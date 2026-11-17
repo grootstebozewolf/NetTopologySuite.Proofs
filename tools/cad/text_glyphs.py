@@ -38,11 +38,19 @@ element as a reference reader reports them, in master units and degrees.
 Named declines: ID_NotSimilarityPlacement for a width factor other than 1
 or a nonzero oblique angle; ID_DegenerateEntity for non-finite or
 non-positive numbers and zero-area contours; ID_TextEntity for everything
-this slice does not resolve (no font for the style, a stroke font, a
+this slice does not resolve (no font for the style, a
 missing glyph, no cap height, an unknown alignment, MTEXT inline codes,
 columns, a wrapping line or top-to-bottom flow, a DGN justification
 other than left baseline, a contour of fewer than three spans, text with
 no ink).
+
+A font file ending in ``.shx`` or ``.shp`` is a stroke font
+(``stroke_glyphs``). Its glyph member is a Compound of open BulgePolyline
+strokes, chords and true arcs, with no Ring. Its cap height and descent
+are the font's ``above`` and ``below``, and a character advances by its
+pen travel. Centre, right, aligned and fit need ink extents, which this
+slice does not compute for strokes, so they decline; MTEXT attachment
+uses advances and works.
 
 Advance is hmtx only. Kerning and shaping are not applied. fontTools (MIT)
 reads the outlines; its code is not ported.
@@ -58,7 +66,6 @@ from typing import Any, Mapping
 _EPS = 1e-9
 _QUAD_KNOTS = [0, 0, 0, 1, 1, 1]
 _CUBIC_KNOTS = [0, 0, 0, 0, 1, 1, 1, 1]
-OUTLINE_SUFFIXES = (".ttf", ".otf", ".ttc")
 
 Decline = tuple[str, str]
 Point = tuple[float, float]
@@ -209,12 +216,11 @@ def ink_extent(placed: list[tuple[float, list[list[Span]]]]) -> tuple[float, flo
     return min(lows), max(highs)
 
 
-def _anchor(run: TextRun, font: Any, cap: float, ink: tuple[float, float]) -> tuple[float, float] | Decline:
+def _anchor(run: TextRun, descent: float, cap: float, ink: tuple[float, float]) -> tuple[float, float] | Decline:
     """The font-unit point that lands on the insert point."""
     if run.span_mode is not None:
         return (ink[0], 0.0)
     xs = {"left": 0.0, "center": (ink[0] + ink[1]) / 2, "right": ink[1]}
-    descent = float(font["hhea"].descent)
     ys = {
         "baseline": 0.0,
         "top": cap,
@@ -331,19 +337,96 @@ def _text_link(run: TextRun, rotation: float, scale: float) -> dict[str, Any]:
     }
 
 
-def _line_glyphs(font: Any, cmap: dict, advances: dict, text: str) -> tuple[list, float] | Decline:
-    """Inked glyphs of one line with their pen positions, and the line advance."""
-    placed: list[tuple[float, list[list[Span]]]] = []
-    pen_x = 0.0
-    for char in text:
-        name = cmap.get(ord(char))
-        if name is None:
-            return ("ID_TextEntity", f"font has no glyph for U+{ord(char):04X}")
-        contours = glyph_contours(font, name)
-        if contours:
-            placed.append((pen_x, contours))
-        pen_x += float(advances[name][0])
-    return (placed, pen_x)
+class _OutlineFace:
+    """A TrueType or CFF font. A glyph payload is its contours."""
+
+    def __init__(self, path: Path) -> None:
+        from fontTools.ttLib import TTFont
+
+        self.font = TTFont(path, fontNumber=0, lazy=True)
+        self.cap = cap_height(self.font)
+        self.descent = float(self.font["hhea"].descent)
+        self.cmap = self.font.getBestCmap() or {}
+        self.advances = self.font["hmtx"].metrics
+
+    def refusal(self) -> Decline | None:
+        if "glyf" not in self.font and "CFF " not in self.font and "CFF2" not in self.font:
+            return ("ID_TextEntity", "font has no glyf or CFF outlines")
+        if self.cap is None:
+            return ("ID_TextEntity", "font states no cap height")
+        return None
+
+    def line(self, text: str) -> tuple[list, float] | Decline:
+        """Inked glyphs of one line with their pen positions, and the line advance."""
+        placed: list[tuple[float, float, list[list[Span]]]] = []
+        pen_x = 0.0
+        for char in text:
+            name = self.cmap.get(ord(char))
+            if name is None:
+                return ("ID_TextEntity", f"font has no glyph for U+{ord(char):04X}")
+            contours = glyph_contours(self.font, name)
+            if contours:
+                placed.append((pen_x, 0.0, contours))
+            pen_x += float(self.advances[name][0])
+        return (placed, pen_x)
+
+    def extent(self, placed: list) -> tuple[float, float] | Decline:
+        return ink_extent([(x, contours) for x, _y, contours in placed])
+
+    def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
+        return _glyph_member(payload, links, ctx)
+
+    def close(self) -> None:
+        self.font.close()
+
+
+class _StrokeFace:
+    """An SHX or SHP stroke font. A glyph payload is its pen strokes."""
+
+    def __init__(self, path: Path) -> None:
+        import stroke_glyphs
+
+        self.font = stroke_glyphs.StrokeFont(path)
+        self.cap = self.font.cap
+        self.descent = self.font.descent
+
+    def refusal(self) -> Decline | None:
+        if self.cap <= 0:
+            return ("ID_TextEntity", "font states no cap height")
+        return None
+
+    def line(self, text: str) -> tuple[list, float] | Decline:
+        return self.font.line(text)
+
+    def extent(self, placed: list) -> tuple[float, float] | Decline:
+        return ("ID_TextEntity", "ink alignment of a stroke font")
+
+    def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
+        strokes = [_entity("BulgePolyline", {"closed": False, "segments": stroke}, links, ctx) for stroke in payload]
+        return _entity("Compound", {"members": strokes}, links, ctx)
+
+    def close(self) -> None:
+        pass
+
+
+def _open_face(path: Path) -> Any:
+    """The face for a font file, or a decline."""
+    try:
+        if str(path).lower().endswith((".shx", ".shp")):
+            face: Any = _StrokeFace(path)
+        else:
+            face = _OutlineFace(path)
+    except Exception as error:  # an unreadable font is a refusal, not a crash
+        return ("ID_TextEntity", f"font file is not readable: {type(error).__name__}")
+    refusal = face.refusal()
+    if refusal is not None:
+        face.close()
+        return refusal
+    return face
+
+
+def _pen_link(x: float, y: float) -> dict[str, Any]:
+    return {"translate": [x, y], "rotate": 0.0, "scale": 1.0, "reflect": False}
 
 
 def block_record(
@@ -356,8 +439,6 @@ def block_record(
     provenance: dict[str, Any],
 ) -> dict[str, Any] | Decline:
     """One Compound carrier entity for the block, or a decline id and reason."""
-    from fontTools.ttLib import TTFont
-
     numbers = (block.height, block.insert[0], block.insert[1], block.rotation, block.line_spacing, block.column_width)
     if not all(math.isfinite(float(value)) for value in numbers) or block.height <= _EPS or block.line_spacing <= _EPS:
         return ("ID_DegenerateEntity", "text height, insert, angle, or spacing is not a positive finite number")
@@ -365,15 +446,11 @@ def block_record(
     drops = {"top": 0.0, "middle": 0.5, "bottom": 1.0}
     if block.halign not in shifts or block.valign not in drops:
         return ("ID_TextEntity", f"unknown text alignment {block.halign} {block.valign}")
-    font = TTFont(block.font, fontNumber=0, lazy=True)
+    face = _open_face(block.font)
+    if isinstance(face, tuple):
+        return face
     try:
-        if "glyf" not in font and "CFF " not in font and "CFF2" not in font:
-            return ("ID_TextEntity", "font has no glyf or CFF outlines")
-        cap = cap_height(font)
-        if cap is None:
-            return ("ID_TextEntity", "font states no cap height")
-        cmap = font.getBestCmap() or {}
-        advances = font["hmtx"].metrics
+        cap = face.cap
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
         scale = block.height / cap
         pitch = cap * 5.0 / 3.0 * block.line_spacing
@@ -386,7 +463,7 @@ def block_record(
         }
         members = []
         for index, text in enumerate(block.lines):
-            line = _line_glyphs(font, cmap, advances, text)
+            line = face.line(text)
             if isinstance(line[0], str):
                 return line
             placed, width = line
@@ -394,14 +471,13 @@ def block_record(
                 return ("ID_TextEntity", "a line is wider than the column and would wrap")
             dx = -shifts[block.halign] * width
             dy = drops[block.valign] * depth - cap - pitch * index
-            for pen_x, contours in placed:
-                advance = {"translate": [pen_x + dx, dy], "rotate": 0.0, "scale": 1.0, "reflect": False}
-                member = _glyph_member(contours, [advance, text_link] + links, ctx)
+            for pen_x, pen_y, payload in placed:
+                member = face.member(payload, [_pen_link(pen_x + dx, pen_y + dy), text_link] + links, ctx)
                 if isinstance(member, tuple):
                     return member
                 members.append(member)
     finally:
-        font.close()
+        face.close()
     if not members:
         return ("ID_TextEntity", "text has no inked glyph")
     return _entity("Compound", {"members": members}, list(links), ctx)
@@ -421,8 +497,6 @@ def run_record(
     ``links`` are the entity links outside the text (OCS, block inserts),
     local to world.
     """
-    from fontTools.ttLib import TTFont
-
     numbers = (run.height, run.insert[0], run.insert[1], run.rotation, run.width_factor, run.oblique)
     if not all(math.isfinite(float(value)) for value in numbers) or run.height <= _EPS:
         return ("ID_DegenerateEntity", "text height, insert, or angle is not a positive finite number")
@@ -430,44 +504,39 @@ def run_record(
         return ("ID_NotSimilarityPlacement", "text width factor is not 1")
     if abs(run.oblique) > _EPS:
         return ("ID_NotSimilarityPlacement", "text oblique angle is not 0")
-    font = TTFont(run.font, fontNumber=0, lazy=True)
+    face = _open_face(run.font)
+    if isinstance(face, tuple):
+        return face
     try:
-        if "glyf" not in font and "CFF " not in font and "CFF2" not in font:
-            return ("ID_TextEntity", "font has no glyf or CFF outlines")
-        cap = cap_height(font)
-        if cap is None:
-            return ("ID_TextEntity", "font states no cap height")
-        cmap = font.getBestCmap() or {}
-        advances = font["hmtx"].metrics
+        cap = face.cap
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
-        line = _line_glyphs(font, cmap, advances, run.text)
+        line = face.line(run.text)
         if isinstance(line[0], str):
             return line
         placed = line[0]
         if not placed:
             return ("ID_TextEntity", "text has no inked glyph")
-        ink = ink_extent(placed)
-        anchor = _anchor(run, font, cap, ink)
-        if len(anchor) == 2 and isinstance(anchor[0], str):
+        # Only centre, right, aligned and fit look at the ink.
+        ink = (0.0, 0.0)
+        if run.span_mode is not None or run.halign != "left":
+            ink = face.extent(placed)
+            if isinstance(ink[0], str):
+                return ink
+        anchor = _anchor(run, face.descent, cap, ink)
+        if isinstance(anchor[0], str):
             return anchor
         turn = _span_placement(run, cap, ink)
         if isinstance(turn[0], str):
             return turn
         text_link = _text_link(run, turn[0], turn[1])
         members = []
-        for pen_x, contours in placed:
-            advance = {
-                "translate": [pen_x - anchor[0], 0.0 - anchor[1]],
-                "rotate": 0.0,
-                "scale": 1.0,
-                "reflect": False,
-            }
-            member = _glyph_member(contours, [advance, text_link] + links, ctx)
+        for pen_x, pen_y, payload in placed:
+            member = face.member(payload, [_pen_link(pen_x - anchor[0], pen_y - anchor[1]), text_link] + links, ctx)
             if isinstance(member, tuple):
                 return member
             members.append(member)
     finally:
-        font.close()
+        face.close()
     return _entity("Compound", {"members": members}, list(links), ctx)
 
 
@@ -479,8 +548,6 @@ def resolve_font(name: str, fonts: Mapping[str, Path | str]) -> Path | Decline:
     table = {str(k).casefold(): Path(v) for k, v in fonts.items()}
     path = table.get(key)
     if path is None:
-        if not key.endswith(OUTLINE_SUFFIXES):
-            return ("ID_TextEntity", f"{key} is not an outline font")
         return ("ID_TextEntity", f"no font file given for {key}")
     return path
 

@@ -399,7 +399,7 @@ def test_stroke_font_missing_font_and_missing_cap_height_decline(ttf: Path) -> N
     msp.add_text("e", height=7, dxfattribs={"style": "NOCAP"})
     rows = _rows(doc, {"carriertext.ttf": ttf, "e.ttf": TTF_PATH})
     assert [row["id"] for row in rows] == ["ID_TextEntity"] * 3
-    assert "not an outline font" in rows[0]["reason"]
+    assert "no font file given for txt.shx" in rows[0]["reason"]
     assert "no font file given" in rows[1]["reason"]
     assert "cap height" in rows[2]["reason"]
 

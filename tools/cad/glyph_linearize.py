@@ -29,6 +29,11 @@ Crossing points are rational and are rounded to floats on output. The
 reported bound is the bound of each flattened contour; for a noded result
 it is not a proved bound on the merged boundary.
 
+A stroke-font row (glyph members made of BulgePolyline strokes) becomes a
+MULTILINESTRING instead. An arc of radius ``r`` and sweep ``theta`` is cut
+into ``ceil(theta / (2*acos(1 - d/r)))`` chords, so each chord's sagitta
+is at most ``d``; the vertices lie on the arc.
+
 Any other row declines as ID_UnsupportedEntity.
 """
 
@@ -175,6 +180,75 @@ def winding(ring: list[Point], point: Point) -> int:
     return total
 
 
+def arc_points(start: Point, end: Point, bulge: float, d: float) -> list[Point]:
+    """Start and interior vertices of a bulge arc cut to sagitta ``d``. The end is not included."""
+    chord = math.hypot(end[0] - start[0], end[1] - start[1])
+    sweep = 4.0 * math.atan(abs(bulge))
+    radius = chord / (2.0 * math.sin(sweep / 2.0))
+    step = 2.0 * math.acos(max(-1.0, 1.0 - d / radius))
+    count = max(1, math.ceil(sweep / step))
+    # The centre is off the chord midpoint by (1 - b^2) / (4 b) times the chord's left normal.
+    offset = (1.0 - bulge * bulge) / (4.0 * bulge)
+    cx = (start[0] + end[0]) / 2.0 - offset * (end[1] - start[1])
+    cy = (start[1] + end[1]) / 2.0 + offset * (end[0] - start[0])
+    first = math.atan2(start[1] - cy, start[0] - cx)
+    turn = math.copysign(sweep, bulge) / count
+    return [start] + [
+        (cx + radius * math.cos(first + turn * index), cy + radius * math.sin(first + turn * index))
+        for index in range(1, count)
+    ]
+
+
+def _stroke_lines(glyph: dict[str, Any], d_world: float | None) -> list[list[Point]] | Decline:
+    links = glyph["placement"]["links"]
+    tolerance = glyph["tolerance"]
+    if d_world is not None:
+        d = d_world / chain_scale(links)
+    elif tolerance["kind"] == "sagitta":
+        d = tolerance["d"]
+    else:
+        return ("ID_ToleranceKindUnsupported", f"{tolerance['kind']} states no chord height")
+    lines = []
+    for stroke in glyph["params"]["members"]:
+        if stroke["kind"] != "BulgePolyline":
+            return ("ID_UnsupportedEntity", "stroke glyph member is not a BulgePolyline")
+        local: list[Point] = []
+        for segment in stroke["params"]["segments"]:
+            start, end = tuple(segment["start"]), tuple(segment["end"])
+            local.extend(arc_points(start, end, segment["bulge"], d) if segment["kind"] == "Arc" else [start])
+        local.append(tuple(stroke["params"]["segments"][-1]["end"]))
+        line = []
+        for point in local:
+            for link in links:
+                point = _apply(point, link)
+            line.append(point)
+        lines.append(line)
+    return lines
+
+
+def _linearize_strokes(row: dict[str, Any], hausdorff: float | None) -> dict[str, Any] | Decline:
+    lines: list[list[Point]] = []
+    bound = hausdorff or 0.0
+    for glyph in row["params"]["members"]:
+        found = _stroke_lines(glyph, hausdorff)
+        if isinstance(found, tuple):
+            return found
+        lines.extend(found)
+        if hausdorff is None:
+            bound = max(bound, chain_scale(glyph["placement"]["links"]) * glyph["tolerance"]["d"])
+    body = ", ".join("(" + ", ".join(f"{x!r} {y!r}" for x, y in line) + ")" for line in lines)
+    return {"wkt": "MULTILINESTRING (" + body + ")", "hausdorff": bound, "lines": len(lines)}
+
+
+def _is_stroke_row(row: dict[str, Any]) -> bool:
+    members = row["params"].get("members") or []
+    return bool(members) and all(
+        glyph["kind"] == "Compound"
+        and (glyph["params"].get("members") or [{}])[0].get("kind") == "BulgePolyline"
+        for glyph in members
+    )
+
+
 def _glyph_contours(glyph: dict[str, Any], d_world: float | None) -> list[list[Point]] | Decline:
     members = glyph["params"].get("members") if glyph["kind"] == "Compound" else None
     if not members or members[0]["kind"] != "Ring" or len(members) < 2:
@@ -214,6 +288,8 @@ def _wkt_ring(ring: list[Point]) -> str:
 def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[str, Any] | Decline:
     """A text carrier row as ``{"wkt", "hausdorff", "polygons"}``, or a decline.
 
+    A stroke-font row gives ``{"wkt", "hausdorff", "lines"}``.
+
     ``hausdorff`` is a world bound. Without it the record's sagitta is used
     and the reported bound is the largest ``k*d`` over the glyphs.
     """
@@ -221,6 +297,8 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
         return ("ID_ToleranceNonPositive", "hausdorff bound is not a positive finite number")
     if row.get("record") != "entity" or row.get("kind") != "Compound":
         return ("ID_UnsupportedEntity", "row is not a text Compound")
+    if _is_stroke_row(row):
+        return _linearize_strokes(row, hausdorff)
     rings: list[list[Point]] = []
     bound = 0.0
     for glyph in row["params"]["members"]:
