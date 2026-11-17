@@ -58,7 +58,12 @@ DXF does not emit ID_AngleConventionUnknown. ``$ANGDIR`` and
 ``$ANGBASE`` are display provenance, not a decline. Another format may
 emit that id.
 
-A TEXT or MTEXT stays ``ID_TextEntity`` unless ``fonts`` maps its style font file
+An INSERT's attached ATTRIBs are considered entities too, placed by the
+links outside that INSERT (their coordinates are already in its space).
+An invisible ATTRIB declines; a non-constant ATTDEF in a block is a
+template the INSERT does not draw and declines; a constant ATTDEF is drawn.
+
+A TEXT, MTEXT, ATTRIB or constant ATTDEF stays ``ID_TextEntity`` unless ``fonts`` maps its style font file
 name to an outline font. Then ``text_glyphs`` writes one Compound of glyph
 outlines (Ring plus Chord and Bezier members), or a named decline. A
 ``.dwg`` path is converted by the ODA File Converter through
@@ -799,7 +804,7 @@ def _text_row(
     z_offset: float,
     provenance: dict[str, Any],
 ) -> dict[str, Any]:
-    """One TEXT or MTEXT as a Compound of glyph outlines, or its named decline."""
+    """One TEXT, MTEXT, ATTRIB or constant ATTDEF as a Compound of glyph outlines, or its named decline."""
     import text_glyphs
 
     bad = _tolerance_ok("Compound", tolerance)
@@ -808,7 +813,17 @@ def _text_row(
     elevation = _num(entity.dxf.insert[2]) + z_offset
     if not _finite(elevation):
         return _decl("ID_DegenerateEntity", "non-finite elevation", provenance)
-    if entity.dxftype() == "MTEXT":
+    kind = entity.dxftype()
+    if kind in ("ATTRIB", "ATTDEF"):
+        if kind == "ATTRIB" and entity.is_invisible:
+            return _decl("ID_TextEntity", "invisible ATTRIB is not drawn", provenance)
+        if kind == "ATTDEF" and not entity.is_const:
+            return _decl("ID_TextEntity", "ATTDEF is an attribute template; the INSERT's ATTRIB is drawn", provenance)
+        if entity.has_embedded_mtext_entity:
+            # A multiline attribute carries its text as an MTEXT.
+            entity = entity.virtual_mtext_entity()
+            kind = "MTEXT"
+    if kind == "MTEXT":
         run = text_glyphs.dxf_mtext_block(entity, doc, fonts)
         record = text_glyphs.block_record
     else:
@@ -901,12 +916,15 @@ def extract_document(
                 child_prefix = [extr] + child_prefix
             for child in children:
                 emit(child, child_prefix, block_path + [name], z_offset + iz, stack + (name,))
+            # Attached attributes are placed in the space the INSERT sits in, not in the block.
+            for attrib in entity.attribs:
+                emit(attrib, prefix, block_path + [name], z_offset, stack + (name,))
             return
         extr = _extrusion_link(entity)
         if isinstance(extr, str):
             rows.append(_decl(extr, "extrusion is not +/- Z", prov))
             return
-        if entity.dxftype() in ("TEXT", "MTEXT") and fonts:
+        if entity.dxftype() in ("TEXT", "MTEXT", "ATTRIB", "ATTDEF") and fonts:
             rows.append(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
             return
         mapped = _map_geometry(entity, mode)
