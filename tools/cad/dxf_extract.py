@@ -58,6 +58,10 @@ DXF does not emit ID_AngleConventionUnknown. ``$ANGDIR`` and
 ``$ANGBASE`` are display provenance, not a decline. Another format may
 emit that id.
 
+An arrayed INSERT (MINSERT) is one INSERT per grid cell, as ezdxf's
+``multi_insert()`` gives them; each copy's block path entry is the block
+name with ``#`` and the copy's index.
+
 An INSERT's attached ATTRIBs are considered entities too, placed by the
 links outside that INSERT (their coordinates are already in its space).
 An invisible ATTRIB declines; a non-constant ATTDEF in a block is a
@@ -858,12 +862,15 @@ def extract_document(
     file_id: str = "unnamed",
     fonts: dict[str, Any] | None = None,
     source_format: str = "DXF",
+    on_considered: Any = None,
 ) -> list[dict[str, Any]]:
     """Extract carrier records and declines from an ezdxf document.
 
     ``mode`` is ``strict`` or ``lenient``. ``tolerance`` is a schema
     tolerance object; the default is sourceDefault. ``fonts`` maps a font
     file name to an outline font path; without it every TEXT declines.
+    ``on_considered``, when given, is called with the DXF type of each
+    considered entity, once per row, in row order.
     """
     if mode not in ("strict", "lenient"):
         raise ValueError("mode must be strict or lenient")
@@ -880,19 +887,34 @@ def extract_document(
         block_path: list[str],
         z_offset: float,
         stack: tuple[str, ...],
+        label: str | None = None,
     ) -> None:
+        def add(row: dict[str, Any]) -> None:
+            # Every row is one considered entity: this one.
+            rows.append(row)
+            if on_considered is not None:
+                on_considered(entity.dxftype())
+
         prov = _provenance(entity, version, file_id, block_path, source_format)
         if isinstance(units, str):
-            rows.append(_decl(units, f"header convention {units}", prov))
+            add(_decl(units, f"header convention {units}", prov))
             return
         if entity.dxftype() == "INSERT":
             name = str(entity.dxf.name)
+            count = int(getattr(entity, "mcount", 1) or 1)
+            if count > 1:
+                # An arrayed INSERT (MINSERT) draws its block once per grid cell. ezdxf's
+                # multi_insert() gives each copy as a plain INSERT, attributes included.
+                for index, copy in enumerate(entity.multi_insert()):
+                    copy.dxf.handle = entity.dxf.get("handle")
+                    emit(copy, prefix, block_path, z_offset, stack, label=f"{name}#{index}")
+                return
             if name in stack:
-                rows.append(_decl("ID_DegenerateEntity", f"cyclic block {name}", prov))
+                add(_decl("ID_DegenerateEntity", f"cyclic block {name}", prov))
                 return
             extr = _extrusion_link(entity)
             if isinstance(extr, str):
-                rows.append(_decl(extr, "INSERT extrusion is not +/- Z", prov))
+                add(_decl(extr, "INSERT extrusion is not +/- Z", prov))
                 return
             link = _insert_link(entity)
             if isinstance(link, str):
@@ -901,51 +923,51 @@ def extract_document(
                     if link == "ID_NotSimilarityPlacement"
                     else link
                 )
-                rows.append(_decl(link, reason, prov))
+                add(_decl(link, reason, prov))
                 return
             iz = _insert_z(entity)
             if isinstance(iz, str):
-                rows.append(_decl(iz, "non-finite INSERT z", prov))
+                add(_decl(iz, "non-finite INSERT z", prov))
                 return
             children = list(_iter_block(doc, name))
             if not children:
-                rows.append(_decl("ID_DegenerateEntity", f"empty block {name}", prov))
+                add(_decl("ID_DegenerateEntity", f"empty block {name}", prov))
                 return
             child_prefix = [link] + prefix
             if extr is not None:
                 child_prefix = [extr] + child_prefix
             for child in children:
-                emit(child, child_prefix, block_path + [name], z_offset + iz, stack + (name,))
+                emit(child, child_prefix, block_path + [label or name], z_offset + iz, stack + (name,))
             # Attached attributes are placed in the space the INSERT sits in, not in the block.
             for attrib in entity.attribs:
-                emit(attrib, prefix, block_path + [name], z_offset, stack + (name,))
+                emit(attrib, prefix, block_path + [label or name], z_offset, stack + (name,))
             return
         extr = _extrusion_link(entity)
         if isinstance(extr, str):
-            rows.append(_decl(extr, "extrusion is not +/- Z", prov))
+            add(_decl(extr, "extrusion is not +/- Z", prov))
             return
         if entity.dxftype() in ("TEXT", "MTEXT", "ATTRIB", "ATTDEF") and fonts:
-            rows.append(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
+            add(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
             return
         mapped = _map_geometry(entity, mode)
         if isinstance(mapped, str):
             if mapped == "ID_UnsupportedEntity":
                 name = entity.dxftype()
-                rows.append(_decl(mapped, f"unsupported {name}", prov, name=name))
+                add(_decl(mapped, f"unsupported {name}", prov, name=name))
             else:
-                rows.append(_decl(mapped, mapped, prov))
+                add(_decl(mapped, mapped, prov))
             return
         bad = _tolerance_ok(mapped["kind"], tol)
         if bad:
-            rows.append(_decl(bad, f"{tol['kind']} on {mapped['kind']}", prov))
+            add(_decl(bad, f"{tol['kind']} on {mapped['kind']}", prov))
             return
         links = ([extr] + prefix) if extr else list(prefix)
         elevation = _num(mapped["elevation"]) + z_offset
         if not _finite(elevation):
-            rows.append(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
+            add(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
             return
         params = _materialize(mapped["kind"], mapped["params"], links, units, tol, elevation, prov)
-        rows.append(_entity(mapped["kind"], params, links, units, tol, elevation, prov))
+        add(_entity(mapped["kind"], params, links, units, tol, elevation, prov))
 
     for entity in doc.modelspace():
         emit(entity, [], [], 0.0, ())
