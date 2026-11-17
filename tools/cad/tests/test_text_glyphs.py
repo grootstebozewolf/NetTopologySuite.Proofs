@@ -489,3 +489,106 @@ def test_dgn_named_declines(ttf: Path) -> None:
     assert text_glyphs.dgn_text_run(base, {})[0] == "ID_TextEntity"
     assert text_glyphs.dgn_text_run({**base, "justification": 7}, {41: ttf})[0] == "ID_TextEntity"
     assert text_glyphs.dgn_text_run({**base, "type": 16}, {41: ttf})[0] == "ID_TextEntity"
+
+
+_PITCH = _CAP * 5 / 3
+
+
+def _mtext_rows(ttf: Path, content: str, **attribs) -> list[dict]:
+    doc = _doc()
+    attribs = {"style": "GLYPH", "char_height": 7, "insert": (10, 20, 4), **attribs}
+    doc.modelspace().add_mtext(content, dxfattribs=attribs)
+    return _rows(doc, {"carriertext.ttf": ttf})
+
+
+def test_mtext_lines_step_down_by_five_thirds_of_the_cap_height(ttf: Path) -> None:
+    (row,) = _mtext_rows(ttf, r"le\P\Pl\~l", rotation=90)
+    assert row["kind"] == "Compound"
+    assert row["dimension"] == {"space": "2d+elevation", "elevation": 4}
+    glyphs = row["params"]["members"]
+    pens = [v for g in glyphs for v in g["placement"]["links"][0]["translate"]]
+    assert pens == pytest.approx(
+        [0, -_CAP, _ADVANCE["l"], -_CAP, 0, -_CAP - 2 * _PITCH, _ADVANCE["l"] + _ADVANCE["space"], -_CAP - 2 * _PITCH]
+    )
+    text_link = glyphs[0]["placement"]["links"][1]
+    assert text_link == {"translate": [10, 20], "rotate": 90, "scale": 7 / _CAP, "reflect": False}
+    # The cap top of the first stem is the top-left attachment point; rotated 90 degrees, x runs up.
+    assert _place((0, _CAP), glyphs[0]["placement"]["links"]) == pytest.approx((10, 20))
+    assert _place((100, 0), glyphs[0]["placement"]["links"]) == pytest.approx((10 + 7, 20 + 1))
+
+
+@pytest.mark.parametrize(
+    ("attachment", "corner"),
+    [
+        (1, (0, 0)),
+        (2, (0.5, 0)),
+        (3, (1, 0)),
+        (4, (0, 0.5)),
+        (5, (0.5, 0.5)),
+        (6, (1, 0.5)),
+        (7, (0, 1)),
+        (8, (0.5, 1)),
+        (9, (1, 1)),
+    ],
+)
+def test_mtext_attachment_point_is_a_box_point(ttf: Path, attachment, corner) -> None:
+    # Two lines: "lll" is 900 wide and "l" is 300 wide. The box is cap + pitch deep.
+    (row,) = _mtext_rows(ttf, r"lll\Pl", attachment_point=attachment)
+    first, last = row["params"]["members"][0], row["params"]["members"][-1]
+    depth = _CAP + _PITCH
+    # Line-local points that must land on the insert point, per line width.
+    top_line = (corner[0] * 900, _CAP - corner[1] * depth)
+    bottom_line = (corner[0] * 300, _CAP + _PITCH - corner[1] * depth)
+    assert _place(top_line, first["placement"]["links"]) == pytest.approx((10, 20))
+    assert _place(bottom_line, last["placement"]["links"]) == pytest.approx((10, 20))
+
+
+def test_mtext_text_direction_wins_over_rotation(ttf: Path) -> None:
+    (row,) = _mtext_rows(ttf, "l", rotation=10, text_direction=(0, -2, 0))
+    assert row["params"]["members"][0]["placement"]["links"][1]["rotate"] == pytest.approx(-90)
+    (tilted,) = _mtext_rows(ttf, "l", text_direction=(1, 0, 1))
+    assert tilted["id"] == "ID_TiltedPlacement"
+
+
+@pytest.mark.parametrize(
+    ("content", "attribs", "decline", "reason"),
+    [
+        (r"{\fArial|b1;l}", {}, "ID_TextEntity", "inline formatting"),
+        (r"\H2x;l", {}, "ID_TextEntity", "inline formatting"),
+        ("lll", {"width": 0.05}, "ID_TextEntity", "would wrap"),
+        ("l", {"flow_direction": 3}, "ID_TextEntity", "top-to-bottom"),
+        ("l^Il", {}, "ID_TextEntity", "U+0009"),
+        (r"\P ", {}, "ID_TextEntity", "no inked glyph"),
+    ],
+)
+def test_named_mtext_declines(ttf: Path, content, attribs, decline, reason) -> None:
+    (row,) = _mtext_rows(ttf, content, **attribs)
+    assert (row["record"], row["id"]) == ("decline", decline)
+    assert reason in row["reason"]
+
+
+def test_mtext_fits_a_wide_enough_column_and_scales_line_spacing(ttf: Path) -> None:
+    # "lll" is 900 units, 9 drawing units at height 7.
+    (row,) = _mtext_rows(ttf, r"lll\Pl", width=9.0, line_spacing_factor=1.5)
+    last = row["params"]["members"][-1]
+    assert last["placement"]["links"][0]["translate"] == pytest.approx([0, -_CAP - 1.5 * _PITCH])
+
+
+def test_mtext_style_stretch_is_not_a_similarity(ttf: Path) -> None:
+    doc = _doc()
+    doc.styles.get("GLYPH").dxf.width = 0.8
+    doc.modelspace().add_mtext("l", dxfattribs={"style": "GLYPH", "char_height": 7})
+    (row,) = _rows(doc, {"carriertext.ttf": ttf})
+    assert row["id"] == "ID_NotSimilarityPlacement"
+
+
+def test_mtext_without_fonts_still_declines_and_linearizes_with_them(ttf: Path) -> None:
+    import glyph_linearize
+
+    doc = _doc()
+    doc.modelspace().add_mtext(r"el\Ple", dxfattribs={"style": "GLYPH", "char_height": 7})
+    (declined,) = _rows(doc, None)
+    assert declined["id"] == "ID_TextEntity"
+    (row,) = _rows(doc, {"carriertext.ttf": ttf})
+    out = glyph_linearize.linearize_row(row, hausdorff=0.01)
+    assert out["polygons"] == 4

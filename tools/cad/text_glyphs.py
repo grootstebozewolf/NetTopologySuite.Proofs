@@ -23,6 +23,13 @@ those points, and the stated height and rotation are not used. ``fit``
 keeps the height, so it is a similarity only when the ink already spans
 the two points. These follow ezdxf's text2path, the DXF reference reader.
 
+``TextBlock`` is plain multiline text (DXF MTEXT without inline codes).
+Baselines step down by ``5/3`` of the cap height times the line spacing
+factor. The box runs from the cap top of the first line to the baseline
+of the last, and each line is as wide as its advances. The attachment
+point picks the box corner, edge, or centre that lands on the insert
+point. A line wider than a stated column width would wrap, and declines.
+
 ``TextRun`` is the format-neutral input. ``dxf_text_run`` reads an ezdxf
 TEXT, which also serves DWG once a reference converter has produced the
 DXF entity model. ``dgn_text_run`` takes the fields of a DGN type 17 text
@@ -32,7 +39,8 @@ Named declines: ID_NotSimilarityPlacement for a width factor other than 1
 or a nonzero oblique angle; ID_DegenerateEntity for non-finite or
 non-positive numbers and zero-area contours; ID_TextEntity for everything
 this slice does not resolve (no font for the style, a stroke font, a
-missing glyph, no cap height, an unknown alignment, a DGN justification
+missing glyph, no cap height, an unknown alignment, MTEXT inline codes,
+columns, a wrapping line or top-to-bottom flow, a DGN justification
 other than left baseline, a contour of fewer than three spans, text with
 no ink).
 
@@ -75,6 +83,21 @@ class TextRun:
     valign: str = "baseline"  # baseline | bottom | middle | top | cap-descent-middle
     span_to: tuple[float, float] | None = None  # second baseline point
     span_mode: str | None = None  # aligned | fit
+
+
+@dataclass(frozen=True)
+class TextBlock:
+    """Plain lines under one font. ``insert`` is the attachment point."""
+
+    lines: tuple[str, ...]
+    font: Path
+    height: float
+    insert: tuple[float, float]
+    rotation: float = 0.0
+    halign: str = "left"  # left | center | right
+    valign: str = "top"  # top | middle | bottom
+    line_spacing: float = 1.0
+    column_width: float = 0.0
 
 
 def _pt(point: Any) -> Point:
@@ -308,6 +331,82 @@ def _text_link(run: TextRun, rotation: float, scale: float) -> dict[str, Any]:
     }
 
 
+def _line_glyphs(font: Any, cmap: dict, advances: dict, text: str) -> tuple[list, float] | Decline:
+    """Inked glyphs of one line with their pen positions, and the line advance."""
+    placed: list[tuple[float, list[list[Span]]]] = []
+    pen_x = 0.0
+    for char in text:
+        name = cmap.get(ord(char))
+        if name is None:
+            return ("ID_TextEntity", f"font has no glyph for U+{ord(char):04X}")
+        contours = glyph_contours(font, name)
+        if contours:
+            placed.append((pen_x, contours))
+        pen_x += float(advances[name][0])
+    return (placed, pen_x)
+
+
+def block_record(
+    block: TextBlock,
+    *,
+    links: list[dict[str, Any]],
+    units: dict[str, Any],
+    tolerance: dict[str, Any],
+    dimension: dict[str, Any],
+    provenance: dict[str, Any],
+) -> dict[str, Any] | Decline:
+    """One Compound carrier entity for the block, or a decline id and reason."""
+    from fontTools.ttLib import TTFont
+
+    numbers = (block.height, block.insert[0], block.insert[1], block.rotation, block.line_spacing, block.column_width)
+    if not all(math.isfinite(float(value)) for value in numbers) or block.height <= _EPS or block.line_spacing <= _EPS:
+        return ("ID_DegenerateEntity", "text height, insert, angle, or spacing is not a positive finite number")
+    shifts = {"left": 0.0, "center": 0.5, "right": 1.0}
+    drops = {"top": 0.0, "middle": 0.5, "bottom": 1.0}
+    if block.halign not in shifts or block.valign not in drops:
+        return ("ID_TextEntity", f"unknown text alignment {block.halign} {block.valign}")
+    font = TTFont(block.font, fontNumber=0, lazy=True)
+    try:
+        if "glyf" not in font and "CFF " not in font and "CFF2" not in font:
+            return ("ID_TextEntity", "font has no glyf or CFF outlines")
+        cap = cap_height(font)
+        if cap is None:
+            return ("ID_TextEntity", "font states no cap height")
+        cmap = font.getBestCmap() or {}
+        advances = font["hmtx"].metrics
+        ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
+        scale = block.height / cap
+        pitch = cap * 5.0 / 3.0 * block.line_spacing
+        depth = cap + pitch * (len(block.lines) - 1)
+        text_link = {
+            "translate": [float(block.insert[0]), float(block.insert[1])],
+            "rotate": block.rotation,
+            "scale": scale,
+            "reflect": False,
+        }
+        members = []
+        for index, text in enumerate(block.lines):
+            line = _line_glyphs(font, cmap, advances, text)
+            if isinstance(line[0], str):
+                return line
+            placed, width = line
+            if block.column_width > _EPS and width * scale > block.column_width * (1 + 1e-9):
+                return ("ID_TextEntity", "a line is wider than the column and would wrap")
+            dx = -shifts[block.halign] * width
+            dy = drops[block.valign] * depth - cap - pitch * index
+            for pen_x, contours in placed:
+                advance = {"translate": [pen_x + dx, dy], "rotate": 0.0, "scale": 1.0, "reflect": False}
+                member = _glyph_member(contours, [advance, text_link] + links, ctx)
+                if isinstance(member, tuple):
+                    return member
+                members.append(member)
+    finally:
+        font.close()
+    if not members:
+        return ("ID_TextEntity", "text has no inked glyph")
+    return _entity("Compound", {"members": members}, list(links), ctx)
+
+
 def run_record(
     run: TextRun,
     *,
@@ -341,16 +440,10 @@ def run_record(
         cmap = font.getBestCmap() or {}
         advances = font["hmtx"].metrics
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
-        placed: list[tuple[float, list[list[Span]]]] = []
-        pen_x = 0.0
-        for char in run.text:
-            name = cmap.get(ord(char))
-            if name is None:
-                return ("ID_TextEntity", f"font has no glyph for U+{ord(char):04X}")
-            contours = glyph_contours(font, name)
-            if contours:
-                placed.append((pen_x, contours))
-            pen_x += float(advances[name][0])
+        line = _line_glyphs(font, cmap, advances, run.text)
+        if isinstance(line[0], str):
+            return line
+        placed = line[0]
         if not placed:
             return ("ID_TextEntity", "text has no inked glyph")
         ink = ink_extent(placed)
@@ -429,6 +522,52 @@ def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> Text
         oblique=float(dxf.get("oblique", 0.0)),
         backward=bool(flags & 2),
         upside_down=bool(flags & 4),
+    )
+
+
+def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> TextBlock | Decline:
+    """A DXF MTEXT (ezdxf entity) as a plain block. DWG shares this entity model."""
+    from ezdxf.tools.text import fast_plain_mtext, has_inline_formatting_codes
+
+    dxf = entity.dxf
+    content = str(entity.text)
+    if has_inline_formatting_codes(content):
+        return ("ID_TextEntity", "MTEXT inline formatting codes")
+    if entity.has_columns:
+        return ("ID_TextEntity", "MTEXT columns")
+    if int(dxf.get("flow_direction", 1)) == 3:
+        return ("ID_TextEntity", "MTEXT top-to-bottom flow")
+    attachment = int(dxf.get("attachment_point", 1))
+    if not 1 <= attachment <= 9:
+        return ("ID_TextEntity", f"unknown text alignment {attachment}")
+    style = doc.styles.get(str(dxf.get("style", "Standard")))
+    font = resolve_font(str(style.dxf.get("font", "")) if style is not None else "", fonts)
+    if isinstance(font, tuple):
+        return font
+    # MTEXT has no width factor or oblique of its own. The style's apply.
+    if not math.isclose(float(style.dxf.get("width", 1.0)), 1.0, rel_tol=1e-9, abs_tol=_EPS):
+        return ("ID_NotSimilarityPlacement", "text style width factor is not 1")
+    if abs(float(style.dxf.get("oblique", 0.0))) > _EPS:
+        return ("ID_NotSimilarityPlacement", "text style oblique angle is not 0")
+    if dxf.hasattr("text_direction"):
+        direction = dxf.text_direction
+        if abs(float(direction[2])) > _EPS:
+            return ("ID_TiltedPlacement", "MTEXT text direction leaves the plane")
+        rotation = math.degrees(math.atan2(float(direction[1]), float(direction[0])))
+    else:
+        rotation = float(dxf.get("rotation", 0.0))
+    insert = dxf.insert
+    lines = fast_plain_mtext(content.replace("\\~", " "), split=True)
+    return TextBlock(
+        lines=tuple(lines),
+        font=font,
+        height=float(dxf.get("char_height", 0.0)),
+        insert=(float(insert[0]), float(insert[1])),
+        rotation=rotation,
+        halign=("left", "center", "right")[(attachment - 1) % 3],
+        valign=("top", "middle", "bottom")[(attachment - 1) // 3],
+        line_spacing=float(dxf.get("line_spacing_factor", 1.0)),
+        column_width=float(dxf.get("width", 0.0)),
     )
 
 

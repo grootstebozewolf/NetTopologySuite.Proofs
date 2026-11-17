@@ -54,7 +54,7 @@ DXF does not emit ID_AngleConventionUnknown. ``$ANGDIR`` and
 ``$ANGBASE`` are display provenance, not a decline. Another format may
 emit that id.
 
-A TEXT stays ``ID_TextEntity`` unless ``fonts`` maps its style font file
+A TEXT or MTEXT stays ``ID_TextEntity`` unless ``fonts`` maps its style font file
 name to an outline font. Then ``text_glyphs`` writes one Compound of glyph
 outlines (Ring plus Chord and Bezier members), or a named decline. A
 ``.dwg`` path is converted by the ODA File Converter through
@@ -791,7 +791,7 @@ def _text_row(
     z_offset: float,
     provenance: dict[str, Any],
 ) -> dict[str, Any]:
-    """One TEXT as a Compound of glyph outlines, or its named decline."""
+    """One TEXT or MTEXT as a Compound of glyph outlines, or its named decline."""
     import text_glyphs
 
     bad = _tolerance_ok("Compound", tolerance)
@@ -800,10 +800,15 @@ def _text_row(
     elevation = _num(entity.dxf.insert[2]) + z_offset
     if not _finite(elevation):
         return _decl("ID_DegenerateEntity", "non-finite elevation", provenance)
-    run = text_glyphs.dxf_text_run(entity, doc, fonts)
+    if entity.dxftype() == "MTEXT":
+        run = text_glyphs.dxf_mtext_block(entity, doc, fonts)
+        record = text_glyphs.block_record
+    else:
+        run = text_glyphs.dxf_text_run(entity, doc, fonts)
+        record = text_glyphs.run_record
     if isinstance(run, tuple):
         return _decl(run[0], run[1], provenance)
-    row = text_glyphs.run_record(
+    row = record(
         run,
         links=([extr] + prefix) if extr else list(prefix),
         units=units,
@@ -893,7 +898,7 @@ def extract_document(
         if isinstance(extr, str):
             rows.append(_decl(extr, "extrusion is not +/- Z", prov))
             return
-        if entity.dxftype() == "TEXT" and fonts:
+        if entity.dxftype() in ("TEXT", "MTEXT") and fonts:
             rows.append(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
             return
         mapped = _map_geometry(entity, mode)
