@@ -314,7 +314,8 @@ def test_text_in_a_mirrored_insert_and_negative_extrusion_composes(ttf: Path) ->
     [
         ({"width": 0.8}, "l", "ID_NotSimilarityPlacement", "width factor"),
         ({"oblique": 15}, "l", "ID_NotSimilarityPlacement", "oblique"),
-        ({"halign": 1, "align_point": (5, 0)}, "l", "ID_TextEntity", "left baseline"),
+        ({"halign": 5, "align_point": (5, 0)}, "ll", "ID_NotSimilarityPlacement", "fit text"),
+        ({"halign": 3, "align_point": (0, 0)}, "ll", "ID_DegenerateEntity", "no length"),
         ({}, "lx", "ID_TextEntity", "U+0078"),
         ({}, "  ", "ID_TextEntity", "no inked glyph"),
     ],
@@ -326,6 +327,66 @@ def test_named_text_declines(ttf: Path, attribs, text, decline, reason) -> None:
     (row,) = _rows(doc, {"carriertext.ttf": ttf})
     assert (row["record"], row["id"]) == ("decline", decline)
     assert reason in row["reason"]
+
+
+# "ll": stems at pen 0 and 300, ink from x = 100 to x = 500. hhea descent is -100.
+@pytest.mark.parametrize(
+    ("halign", "valign", "anchor"),
+    [
+        (1, 0, (300, 0)),
+        (2, 0, (500, 0)),
+        (0, 3, (0, _CAP)),
+        (0, 2, (0, _CAP / 2)),
+        (0, 1, (0, -100)),
+        (1, 3, (300, _CAP)),
+        (2, 1, (500, -100)),
+        (4, 0, (300, (_CAP - 100) / 2)),
+        (4, 3, (300, (_CAP - 100) / 2)),
+    ],
+)
+def test_alignment_puts_the_anchor_on_the_align_point(ttf: Path, halign, valign, anchor) -> None:
+    doc = _doc()
+    attribs = {"style": "GLYPH", "insert": (-99, -99), "align_point": (10, 20), "halign": halign, "valign": valign}
+    doc.modelspace().add_text("ll", height=7, rotation=30, dxfattribs=attribs)
+    (row,) = _rows(doc, {"carriertext.ttf": ttf})
+    first, second = row["params"]["members"]
+    assert first["placement"]["links"][1]["scale"] == pytest.approx(7 / _CAP)
+    assert _place(anchor, first["placement"]["links"]) == pytest.approx((10, 20))
+    assert _place((anchor[0] - 300, anchor[1]), second["placement"]["links"]) == pytest.approx((10, 20))
+
+
+def test_right_alignment_uses_the_curve_extent_not_the_control_points(otf: Path) -> None:
+    # The right side of o runs (600,700) (700,500) (700,200) (600,0): it peaks at x = 675.
+    assert text_glyphs._axis_extent([600, 700, 700, 600]) == (600, 675)
+    assert text_glyphs._axis_extent([0, 100, 0]) == (0, 50)
+    doc = _doc("carriertext.otf")
+    doc.modelspace().add_text("o", height=7, dxfattribs={"style": "GLYPH", "halign": 2, "align_point": (10, 20)})
+    (row,) = _rows(doc, {"carriertext.otf": otf})
+    glyph = row["params"]["members"][0]
+    assert _place((675, 0), glyph["placement"]["links"]) == pytest.approx((10, 20))
+
+
+def test_aligned_text_spans_two_baseline_points(ttf: Path) -> None:
+    doc = _doc()
+    attribs = {"style": "GLYPH", "insert": (10, 20), "align_point": (10, 60), "halign": 3, "valign": 2}
+    doc.modelspace().add_text("ll", height=999, rotation=45, dxfattribs=attribs)
+    (row,) = _rows(doc, {"carriertext.ttf": ttf})
+    first, second = row["params"]["members"]
+    text_link = first["placement"]["links"][1]
+    assert text_link["rotate"] == pytest.approx(90)
+    assert text_link["scale"] == pytest.approx(40 / 400)
+    assert _place((100, 0), first["placement"]["links"]) == pytest.approx((10, 20))
+    assert _place((200, 0), second["placement"]["links"]) == pytest.approx((10, 60))
+
+
+def test_fit_text_is_kept_when_the_ink_already_fits(ttf: Path) -> None:
+    doc = _doc()
+    # Height 7 gives scale 0.01, and the ink is 400 units wide.
+    attribs = {"style": "GLYPH", "insert": (10, 20), "align_point": (14, 20), "halign": 5}
+    doc.modelspace().add_text("ll", height=7, dxfattribs=attribs)
+    (row,) = _rows(doc, {"carriertext.ttf": ttf})
+    second = row["params"]["members"][1]
+    assert _place((200, 0), second["placement"]["links"]) == pytest.approx((14, 20))
 
 
 def test_stroke_font_missing_font_and_missing_cap_height_decline(ttf: Path) -> None:
@@ -423,6 +484,8 @@ def test_dgn_named_declines(ttf: Path) -> None:
     assert text_glyphs.run_record(squeezed, **_DGN_CTX)[0] == "ID_NotSimilarityPlacement"
     flat = text_glyphs.dgn_text_run({**base, "height": 0.0, "width": 0.0}, {41: ttf})
     assert text_glyphs.run_record(flat, **_DGN_CTX)[0] == "ID_DegenerateEntity"
+    odd = text_glyphs.TextRun(text="l", font=ttf, height=2.0, insert=(0.0, 0.0), halign="diagonal")
+    assert text_glyphs.run_record(odd, **_DGN_CTX)[0] == "ID_TextEntity"
     assert text_glyphs.dgn_text_run(base, {})[0] == "ID_TextEntity"
     assert text_glyphs.dgn_text_run({**base, "justification": 7}, {41: ttf})[0] == "ID_TextEntity"
     assert text_glyphs.dgn_text_run({**base, "type": 16}, {41: ttf})[0] == "ID_TextEntity"

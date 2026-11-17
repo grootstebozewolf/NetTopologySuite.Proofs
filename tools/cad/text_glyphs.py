@@ -13,6 +13,16 @@ the text link (insert point, rotation, scale ``height / capHeight``), then
 the entity links the caller already holds. Backward text reflects. Upside
 down text reflects and adds a half turn. Both together are a half turn.
 
+Alignment moves the anchor inside the pen link. Left is the pen origin.
+Center and right are the centre and right edge of the ink, from exact
+Bezier extents. Baseline is 0, top is the cap height, middle is half the
+cap height, bottom is the hhea descent, and the DXF ``Middle`` alignment
+is the middle of cap height and descent at the ink centre. ``aligned``
+puts the ink between two baseline points: rotation and scale come from
+those points, and the stated height and rotation are not used. ``fit``
+keeps the height, so it is a similarity only when the ink already spans
+the two points. These follow ezdxf's text2path, the DXF reference reader.
+
 ``TextRun`` is the format-neutral input. ``dxf_text_run`` reads an ezdxf
 TEXT, which also serves DWG once a reference converter has produced the
 DXF entity model. ``dgn_text_run`` takes the fields of a DGN type 17 text
@@ -22,8 +32,9 @@ Named declines: ID_NotSimilarityPlacement for a width factor other than 1
 or a nonzero oblique angle; ID_DegenerateEntity for non-finite or
 non-positive numbers and zero-area contours; ID_TextEntity for everything
 this slice does not resolve (no font for the style, a stroke font, a
-missing glyph, no cap height, an alignment other than left baseline, a
-contour of fewer than three spans, text with no ink).
+missing glyph, no cap height, an unknown alignment, a DGN justification
+other than left baseline, a contour of fewer than three spans, text with
+no ink).
 
 Advance is hmtx only. Kerning and shaping are not applied. fontTools (MIT)
 reads the outlines; its code is not ported.
@@ -60,6 +71,10 @@ class TextRun:
     oblique: float = 0.0
     backward: bool = False
     upside_down: bool = False
+    halign: str = "left"  # left | center | right
+    valign: str = "baseline"  # baseline | bottom | middle | top | cap-descent-middle
+    span_to: tuple[float, float] | None = None  # second baseline point
+    span_mode: str | None = None  # aligned | fit
 
 
 def _pt(point: Any) -> Point:
@@ -129,6 +144,84 @@ def cap_height(font: Any) -> float | None:
     if not tops or max(tops) <= 0:
         return None
     return float(max(tops))
+
+
+def _axis_extent(values: list[float]) -> tuple[float, float]:
+    """Exact range of one coordinate of a Bezier span, from its control values."""
+    low, high = min(values[0], values[-1]), max(values[0], values[-1])
+    roots: list[float] = []
+    if len(values) == 3:
+        a, b, c = values
+        if a - 2 * b + c != 0:
+            roots.append((a - b) / (a - 2 * b + c))
+    elif len(values) == 4:
+        a, b, c, d = values
+        qa, qb, qc = -a + 3 * b - 3 * c + d, 2 * (a - 2 * b + c), b - a
+        if qa == 0:
+            if qb != 0:
+                roots.append(-qc / qb)
+        else:
+            disc = qb * qb - 4 * qa * qc
+            if disc >= 0:
+                root = math.sqrt(disc)
+                roots.extend(((-qb + root) / (2 * qa), (-qb - root) / (2 * qa)))
+    for t in roots:
+        if 0 < t < 1:
+            work = list(values)
+            while len(work) > 1:
+                work = [(1 - t) * u + t * v for u, v in zip(work, work[1:])]
+            low, high = min(low, work[0]), max(high, work[0])
+    return low, high
+
+
+def ink_extent(placed: list[tuple[float, list[list[Span]]]]) -> tuple[float, float]:
+    """Left and right edge of the ink, in font units, pen advance included."""
+    lows, highs = [], []
+    for pen_x, contours in placed:
+        for contour in contours:
+            for span in contour:
+                low, high = _axis_extent([point[0] for point in span[1:]])
+                lows.append(pen_x + low)
+                highs.append(pen_x + high)
+    return min(lows), max(highs)
+
+
+def _anchor(run: TextRun, font: Any, cap: float, ink: tuple[float, float]) -> tuple[float, float] | Decline:
+    """The font-unit point that lands on the insert point."""
+    if run.span_mode is not None:
+        return (ink[0], 0.0)
+    xs = {"left": 0.0, "center": (ink[0] + ink[1]) / 2, "right": ink[1]}
+    descent = float(font["hhea"].descent)
+    ys = {
+        "baseline": 0.0,
+        "top": cap,
+        "middle": cap / 2,
+        "bottom": descent,
+        "cap-descent-middle": (cap + descent) / 2,
+    }
+    if run.halign not in xs or run.valign not in ys:
+        return ("ID_TextEntity", f"unknown text alignment {run.halign} {run.valign}")
+    return (xs[run.halign], ys[run.valign])
+
+
+def _span_placement(run: TextRun, cap: float, ink: tuple[float, float]) -> tuple[float, float] | Decline:
+    """Rotation and scale for ``aligned`` and ``fit``, or the stated ones."""
+    scale = run.height / cap
+    if run.span_mode is None:
+        return (run.rotation, scale)
+    if run.span_mode not in ("aligned", "fit") or run.span_to is None:
+        return ("ID_TextEntity", f"unknown text alignment {run.span_mode}")
+    dx, dy = run.span_to[0] - run.insert[0], run.span_to[1] - run.insert[1]
+    length = math.hypot(dx, dy)
+    if not math.isfinite(length) or length <= _EPS or ink[1] - ink[0] <= _EPS:
+        return ("ID_DegenerateEntity", "aligned text has no length")
+    rotation = math.degrees(math.atan2(dy, dx))
+    stretch = length / (ink[1] - ink[0])
+    if run.span_mode == "aligned":
+        return (rotation, stretch)
+    if not math.isclose(stretch, scale, rel_tol=1e-9, abs_tol=_EPS):
+        return ("ID_NotSimilarityPlacement", "fit text stretches the width only")
+    return (rotation, scale)
 
 
 def _entity(
@@ -204,8 +297,7 @@ def _glyph_member(
     return _entity("Compound", {"members": members}, links, ctx)
 
 
-def _text_link(run: TextRun, scale: float) -> dict[str, Any]:
-    rotation = run.rotation
+def _text_link(run: TextRun, rotation: float, scale: float) -> dict[str, Any]:
     if run.upside_down:
         rotation += 180.0
     return {
@@ -249,8 +341,7 @@ def run_record(
         cmap = font.getBestCmap() or {}
         advances = font["hmtx"].metrics
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
-        text_link = _text_link(run, run.height / cap)
-        members = []
+        placed: list[tuple[float, list[list[Span]]]] = []
         pen_x = 0.0
         for char in run.text:
             name = cmap.get(ord(char))
@@ -258,16 +349,32 @@ def run_record(
                 return ("ID_TextEntity", f"font has no glyph for U+{ord(char):04X}")
             contours = glyph_contours(font, name)
             if contours:
-                advance = {"translate": [pen_x, 0.0], "rotate": 0.0, "scale": 1.0, "reflect": False}
-                member = _glyph_member(contours, [advance, text_link] + links, ctx)
-                if isinstance(member, tuple):
-                    return member
-                members.append(member)
+                placed.append((pen_x, contours))
             pen_x += float(advances[name][0])
+        if not placed:
+            return ("ID_TextEntity", "text has no inked glyph")
+        ink = ink_extent(placed)
+        anchor = _anchor(run, font, cap, ink)
+        if len(anchor) == 2 and isinstance(anchor[0], str):
+            return anchor
+        turn = _span_placement(run, cap, ink)
+        if isinstance(turn[0], str):
+            return turn
+        text_link = _text_link(run, turn[0], turn[1])
+        members = []
+        for pen_x, contours in placed:
+            advance = {
+                "translate": [pen_x - anchor[0], 0.0 - anchor[1]],
+                "rotate": 0.0,
+                "scale": 1.0,
+                "reflect": False,
+            }
+            member = _glyph_member(contours, [advance, text_link] + links, ctx)
+            if isinstance(member, tuple):
+                return member
+            members.append(member)
     finally:
         font.close()
-    if not members:
-        return ("ID_TextEntity", "text has no inked glyph")
     return _entity("Compound", {"members": members}, list(links), ctx)
 
 
@@ -285,18 +392,34 @@ def resolve_font(name: str, fonts: Mapping[str, Path | str]) -> Path | Decline:
     return path
 
 
+# Groups 72 and 73. Aligned (3) and fit (5) span two points instead.
+_DXF_HALIGN = {0: "left", 1: "center", 2: "right", 3: "left", 4: "center", 5: "left"}
+_DXF_VALIGN = {0: "baseline", 1: "bottom", 2: "middle", 3: "top"}
+
+
 def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> TextRun | Decline:
     """A DXF TEXT (ezdxf entity) as a run. DWG shares this entity model."""
     dxf = entity.dxf
-    if int(dxf.get("halign", 0)) != 0 or int(dxf.get("valign", 0)) != 0:
-        return ("ID_TextEntity", "text alignment is not left baseline")
+    halign = int(dxf.get("halign", 0))
+    valign = int(dxf.get("valign", 0)) if halign <= 2 else 0
+    if halign not in _DXF_HALIGN or valign not in _DXF_VALIGN:
+        return ("ID_TextEntity", f"unknown text alignment {halign} {valign}")
     style = doc.styles.get(str(dxf.get("style", "Standard")))
     font = resolve_font(str(style.dxf.get("font", "")) if style is not None else "", fonts)
     if isinstance(font, tuple):
         return font
     flags = int(dxf.get("text_generation_flag", 0))
     insert = dxf.insert
+    # Group 11 is the anchor for every alignment except left baseline.
+    second = dxf.get("align_point", insert)
+    span_mode = {3: "aligned", 5: "fit"}.get(halign)
+    if span_mode is None and (halign, valign) != (0, 0):
+        insert = second
     return TextRun(
+        halign=_DXF_HALIGN[halign],
+        valign="cap-descent-middle" if halign == 4 else _DXF_VALIGN[valign],
+        span_to=(float(second[0]), float(second[1])) if span_mode else None,
+        span_mode=span_mode,
         text=entity.plain_text(),
         font=font,
         height=float(dxf.get("height", 0.0)),
