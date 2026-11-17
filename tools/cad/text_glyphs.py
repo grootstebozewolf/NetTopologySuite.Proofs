@@ -37,10 +37,32 @@ insert point.
 
 MTEXT inline codes are read by ezdxf's parser. Colour is ignored: the
 carrier has none. A height change scales the word inside its pen link. A
-paragraph alignment of left, centre or right is applied. Underline and
+paragraph alignment of left, centre, right or justified is applied, with
+the paragraph's first-line, left and right indents. Underline and
 strike-through are drawn as described below. Every other code declines
-by name: stacked text, tabulators, overline, tracking, indents and tab
-stops, and justified or distributed paragraphs.
+by name: stacked text, overline, tracking, and distributed paragraphs
+(ezdxf's own layout engine cannot do those either).
+
+Paragraph layout follows ezdxf's engine (``ezdxf.tools.text_layout``),
+read from its source: indents and tab stops are multiples of the cap
+height; the first line starts at left + first-line indent; a justified
+line spreads its spare width evenly over the spaces after its last tab
+stop, except the paragraph's last line. A tab moves the next word to the
+next stop beyond it: explicit stops first (``r`` and ``c`` mark right and
+centre stops) that lie inside the column, then default left stops every
+four cap heights after the last of them; with no stop left it is a
+space. Tabs work on left and justified lines; on centred and right lines
+a tab is a space. Words joined without a space, or by a non-breaking
+space, never break apart: such a group overflows the column instead.
+Two ezdxf details are matched on purpose: centred and right lines fit
+strictly (``<``, where left lines use ``<=``), and a justified line never
+stretches its first cell or the cell at its last tab stop.
+
+One ezdxf behaviour is not matched. On a centred or right line, ezdxf
+turns a tab that does not fit into a space that starts the next line
+(sometimes leaving an empty line). Here a tab or space at a break
+belongs to neither line. The differential test against ezdxf's engine
+skips such cases by name.
 
 Underline and strike-through are filled bars whose band comes from the
 font: ``post.underlinePosition`` is the top of the underline and
@@ -602,6 +624,66 @@ def _shaped_line(face: Any, text: str, width: float, lean: float) -> tuple[list,
     return (placed, line[1] * width)
 
 
+def _tab_stops(stops: tuple, cap: float) -> list[tuple[float, str]] | Decline:
+    """Explicit tab stops in layout units, as ``(position, kind)``; kind is left, right or center.
+
+    MTEXT writes a stop as a number (left), or ``r`` or ``c`` then a number,
+    in multiples of the cap height.
+    """
+    out: list[tuple[float, str]] = []
+    for stop in stops:
+        kind = "left"
+        if isinstance(stop, str):
+            kind = {"r": "right", "c": "center"}.get(stop[:1], "")
+            try:
+                value = float(stop[1:])
+            except ValueError:
+                kind = ""
+            if not kind:
+                return ("ID_TextEntity", f"unknown MTEXT tab stop {stop}")
+        else:
+            value = float(stop)
+        if not math.isfinite(value):
+            return ("ID_DegenerateEntity", "MTEXT tab stop is not finite")
+        out.append((value * cap, kind))
+    return out
+
+
+def _next_stop(
+    stops: list[tuple[float, str]], indent: float, start: float, advance: float, avail: float | None
+) -> float | None:
+    """Where a group after a tab starts, or None when no stop applies.
+
+    Stops are measured from the paragraph's left edge, so a line indented by
+    ``indent`` sees them ``indent`` earlier, and only stops inside the line
+    count. The first stop in list order that the group can reach is taken.
+    With a column, ``stops`` already holds the default stops; without one,
+    default left stops every four cap heights follow the last explicit stop.
+    """
+    candidates = [(pos - indent, kind) for pos, kind in stops]
+    if avail is None:
+        step = _DEFAULT_TAB[0]
+        last = stops[-1][0] if stops else 0.0
+        n = math.floor(last / step) + 1
+        while n * step - indent <= start + advance + step:
+            candidates.append((n * step - indent, "left"))
+            n += 1
+    for pos, kind in candidates:
+        if pos <= 0 or (avail is not None and pos > avail + _EPS):
+            continue
+        if kind == "left" and pos > start:
+            return pos
+        if kind == "center" and pos > start + advance / 2:
+            return pos - advance / 2
+        if kind == "right" and pos > start + advance:
+            return pos - advance
+    return None
+
+
+# The default tab step in layout units, set per block (four cap heights).
+_DEFAULT_TAB = [0.0]
+
+
 def _mark_runs(cells: list[tuple[float, float, str, Any, float]]) -> list[tuple[str, float, float, Any, float]]:
     """Merge touching marked cells into bars.
 
@@ -681,18 +763,70 @@ def block_record(
             "scale": scale,
             "reflect": False,
         }
+        _DEFAULT_TAB[0] = 4.0 * cap
         paragraphs = block.paragraphs if block.paragraphs is not None else _plain_paragraphs(block.lines)
-        # A laid-out line: alignment share, width, tallest relative height, cells.
-        laid: list[tuple[float, float, float, list[tuple[float, float, list]]]] = []
-        for align, items in paragraphs:
-            if align is not None and align not in shifts:
+        # A laid-out line. Cell and mark x values are relative to the line start.
+        laid: list[dict[str, Any]] = []
+        for paragraph in paragraphs:
+            align, items = paragraph[0], paragraph[1]
+            props = paragraph[2] if len(paragraph) > 2 else (0.0, 0.0, 0.0, ())
+            justify = align == "justified"
+            if align is not None and align not in shifts and not justify:
                 return ("ID_TextEntity", f"unknown text alignment {align}")
-            share = shifts[align if align is not None else block.halign]
-            cells: list[tuple[float, float, list, Any]] = []
-            marked: list[tuple[float, float, str, Any, float]] = []  # (x, advance, marks, face, fit)
-            width = 0.0
-            tallest = 0.0
+            share = 0.0 if justify else shifts[align if align is not None else block.halign]
+            # Indents and tab stops are multiples of the block's cap height.
+            indent_first, indent_left, indent_right = (cap * value for value in props[:3])
+            stops = _tab_stops(props[3], cap)
+            if isinstance(stops, tuple):
+                return stops
+            if column:
+                # As ezdxf: explicit stops inside the column, then default left stops every
+                # four cap heights after the last of them, all inside the column.
+                stops = [stop for stop in stops if stop[0] < column]
+                after = stops[-1][0] if stops else 0.0
+                step = 4.0 * cap
+                stops += [(k * step, "left") for k in range(1, int(column // step) + 2) if after < k * step < column]
+            # Tabs are honoured on left and justified lines; elsewhere a tab is a space.
+            tabbing = share == 0.0
+            first = True
+
+            def open_line() -> dict[str, Any]:
+                indent = indent_left + (indent_first if first else 0.0)
+                avail = column - indent - indent_right if column else None
+                if avail is not None and avail <= _EPS:
+                    avail = _EPS
+                return {
+                    "share": share, "indent": indent, "right": indent_right, "avail": avail,
+                    "width": 0.0, "tallest": 0.0, "cells": [], "marked": [], "glue": [],
+                    "anchor": None, "justify": justify, "last": False,
+                }
+
+            line = open_line()
             waiting: list[tuple[float, float, str, Any, float]] = []  # spaces not yet committed
+            pending_tab: tuple[float, float, str, Any, float] | None = None
+
+            def close_line() -> None:
+                nonlocal line, first
+                laid.append(line)
+                first = False
+                line = open_line()
+
+            def commit_spaces() -> None:
+                for space_advance, space_rel, space_marks, space_face, space_fit, *_tab in waiting:
+                    if space_marks:
+                        line["marked"].append((line["width"], space_advance, space_marks, space_face, space_fit))
+                    line["glue"].append(line["width"])
+                    line["width"] += space_advance
+                    line["tallest"] = max(line["tallest"], space_rel)
+                    if line["anchor"] is None:
+                        # ezdxf never stretches a line's first cell.
+                        line["anchor"] = line["width"]
+                waiting.clear()
+
+            # Measure every item, then cut the paragraph into separators and rigid groups:
+            # words joined without a space or by a non-breaking space never break apart.
+            sequence: list[Any] = []
+            group: list[dict[str, Any]] = []
             for item in items:
                 kind, text, rel = item[0], item[1], item[2]
                 if not (math.isfinite(rel) and rel > _EPS):
@@ -712,45 +846,121 @@ def block_record(
                 measured = _shaped_line(item_face, " " if kind != "word" else text, shape[0], shape[1])
                 if isinstance(measured[0], str):
                     return measured
-                placed, advance = measured[0], measured[1] * fit
-                marks = item[5] if len(item) > 5 else ""
-                if kind == "space":
-                    waiting.append((advance, rel, marks, item_face, fit))
+                entry = {
+                    "kind": kind, "rel": rel, "face": item_face, "fit": fit,
+                    "placed": measured[0], "advance": measured[1] * fit,
+                    "marks": item[5] if len(item) > 5 else "",
+                }
+                if kind in ("word", "nbsp"):
+                    group.append(entry)
                     continue
-                gap = sum(w[0] for w in waiting)
-                if column and waiting and cells and width + gap + advance > column * (1 + 1e-9):
-                    # Break at the spaces; they belong to neither line.
-                    laid.append((share, width, tallest, cells, marked))
-                    cells, marked, width, tallest, waiting, gap = [], [], 0.0, 0.0, [], 0.0
-                tallest = max([tallest, rel] + [w[1] for w in waiting])
-                for space_advance, _rel, space_marks, space_face, space_fit in waiting:
-                    if space_marks:
-                        marked.append((width, space_advance, space_marks, space_face, space_fit))
-                    width += space_advance
-                waiting = []
-                cells.append((width, fit, placed, item_face))
-                if marks:
-                    marked.append((width, advance, marks, item_face, fit))
-                width += advance
-            # Spaces that end a paragraph stay in its width.
-            for space_advance, _rel, space_marks, space_face, space_fit in waiting:
-                if space_marks:
-                    marked.append((width, space_advance, space_marks, space_face, space_fit))
-                width += space_advance
-            tallest = max([tallest] + [w[1] for w in waiting]) or (items[-1][2] if items else 1.0)
-            laid.append((share, width, tallest, cells, marked))
+                if group:
+                    sequence.append(group)
+                    group = []
+                # On centred and right lines a tab is a space.
+                sequence.append(("tab" if kind == "tab" and tabbing else "space", entry))
+            if group:
+                sequence.append(group)
 
-        box = column if column else max(line[1] for line in laid)
+            for part in sequence:
+                if isinstance(part, tuple):
+                    sep, entry = part
+                    if sep == "space":
+                        is_tab = entry["kind"] == "tab"
+                        waiting.append((entry["advance"], entry["rel"], entry["marks"], entry["face"], entry["fit"], is_tab))
+                    else:
+                        # The tab's own width is a space's, used when no stop is left.
+                        pending_tab = (entry["advance"], entry["rel"], entry["marks"], entry["face"], entry["fit"])
+                    continue
+                advance = sum(entry["advance"] for entry in part)
+                while True:
+                    start = line["width"] + sum(w[0] for w in waiting)
+                    locked = False
+                    if pending_tab is not None:
+                        stop = _next_stop(stops, line["indent"], start, advance, line["avail"])
+                        if stop is None:
+                            start += pending_tab[0]
+                        else:
+                            start, locked = stop, True
+                    if line["avail"] is None:
+                        break
+                    if tabbing and start + advance <= line["avail"] * (1 + 1e-9):
+                        break
+                    # ezdxf tests centred and right lines strictly.
+                    if not tabbing and start + advance < line["avail"] * (1 - 1e-12):
+                        break
+                    if line["cells"] and (waiting or pending_tab is not None):
+                        # Break at the space or tab before this group. Spaces at the break belong
+                        # to neither line; a tab carries over and is tried again on the new line.
+                        waiting.clear()
+                        close_line()
+                        continue
+                    if pending_tab is not None:
+                        # A tab and group that do not fit an empty line: ezdxf drops the tab.
+                        pending_tab = None
+                        continue
+                    # Alone on its line: it overflows.
+                    break
+                commit_spaces()
+                if pending_tab is not None:
+                    gap = start - line["width"]
+                    if pending_tab[2] and gap > _EPS:
+                        line["marked"].append((line["width"], gap, pending_tab[2], pending_tab[3], pending_tab[4]))
+                    if not locked:
+                        line["glue"].append(line["width"])
+                    line["tallest"] = max(line["tallest"], pending_tab[1])
+                    pending_tab = None
+                x = start
+                for entry in part:
+                    if entry["kind"] == "nbsp":
+                        # A non-breaking space does not break, but it does stretch in a justified line.
+                        line["glue"].append(x)
+                    else:
+                        line["cells"].append((x, entry["fit"], entry["placed"], entry["face"]))
+                    if entry["marks"]:
+                        line["marked"].append((x, entry["advance"], entry["marks"], entry["face"], entry["fit"]))
+                    line["tallest"] = max(line["tallest"], entry["rel"])
+                    x += entry["advance"]
+                line["width"] = x
+                if locked or line["anchor"] is None:
+                    # Stretching starts after the last tab-stop cell, or else after the first cell.
+                    line["anchor"] = x
+            # A paragraph's last space is dropped like a line-breaking one, as ezdxf does;
+            # any spaces before it stay in its width.
+            if waiting:
+                waiting.pop()
+            commit_spaces()
+            if not line["tallest"]:
+                line["tallest"] = items[-1][2] if items else 1.0
+            line["last"] = True
+            laid.append(line)
+
+        box = column if column else max(line["indent"] + line["width"] + line["right"] for line in laid)
         left = -shifts[block.halign] * box
         baselines = []
         top = 0.0
-        for _share, _width, tallest, _cells, _marked in laid:
-            baselines.append(top - cap * tallest)
-            top -= cap * tallest * 5.0 / 3.0 * block.line_spacing
+        for line in laid:
+            baselines.append(top - cap * line["tallest"])
+            top -= cap * line["tallest"] * 5.0 / 3.0 * block.line_spacing
         depth = -baselines[-1]
         members = []
-        for (share, width, _tallest, cells, marked), baseline in zip(laid, baselines):
-            x0 = left + (box - width) * share
+        for line, baseline in zip(laid, baselines):
+            avail = line["avail"] if line["avail"] is not None else box - line["indent"] - line["right"]
+            cells, marked = line["cells"], line["marked"]
+            if line["justify"] and not line["last"]:
+                # Spread the spare width over the glue after the last tab stop, as ezdxf does.
+                anchor = line["anchor"] if line["anchor"] is not None else 0.0
+                glue = [x for x in line["glue"] if x >= anchor - _EPS]
+                spare = avail - line["width"]
+                if glue and spare > _EPS:
+                    step = spare / len(glue)
+                    moved = lambda x: x + step * sum(1 for g in glue if g < x - _EPS)
+                    cells = [(moved(x), fit, placed, face) for x, fit, placed, face in cells]
+                    marked = [
+                        (moved(x), advance + (step if any(abs(g - x) <= _EPS for g in glue) else 0.0), marks, face, fit)
+                        for x, advance, marks, face, fit in marked
+                    ]
+            x0 = left + line["indent"] + (avail - line["width"]) * line["share"]
             y0 = baseline + drops[block.valign] * depth
             bars = _bar_members(_mark_runs(marked), x0, y0, [text_link] + links, ctx)
             if isinstance(bars, tuple):
@@ -987,16 +1197,17 @@ def _mtext_paragraphs(
         MTextParagraphAlignment.LEFT: "left",
         MTextParagraphAlignment.CENTER: "center",
         MTextParagraphAlignment.RIGHT: "right",
+        MTextParagraphAlignment.JUSTIFIED: "justified",
     }
     refused = {
         TokenType.STACK: "MTEXT stacked text",
-        TokenType.TABULATOR: "MTEXT tabulator",
         TokenType.NEW_COLUMN: "MTEXT columns",
         TokenType.WRAP_AT_DIMLINE: "MTEXT dimension line wrap",
     }
     paragraphs: list[tuple[str | None, tuple]] = []
     items: list[tuple] = []
     align: str | None = None
+    props: tuple = (0.0, 0.0, 0.0, ())
     rel = 1.0
     try:
         tokens = list(MTextParser(content, start))
@@ -1014,10 +1225,10 @@ def _mtext_paragraphs(
             if ctx.align != MTextLineAlignment.BOTTOM:
                 return ("ID_TextEntity", "MTEXT line alignment is not bottom")
             para = ctx.paragraph
-            if para.indent or para.left or para.right or para.tab_stops:
-                return ("ID_TextEntity", "MTEXT paragraph indents or tab stops")
             if para.align not in aligns:
-                return ("ID_TextEntity", "MTEXT justified or distributed paragraph")
+                return ("ID_TextEntity", "MTEXT distributed paragraph: ezdxf cannot lay it out either")
+            if not all(math.isfinite(float(v)) for v in (para.indent, para.left, para.right)):
+                return ("ID_DegenerateEntity", "MTEXT paragraph indent is not finite")
         if char_height > _EPS:
             rel = ctx.cap_height / char_height
         shape = (float(ctx.width_factor), float(ctx.oblique))
@@ -1030,17 +1241,21 @@ def _mtext_paragraphs(
             own = found
         if token.type == TokenType.WORD:
             align = aligns[ctx.paragraph.align]
+            para = ctx.paragraph
+            props = (float(para.indent), float(para.left), float(para.right), tuple(para.tab_stops or ()))
             word = re.sub(r"\\U\+([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), str(token.data))
             items.append(("word", word, rel, own, shape, marks))
         elif token.type == TokenType.SPACE:
             items.append(("space", " ", rel, own, shape, marks))
         elif token.type == TokenType.NBSP:
             items.append(("nbsp", " ", rel, own, shape, marks))
+        elif token.type == TokenType.TABULATOR:
+            items.append(("tab", " ", rel, own, shape, marks))
         elif token.type == TokenType.NEW_PARAGRAPH:
             # An empty paragraph keeps a slot as tall as the text around it.
-            paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
+            paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props))
             items = []
-    paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
+    paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props))
     return tuple(paragraphs)
 
 

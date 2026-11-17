@@ -559,11 +559,9 @@ def test_mtext_text_direction_wins_over_rotation(ttf: Path) -> None:
         (r"\Ll\l", {}, "ID_TextEntity", "font states no underline position"),
         (r"\Ol\o", {}, "ID_TextEntity", "overline"),
         (r"\T1.5;l", {}, "ID_TextEntity", "tracking"),
-        (r"\pi2,l4;l", {}, "ID_TextEntity", "indents"),
-        (r"\pxqj;l", {}, "ID_TextEntity", "justified"),
+        (r"\pxqd;l", {}, "ID_TextEntity", "distributed"),
         (r"l\U+00B0", {}, "ID_TextEntity", "U+00B0"),
         ("l", {"flow_direction": 3}, "ID_TextEntity", "top-to-bottom"),
-        ("l^Il", {}, "ID_TextEntity", "tabulator"),
         (r"\P ", {}, "ID_TextEntity", "no inked glyph"),
     ],
 )
