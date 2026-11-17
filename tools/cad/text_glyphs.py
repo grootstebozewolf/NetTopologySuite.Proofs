@@ -7,6 +7,8 @@ a Compound of one Ring (chord skeleton, nonzero winding, source orientation)
 and one Compound per contour. A contour member is a Chord for a line span
 and a Bezier for a curve span: degree 2 from glyf, degree 3 from CFF.
 Outline numbers stay in font units and source order. Nothing is flipped.
+A contour that encloses no area (real fonts carry two-point leftovers)
+fills nothing under the winding rule and is left out of the glyph.
 
 Placement, local to world, per glyph: the pen advance in font units, then
 the text link (insert point, rotation, scale ``height / capHeight``), then
@@ -37,12 +39,11 @@ element as a reference reader reports them, in master units and degrees.
 
 Named declines: ID_NotSimilarityPlacement for a width factor other than 1
 or a nonzero oblique angle; ID_DegenerateEntity for non-finite or
-non-positive numbers and zero-area contours; ID_TextEntity for everything
+non-positive numbers and a glyph whose contours all enclose no area; ID_TextEntity for everything
 this slice does not resolve (no font for the style, a
 missing glyph, no cap height, an unknown alignment, MTEXT inline codes,
 columns, a wrapping line or top-to-bottom flow, a DGN justification
-other than left baseline, a contour of fewer than three spans, text with
-no ink).
+other than left baseline, a text with no ink).
 
 A font file ending in ``.shx`` or ``.shp`` is a stroke font
 (``stroke_glyphs``). Its glyph member is a Compound of open BulgePolyline
@@ -293,6 +294,14 @@ def _span_entity(span: Span, links: list[dict[str, Any]], ctx: dict[str, Any]) -
     )
 
 
+def _on_curve(span: Span, t: float) -> Point:
+    """De Casteljau on a span's control points."""
+    work = list(span[1:])
+    while len(work) > 1:
+        work = [((1 - t) * a[0] + t * b[0], (1 - t) * a[1] + t * b[1]) for a, b in zip(work, work[1:])]
+    return work[0]
+
+
 def _glyph_member(
     contours: list[list[Span]],
     links: list[dict[str, Any]],
@@ -300,19 +309,33 @@ def _glyph_member(
 ) -> dict[str, Any] | Decline:
     skeleton = []
     orientation = []
+    kept: list[list[Span]] = []
     for contour in contours:
-        if len(contour) < 3:
-            return ("ID_TextEntity", "glyph contour of fewer than three spans")
+        # Span end points. A contour of one or two spans, or one whose end
+        # points enclose no area, also gets on-curve points at t = 1/2, then
+        # at quarters; those are exact in binary and lie on the source curve.
+        chords: list[dict[str, Any]] = []
         area = 0.0
-        chords = []
-        for span in contour:
-            (x1, y1), (x2, y2) = span[1], span[-1]
-            area += x1 * y2 - x2 * y1
-            chords.append({"kind": "Chord", "start": [x1, y1], "end": [x2, y2], "bulge": 0})
-        if abs(area) <= _EPS:
-            return ("ID_DegenerateEntity", "glyph contour of zero area")
+        for pieces in (1, 2, 4):
+            points = [
+                _on_curve(span, step / pieces) for span in contour for step in range(pieces)
+            ]
+            points = [p for p, q in zip(points, points[-1:] + points[:-1]) if p != q]
+            area = sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]))
+            if len(points) >= 3 and abs(area) > _EPS:
+                chords = [
+                    {"kind": "Chord", "start": [x1, y1], "end": [x2, y2], "bulge": 0}
+                    for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1])
+                ]
+                break
+        if not chords:
+            # Encloses nothing at every refinement, so it fills nothing: left out.
+            continue
+        kept.append(contour)
         orientation.append("ccw" if area > 0 else "cw")
         skeleton.append(chords)
+    if not kept:
+        return ("ID_DegenerateEntity", "glyph has no contour with area")
     ring = _entity(
         "Ring",
         {"windingRule": "nonzero", "contours": skeleton, "orientation": orientation},
@@ -320,7 +343,7 @@ def _glyph_member(
         ctx,
     )
     members = [ring]
-    for contour in contours:
+    for contour in kept:
         spans = [_span_entity(span, links, ctx) for span in contour]
         members.append(_entity("Compound", {"members": spans}, links, ctx))
     return _entity("Compound", {"members": members}, links, ctx)
@@ -545,6 +568,9 @@ def resolve_font(name: str, fonts: Mapping[str, Path | str]) -> Path | Decline:
     key = Path(name.replace("\\", "/")).name.casefold()
     if not key:
         return ("ID_TextEntity", "text style names no font")
+    if "." not in key:
+        # A style font without an extension is a compiled shape font.
+        key += ".shx"
     table = {str(k).casefold(): Path(v) for k, v in fonts.items()}
     path = table.get(key)
     if path is None:

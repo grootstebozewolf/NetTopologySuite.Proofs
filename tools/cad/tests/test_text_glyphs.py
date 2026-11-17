@@ -592,3 +592,33 @@ def test_mtext_without_fonts_still_declines_and_linearizes_with_them(ttf: Path) 
     (row,) = _rows(doc, {"carriertext.ttf": ttf})
     out = glyph_linearize.linearize_row(row, hausdorff=0.01)
     assert out["polygons"] == 4
+
+
+def test_two_span_and_one_span_contours_get_an_on_curve_skeleton() -> None:
+    ctx = {key: _DGN_CTX[key] for key in ("units", "tolerance", "dimension", "provenance")}
+    # A lens: two quadratics between the same two points. Its end points alone enclose nothing.
+    lens = [("Q", (0.0, 0.0), (50.0, 80.0), (100.0, 0.0)), ("Q", (100.0, 0.0), (50.0, -80.0), (0.0, 0.0))]
+    member = text_glyphs._glyph_member([lens], [], ctx)
+    VALIDATOR.validate(member)
+    ring, contour = member["params"]["members"]
+    assert ring["params"]["orientation"] == ["cw"]
+    assert [c["start"] for c in ring["params"]["contours"][0]] == [[0, 0], [50, 40], [100, 0], [50, -40]]
+    assert len(contour["params"]["members"]) == 2
+    # A teardrop: one cubic that starts and ends at the same point.
+    drop = [("C", (0.0, 0.0), (120.0, 120.0), (-120.0, 120.0), (0.0, 0.0))]
+    member = text_glyphs._glyph_member([drop], [], ctx)
+    VALIDATOR.validate(member)
+    assert member["params"]["members"][0]["params"]["orientation"] == ["ccw"]
+    assert len(member["params"]["members"][0]["params"]["contours"][0]) == 4
+    flat = [("L", (0.0, 0.0), (10.0, 0.0)), ("L", (10.0, 0.0), (0.0, 0.0))]
+    assert text_glyphs._glyph_member([flat], [], ctx)[0] == "ID_DegenerateEntity"
+    # Next to a real contour, the retraced line is left out: it fills nothing.
+    member = text_glyphs._glyph_member([lens, flat], [], ctx)
+    VALIDATOR.validate(member)
+    assert len(member["params"]["members"]) == 2
+    assert member["params"]["members"][0]["params"]["orientation"] == ["cw"]
+
+
+def test_style_font_without_an_extension_is_a_shape_font(ttf: Path) -> None:
+    assert text_glyphs.resolve_font("txt", {"TXT.SHX": ttf}) == ttf
+    assert "txt.shx" in text_glyphs.resolve_font("txt", {})[1]
