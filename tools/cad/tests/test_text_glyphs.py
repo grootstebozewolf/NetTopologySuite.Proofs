@@ -555,7 +555,8 @@ def test_mtext_text_direction_wins_over_rotation(ttf: Path) -> None:
     [
         (r"{\fArial|b1;l}", {}, "ID_TextEntity", "no font file given for arial|b1|i0"),
         (r"{\fArial;l}", {}, "ID_TextEntity", "no font file given for arial"),
-        (r"\S1/2;", {}, "ID_TextEntity", "stacked"),
+        (r"\Sl/l;", {}, "ID_TextEntity", "no underline thickness for a fraction bar"),
+        (r"\Q10;\Sl^ l;", {}, "ID_TextEntity", "stacked text with an oblique angle"),
         (r"\Ll\l", {}, "ID_TextEntity", "font states no underline position"),
         (r"\Ol\o", {}, "ID_TextEntity", "overline"),
         (r"\T1.5;l", {}, "ID_TextEntity", "tracking"),

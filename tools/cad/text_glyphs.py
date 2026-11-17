@@ -40,8 +40,17 @@ carrier has none. A height change scales the word inside its pen link. A
 paragraph alignment of left, centre, right or justified is applied, with
 the paragraph's first-line, left and right indents. Underline and
 strike-through are drawn as described below. Every other code declines
-by name: stacked text, overline, tracking, and distributed paragraphs
-(ezdxf's own layout engine cannot do those either).
+by name: overline, tracking, and distributed paragraphs (ezdxf's own
+layout engine cannot do those either).
+
+Stacked text (``\S``) is one cell, laid out as ezdxf's ``Fraction`` does:
+both parts at the current height; ``/`` and ``^`` stack them centred in a
+cell 1.2 times their two heights tall, ``#`` sets them diagonally. The
+bar of ``/`` (halfway up) and of ``#`` (diagonal) is a hairline in ezdxf.
+Here it is filled, as thick as the font's own underline
+(``post.underlineThickness``); a font without one declines. In a stroke
+font the bar is one more stroke. Stacked text under an oblique angle
+declines.
 
 Paragraph layout follows ezdxf's engine (``ezdxf.tools.text_layout``),
 read from its source: indents and tab stops are multiples of the cap
@@ -520,6 +529,21 @@ class _OutlineFace:
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         return _glyph_member(payload, links, ctx)
 
+    def rule(self, a: Point, b: Point) -> list[list[Span]] | Decline:
+        """A stacked-text bar from ``a`` to ``b``: as thick as the font's underline."""
+        if "u" not in self.bands:
+            return ("ID_TextEntity", "font states no underline thickness for a fraction bar")
+        low, high = self.bands["u"]
+        length = math.hypot(b[0] - a[0], b[1] - a[1])
+        if length <= _EPS:
+            return ("ID_DegenerateEntity", "fraction bar of zero length")
+        half = (high - low) / 2.0
+        nx, ny = -(b[1] - a[1]) / length * half, (b[0] - a[0]) / length * half
+        corners = [(a[0] + nx, a[1] + ny), (b[0] + nx, b[1] + ny), (b[0] - nx, b[1] - ny), (a[0] - nx, a[1] - ny)]
+        if not self.outer_clockwise:
+            corners.reverse()
+        return [[("L", p, q) for p, q in zip(corners, corners[1:] + corners[:1])]]
+
     def bar(self, mark: str, length: float) -> list[list[Span]] | Decline:
         """A decoration band as one glyph contour from x = 0 to ``length``."""
         if mark not in self.bands:
@@ -574,6 +598,10 @@ class _StrokeFace:
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         strokes = [_entity("BulgePolyline", {"closed": False, "segments": stroke}, links, ctx) for stroke in payload]
         return _entity("Compound", {"members": strokes}, links, ctx)
+
+    def rule(self, a: Point, b: Point) -> list[list[dict[str, Any]]] | Decline:
+        """A stacked-text bar as one stroke, like every other line of a stroke font."""
+        return [[{"kind": "Chord", "start": [a[0], a[1]], "end": [b[0], b[1]], "bulge": 0}]]
 
     def bar(self, mark: str, length: float) -> list[list[Span]] | Decline:
         name = {"u": "underline", "s": "strike-through"}[mark]
@@ -727,6 +755,48 @@ def _bar_members(
     return members
 
 
+def _stacked(face: Any, parts: tuple[str, str, str], width: float, lean: float) -> tuple[list, float, float] | Decline:
+    """Stacked text as one cell, laid out as ezdxf's ``Fraction`` does, in font units.
+
+    Returns the placed glyphs and bar, the cell's advance, and its height in
+    cap heights. ``/`` and ``^`` stack the parts centred, the cell 1.2 times
+    their two heights tall, with a bar halfway up for ``/``. ``#`` sets them
+    side by side, top left and bottom right, with a diagonal bar between.
+    """
+    upper, lower, kind = parts
+    if abs(lean) > _EPS:
+        return ("ID_TextEntity", "MTEXT stacked text with an oblique angle")
+    top = _shaped_line(face, upper, width, 0.0)
+    if isinstance(top[0], str):
+        return top
+    bottom = _shaped_line(face, lower, width, 0.0)
+    if isinstance(bottom[0], str):
+        return bottom
+    cap = face.cap
+    (top_placed, top_w), (bottom_placed, bottom_w) = top, bottom
+    if kind == "#":
+        height, advance = 2.0 * cap, top_w + bottom_w
+        top_x, bottom_x = 0.0, advance - bottom_w
+    else:
+        height, advance = 1.2 * 2.0 * cap, max(top_w, bottom_w)
+        top_x, bottom_x = (advance - top_w) / 2.0, (advance - bottom_w) / 2.0
+    top_y = height - cap
+    placed = [(x + top_x, y + top_y, payload) for x, y, payload in top_placed]
+    placed += [(x + bottom_x, y, payload) for x, y, payload in bottom_placed]
+    if kind in ("/", "#"):
+        if kind == "/":
+            ends = ((0.0, height / 2.0), (advance, height / 2.0))
+        else:
+            delta = min(advance, height) / 2.0
+            cx, cy = top_w, height - cap
+            ends = ((cx - delta, cy - delta), (cx + delta, cy + delta))
+        rule = face.rule(*ends)
+        if isinstance(rule, tuple) and len(rule) == 2 and isinstance(rule[0], str):
+            return rule
+        placed.append((0.0, 0.0, rule))
+    return (placed, advance, height / cap)
+
+
 def _pen_link(x: float, y: float) -> dict[str, Any]:
     return {"translate": [x, y], "rotate": 0.0, "scale": 1.0, "reflect": False}
 
@@ -843,15 +913,18 @@ def block_record(
                 shape = _shape_numbers(*(item[4] if len(item) > 4 else (block.width_factor, block.oblique)))
                 if isinstance(shape[0], str):
                     return shape
-                measured = _shaped_line(item_face, " " if kind != "word" else text, shape[0], shape[1])
+                if kind == "stack":
+                    measured = _stacked(item_face, text, shape[0], shape[1])
+                else:
+                    measured = _shaped_line(item_face, " " if kind != "word" else text, shape[0], shape[1])
                 if isinstance(measured[0], str):
                     return measured
                 entry = {
-                    "kind": kind, "rel": rel, "face": item_face, "fit": fit,
-                    "placed": measured[0], "advance": measured[1] * fit,
+                    "kind": kind, "rel": rel * (measured[2] if kind == "stack" else 1.0), "face": item_face,
+                    "fit": fit, "placed": measured[0], "advance": measured[1] * fit,
                     "marks": item[5] if len(item) > 5 else "",
                 }
-                if kind in ("word", "nbsp"):
+                if kind in ("word", "nbsp", "stack"):
                     group.append(entry)
                     continue
                 if group:
@@ -1200,7 +1273,6 @@ def _mtext_paragraphs(
         MTextParagraphAlignment.JUSTIFIED: "justified",
     }
     refused = {
-        TokenType.STACK: "MTEXT stacked text",
         TokenType.NEW_COLUMN: "MTEXT columns",
         TokenType.WRAP_AT_DIMLINE: "MTEXT dimension line wrap",
     }
@@ -1217,7 +1289,7 @@ def _mtext_paragraphs(
         ctx = token.ctx
         if token.type in refused:
             return ("ID_TextEntity", refused[token.type])
-        if token.type == TokenType.WORD:
+        if token.type in (TokenType.WORD, TokenType.STACK):
             if ctx.overline:
                 return ("ID_TextEntity", "MTEXT overline: no font table states where it goes")
             if not math.isclose(ctx.char_tracking_factor, 1.0, rel_tol=1e-9):
@@ -1251,6 +1323,16 @@ def _mtext_paragraphs(
             items.append(("nbsp", " ", rel, own, shape, marks))
         elif token.type == TokenType.TABULATOR:
             items.append(("tab", " ", rel, own, shape, marks))
+        elif token.type == TokenType.STACK:
+            align = aligns[ctx.paragraph.align]
+            para = ctx.paragraph
+            props = (float(para.indent), float(para.left), float(para.right), tuple(para.tab_stops or ()))
+            upper, lower, stacking = token.data
+            if stacking:
+                items.append(("stack", (str(upper), str(lower), str(stacking)), rel, own, shape, marks))
+            else:
+                # No stacking character: ezdxf sets the text as a plain word.
+                items.append(("word", str(upper), rel, own, shape, marks))
         elif token.type == TokenType.NEW_PARAGRAPH:
             # An empty paragraph keeps a slot as tall as the text around it.
             paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props))
