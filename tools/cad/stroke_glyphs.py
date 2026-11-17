@@ -75,6 +75,40 @@ class StrokeFont:
         return (placed, walk.at[0])
 
 
+def segment_x_extent(segment: dict[str, Any]) -> tuple[float, float]:
+    """Exact left and right reach of a chord or bulge arc."""
+    (sx, sy), (ex, ey) = segment["start"], segment["end"]
+    low, high = min(sx, ex), max(sx, ex)
+    bulge = segment["bulge"]
+    if segment["kind"] != "Arc" or not bulge:
+        return low, high
+    # Centre: off the chord midpoint by (1 - b^2) / (4 b) along the chord's left normal.
+    offset = (1.0 - bulge * bulge) / (4.0 * bulge)
+    cx = (sx + ex) / 2.0 - offset * (ey - sy)
+    cy = (sy + ey) / 2.0 + offset * (ex - sx)
+    radius = math.hypot(sx - cx, sy - cy)
+    start = math.atan2(sy - cy, sx - cx)
+    sweep = 4.0 * math.atan(abs(bulge))
+    for angle, reach in ((0.0, cx + radius), (math.pi, cx - radius)):
+        # How far the arc must turn from its start, in its own direction, to face ``angle``.
+        turned = (angle - start) % (2 * math.pi) if bulge > 0 else (start - angle) % (2 * math.pi)
+        if turned < sweep:
+            low, high = min(low, reach), max(high, reach)
+    return low, high
+
+
+def ink_x_extent(placed: list[tuple[float, float, list[list[dict[str, Any]]]]]) -> tuple[float, float]:
+    """Left and right edge of the strokes of a line, pen positions included."""
+    lows, highs = [], []
+    for pen_x, _pen_y, strokes in placed:
+        for stroke in strokes:
+            for segment in stroke:
+                low, high = segment_x_extent(segment)
+                lows.append(pen_x + low)
+                highs.append(pen_x + high)
+    return min(lows), max(highs)
+
+
 def _relative(strokes: list[list[dict[str, Any]]], origin: Point) -> list[list[dict[str, Any]]]:
     def shift(point: list[float]) -> list[float]:
         return [point[0] - origin[0], point[1] - origin[1]]

@@ -66,9 +66,8 @@ A font file ending in ``.shx`` or ``.shp`` is a stroke font
 (``stroke_glyphs``). Its glyph member is a Compound of open BulgePolyline
 strokes, chords and true arcs, with no Ring. Its cap height and descent
 are the font's ``above`` and ``below``, and a character advances by its
-pen travel. Centre, right, aligned and fit need ink extents, which this
-slice does not compute for strokes, so they decline; MTEXT attachment
-uses advances and works.
+pen travel. Centre, right, aligned and fit use the exact reach of the
+strokes, arcs included.
 
 Advance is hmtx only. Kerning and shaping are not applied. fontTools (MIT)
 reads the outlines; its code is not ported.
@@ -459,7 +458,9 @@ class _StrokeFace:
         return self.font.line(text)
 
     def extent(self, placed: list) -> tuple[float, float] | Decline:
-        return ("ID_TextEntity", "ink alignment of a stroke font")
+        import stroke_glyphs
+
+        return stroke_glyphs.ink_x_extent(placed)
 
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         strokes = [_entity("BulgePolyline", {"closed": False, "segments": stroke}, links, ctx) for stroke in payload]

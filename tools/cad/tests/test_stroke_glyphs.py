@@ -167,8 +167,8 @@ def test_dxf_text_and_mtext_with_a_stroke_style(shp: Path) -> None:
     # Top right attachment: the second line "LO" is 44 wide and one pitch down.
     last = mtext["params"]["members"][-1]
     assert last["placement"]["links"][0]["translate"] == pytest.approx([18 - 44, -_ABOVE - _ABOVE * 5 / 3])
-    assert (centred["record"], centred["id"]) == ("decline", "ID_TextEntity")
-    assert "ink alignment" in centred["reason"]
+    # Centre: L reaches 0..12 and O, from pen 18, reaches 18..38, so the ink centre is 19.
+    assert _place((19, 0), centred["params"]["members"][0]["placement"]["links"]) == pytest.approx((10, 20))
     out = glyph_linearize.linearize_row(text, hausdorff=0.001)
     assert out["wkt"].startswith("MULTILINESTRING ((") and out["lines"] == 2
 
@@ -189,3 +189,29 @@ def test_unreadable_font_file_declines(tmp_path: Path) -> None:
     bad.write_bytes(b"not a shape file")
     out = text_glyphs.run_record(text_glyphs.TextRun(text="L", font=bad, height=7.0, insert=(0.0, 0.0)), **_DGN_CTX)
     assert out[0] == "ID_TextEntity" and "not readable" in out[1]
+
+
+def test_stroke_ink_reach_follows_the_arcs(shp: Path) -> None:
+    # D: a clockwise half circle from (0,21) to (0,0) bulges right to x = 10.5.
+    half = {"kind": "Arc", "start": [0, 21], "end": [0, 0], "bulge": -1.0}
+    assert stroke_glyphs.segment_x_extent(half) == pytest.approx((0, 10.5))
+    assert stroke_glyphs.segment_x_extent({**half, "bulge": 1.0}) == pytest.approx((-10.5, 0))
+    # A shallow arc between the same points stays near its chord: sagitta = b * chord / 2.
+    shallow = stroke_glyphs.segment_x_extent({**half, "bulge": -0.1})
+    assert shallow == pytest.approx((0, 0.1 * 21 / 2))
+    # Three quarters of a circle about (1,1), radius sqrt 2: it passes angle 0 but not angle pi.
+    wide = {"kind": "Arc", "start": [0, 0], "end": [0, 2], "bulge": math.tan(3 * math.pi / 8)}
+    assert stroke_glyphs.segment_x_extent(wide) == pytest.approx((0, 1 + math.sqrt(2)))
+    assert stroke_glyphs.segment_x_extent({**wide, "bulge": -wide["bulge"]}) == pytest.approx((-1 - math.sqrt(2), 0))
+
+    doc = _doc("carrierstroke.shp")
+    msp = doc.modelspace()
+    msp.add_text("D", height=21, dxfattribs={"style": "GLYPH", "halign": 2, "align_point": (50, 5)})
+    msp.add_text("LD", height=999, dxfattribs={"style": "GLYPH", "halign": 3, "insert": (0, 0), "align_point": (0, 57)})
+    right, aligned = dxf_extract.extract_document(doc, fonts={"carrierstroke.shp": shp}, file_id="stroke")
+    dee = right["params"]["members"][0]
+    assert _place((10.5, 0), dee["placement"]["links"]) == pytest.approx((50, 5))
+    # Aligned: ink runs from 0 to 18 + 10.5 = 28.5 and is fitted to a span of 57, straight up.
+    link = aligned["params"]["members"][0]["placement"]["links"][1]
+    assert (link["scale"], link["rotate"]) == pytest.approx((2.0, 90.0))
+    assert _place((10.5, 0), aligned["params"]["members"][1]["placement"]["links"]) == pytest.approx((0, 57))
