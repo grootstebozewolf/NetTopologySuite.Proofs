@@ -23,8 +23,11 @@ contour is a polygon boundary when the winding number changes between
 zero and nonzero across it: zero outside is a shell, zero inside is a
 hole, and a contour with nonzero on both sides is not a boundary. Winding
 numbers and the crossing test are exact rational arithmetic on the
-flattened vertices. Contours that cross or touch after flattening decline
-as ID_NonzeroOverlapNotYet; this slice does not node them.
+flattened vertices. When flattened contours cross, touch or overlap,
+``nonzero_node`` nodes them exactly and the result is marked ``noded``.
+Crossing points are rational and are rounded to floats on output. The
+reported bound is the bound of each flattened contour; for a noded result
+it is not a proved bound on the merged boundary.
 
 Any other row declines as ID_UnsupportedEntity.
 """
@@ -234,12 +237,31 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
     if any(len(ring) < 3 or area == 0 for ring, area in zip(rings, areas)):
         return ("ID_DegenerateEntity", "flattened contour has no area")
     boxes = [_box(ring) for ring in rings]
-    for i, ring in enumerate(rings):
-        if _self_meets(ring):
-            return ("ID_NonzeroOverlapNotYet", "a flattened contour meets itself")
-        for j in range(i + 1, len(rings)):
-            if not _boxes_apart(boxes[i], boxes[j]) and _rings_meet(ring, rings[j]):
-                return ("ID_NonzeroOverlapNotYet", "two flattened contours meet")
+    meet = any(_self_meets(ring) for ring in rings) or any(
+        not _boxes_apart(boxes[i], boxes[j]) and _rings_meet(rings[i], rings[j])
+        for i in range(len(rings))
+        for j in range(i + 1, len(rings))
+    )
+    if meet:
+        import nonzero_node
+
+        try:
+            merged = nonzero_node.nonzero_polygons(rings)
+        except ValueError as error:
+            return ("ID_NonzeroOverlapNotYet", str(error))
+        if not merged:
+            return ("ID_DegenerateEntity", "text fills nothing")
+        as_float = lambda ring: [(float(x), float(y)) for x, y in ring]
+        polygons = [
+            "(" + ", ".join(_wkt_ring(as_float(ring)) for ring in [shell] + inner) + ")"
+            for shell, inner in merged
+        ]
+        return {
+            "wkt": "MULTIPOLYGON (" + ", ".join(polygons) + ")",
+            "hausdorff": bound,
+            "polygons": len(polygons),
+            "noded": True,
+        }
 
     shells: list[int] = []
     holes: list[int] = []
@@ -270,6 +292,7 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
         "wkt": "MULTIPOLYGON (" + ", ".join(polygons) + ")",
         "hausdorff": bound,
         "polygons": len(polygons),
+        "noded": False,
     }
 
 

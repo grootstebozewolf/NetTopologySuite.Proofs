@@ -8,6 +8,7 @@ from pathlib import Path
 
 import freetype
 import pytest
+import shapely
 
 import dxf_extract
 import glyph_linearize
@@ -149,10 +150,83 @@ def test_fill_agrees_with_the_freetype_rasterizer(request, font_name: str, char:
     assert ink > 500 and paper > (500 if char == "e" else 50)
 
 
-def test_overlapping_glyphs_decline_instead_of_being_noded(ttf: Path) -> None:
+def test_overlapping_glyphs_are_noded_into_one_polygon(ttf: Path) -> None:
     row = _row(ttf, "ll")
+    apart = glyph_linearize.linearize_row(row, hausdorff=0.01)
+    assert (apart["polygons"], apart["noded"]) == (2, False)
+    # Second stem moved to overlap the first by half its width.
     row["params"]["members"][1]["placement"]["links"][0]["translate"][0] = 50.0
-    assert glyph_linearize.linearize_row(row, hausdorff=0.01)[0] == "ID_NonzeroOverlapNotYet"
+    out = glyph_linearize.linearize_row(row, hausdorff=0.01)
+    assert (out["polygons"], out["noded"]) == (1, True)
+    shape = shapely.from_wkt(out["wkt"])
+    scale = 7.0 / _CAP
+    assert shape.is_valid
+    assert shape.area == pytest.approx(150 * 700 * scale * scale)
+
+
+def _overlap_font(tmp_path: Path) -> Path:
+    """t: a stem and a crossbar wound the same way. q: the e outline cut by a bar wound the other way."""
+    from fontTools.fontBuilder import FontBuilder
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+
+    from fixtures.gen_truetype_e import _HOLE, _OUTER, _draw
+
+    def rect(pen, x0, y0, x1, y1, clockwise=True) -> None:
+        points = [(x0, y0), (x0, y1), (x1, y1), (x1, y0)]
+        points = points if clockwise else points[::-1]
+        pen.moveTo(points[0])
+        for point in points[1:]:
+            pen.lineTo(point)
+        pen.closePath()
+
+    t = TTGlyphPen(None)
+    rect(t, 300, 0, 400, 700)
+    rect(t, 100, 400, 600, 500)
+    q = TTGlyphPen(None)
+    _draw(q, _OUTER)
+    _draw(q, _HOLE)
+    rect(q, 0, 320, 800, 380, clockwise=False)
+    fb = FontBuilder(1000, isTTF=True)
+    fb.setupGlyphOrder([".notdef", "t", "q"])
+    fb.setupCharacterMap({ord("t"): "t", ord("q"): "q"})
+    fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(), "t": t.glyph(), "q": q.glyph()})
+    fb.setupHorizontalMetrics({".notdef": (600, 0), "t": (700, 100), "q": (800, 0)})
+    fb.setupHorizontalHeader(ascent=900, descent=-100)
+    fb.setupOS2(sCapHeight=_CAP)
+    fb.setupPost()
+    fb.setupNameTable({"familyName": "Overlap", "styleName": "Regular"})
+    path = tmp_path / "overlap.ttf"
+    fb.save(str(path))
+    return path
+
+
+@pytest.mark.parametrize(("char", "polygons"), [("t", 1), ("q", 5)])
+def test_overlapping_contours_fill_like_the_freetype_rasterizer(tmp_path: Path, char: str, polygons: int) -> None:
+    font = _overlap_font(tmp_path)
+    ppem = 100
+    face = freetype.Face(str(font))
+    face.set_pixel_sizes(0, ppem)
+    face.load_char(char, freetype.FT_LOAD_RENDER | freetype.FT_LOAD_NO_HINTING)
+    bitmap = face.glyph.bitmap
+    left, top = face.glyph.bitmap_left, face.glyph.bitmap_top
+
+    out = glyph_linearize.linearize_row(_row(font, char, height=_CAP * ppem / 1000), hausdorff=0.01)
+    assert out["noded"] is True
+    shape = shapely.from_wkt(out["wkt"])
+    assert shape.is_valid
+    assert len(shape.geoms) == out["polygons"] == polygons
+    ink = paper = 0
+    for row in range(bitmap.rows):
+        for col in range(bitmap.width):
+            coverage = bitmap.buffer[row * bitmap.pitch + col]
+            centre = shapely.Point(left + col + 0.5, top - row - 0.5)
+            if coverage == 255:
+                assert shape.contains(centre), centre
+                ink += 1
+            elif coverage == 0:
+                assert not shape.contains(centre), centre
+                paper += 1
+    assert ink > 500 and paper > 100
 
 
 def test_same_direction_nested_contour_is_not_a_boundary(ttf: Path) -> None:
