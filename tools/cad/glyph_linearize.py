@@ -1,18 +1,31 @@
 #!/usr/bin/env python3
-"""Text carrier record to a linear MULTIPOLYGON, with a stated Hausdorff bound.
+"""Text carrier record to linear WKT, with a stated Hausdorff bound.
 
-Input is one row written by ``text_glyphs.run_record``: a Compound of
-glyph members, each a Ring plus one Compound of Chord and Bezier spans per
-contour. Output is WKT in world coordinates, exterior rings
-counter-clockwise and holes clockwise, the GIS convention. The source
-orientation in the record is read, not rewritten.
+Input is one row written by ``text_glyphs.run_record`` or ``block_record``:
+a Compound of glyph members. An outline glyph is a Ring plus one Compound
+of Chord and Bezier spans per contour; a stroke glyph is a Compound of
+BulgePolyline strokes. Outline glyphs become a MULTIPOLYGON, stroke
+glyphs a MULTILINESTRING, and a row that holds both (an MTEXT that
+switches between outline and stroke fonts) a GEOMETRYCOLLECTION of the
+two. Output is in world coordinates, exterior rings counter-clockwise and
+holes clockwise, the GIS convention.
+
+The Ring's ``windingRule`` must be ``nonzero``; any other rule declines,
+since only nonzero is implemented. Its ``orientation`` is checked against
+the sign of its own contour skeleton, and a mismatch declines as a
+producer error. The output orientation is then computed from the
+flattened rings.
 
 Flattening is uniform in the parameter. A Bezier of degree p with control
 points P_i is cut into ``n = ceil(sqrt(p*(p-1)*M / (8*d)))`` chords, where
 ``M = max |P_i - 2*P_(i+1) + P_(i+2)|`` (Wang). Every chord is then within
 ``d`` of its curve piece, in local units, so the polyline is within the
 Hausdorff bound ``k*d`` of the placed contour, where ``k`` is the product
-of the link scales (``tolerance.json``, sagitta).
+of the link scales (``tolerance.json``, sagitta). The chord count is
+computed exactly (``n**4 * 64 * d**2 >= (p*(p-1))**2 * M**2`` in rationals),
+so no float rounding can leave it one chord short. The bound is for exact
+arithmetic: it leaves out the float error of de Casteljau evaluation and
+of ``cos`` and ``sin`` in the placement, a few ulps of the coordinates.
 
 ``d`` comes from the record's sagitta tolerance, or from ``hausdorff``, a
 world bound that is divided by ``k``. A record with neither declines as
@@ -25,9 +38,13 @@ hole, and a contour with nonzero on both sides is not a boundary. Winding
 numbers and the crossing test are exact rational arithmetic on the
 flattened vertices. When flattened contours cross, touch or overlap,
 ``nonzero_node`` nodes them exactly and the result is marked ``noded``.
-Crossing points are rational and are rounded to floats on output. The
-reported bound is the bound of each flattened contour; for a noded result
-it is not a proved bound on the merged boundary.
+Crossing points are rational and are rounded to floats on output; that
+rounding is an unbounded step (consecutive duplicates it creates are
+dropped, but a touch could in principle become a crossing). The output
+carries two numbers: ``contourHausdorff`` is ``k*d``, the bound of each
+flattened contour, and ``hausdorff`` is the same number when nothing was
+noded and ``null`` when something was, because the bound is not proved
+for the merged boundary.
 
 A stroke-font row (glyph members made of BulgePolyline strokes) becomes a
 MULTILINESTRING instead. An arc of radius ``r`` and sweep ``theta`` is cut
@@ -70,14 +87,33 @@ def chain_scale(links: list[dict[str, Any]]) -> float:
 
 
 def wang_count(points: list[Point], d: float) -> int:
-    """Chords needed so a uniform polyline is within ``d`` of the Bezier."""
+    """Chords needed so a uniform polyline is within ``d`` of the Bezier.
+
+    The least ``n >= 1`` with ``n >= sqrt(p*(p-1)*M / (8*d))``, decided in
+    rationals as ``n**4 * 64 * d**2 >= (p*(p-1))**2 * M**2``, where ``M**2``
+    is the largest squared second difference of the control points.
+    """
     degree = len(points) - 1
-    second = 0.0
-    for a, b, c in zip(points, points[1:], points[2:]):
-        second = max(second, math.hypot(a[0] - 2 * b[0] + c[0], a[1] - 2 * b[1] + c[1]))
-    if second == 0.0:
+    exact = [(Fraction(x), Fraction(y)) for x, y in points]
+    m2 = max(
+        ((a[0] - 2 * b[0] + c[0]) ** 2 + (a[1] - 2 * b[1] + c[1]) ** 2 for a, b, c in zip(exact, exact[1:], exact[2:])),
+        default=Fraction(0),
+    )
+    if m2 == 0:
         return 1
-    return max(1, math.ceil(math.sqrt(degree * (degree - 1) * second / (8.0 * d))))
+    need = Fraction(degree * (degree - 1)) ** 2 * m2
+    d2 = 64 * Fraction(d) ** 2
+
+    def enough(n: int) -> bool:
+        return Fraction(n) ** 4 * d2 >= need
+
+    # A float guess, then fix it up exactly in either direction.
+    n = max(1, math.ceil(math.sqrt(degree * (degree - 1) * math.sqrt(float(m2)) / (8.0 * d))))
+    while n > 1 and enough(n - 1):
+        n -= 1
+    while not enough(n):
+        n += 1
+    return n
 
 
 def bezier_point(points: list[Point], t: float) -> Point:
@@ -138,33 +174,34 @@ def _segments_meet(a: Point, b: Point, c: Point, d: Point) -> bool:
     )
 
 
-def _box(ring: list[Point]) -> tuple[float, float, float, float]:
-    xs = [p[0] for p in ring]
-    ys = [p[1] for p in ring]
-    return (min(xs), min(ys), max(xs), max(ys))
+def any_meet(rings: list[list[Point]]) -> bool:
+    """True when any two edges of the rings share a point, other than neighbours in one ring at their joint.
 
-
-def _boxes_apart(a: tuple, b: tuple) -> bool:
-    return a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1]
-
-
-def _rings_meet(first: list[Point], second: list[Point]) -> bool:
-    for a, b in zip(first, first[1:] + first[:1]):
-        for c, d in zip(second, second[1:] + second[:1]):
-            if _segments_meet(a, b, c, d):
-                return True
-    return False
-
-
-def _self_meets(ring: list[Point]) -> bool:
-    count = len(ring)
-    edges = list(zip(ring, ring[1:] + ring[:1]))
-    for i in range(count):
-        for j in range(i + 1, count):
-            if j == i + 1 or (i == 0 and j == count - 1):
+    An x-sorted sweep: edges are taken by their left end, and an edge is only
+    tested against the edges whose x range still reaches it. The tests
+    themselves are the exact ``_segments_meet``.
+    """
+    edges = []
+    for r, ring in enumerate(rings):
+        count = len(ring)
+        for i in range(count):
+            a, b = ring[i], ring[(i + 1) % count]
+            edges.append((min(a[0], b[0]), max(a[0], b[0]), min(a[1], b[1]), max(a[1], b[1]), r, i, count, a, b))
+    edges.sort(key=lambda edge: edge[0])
+    active: list[tuple] = []
+    for edge in edges:
+        x0, x1, y0, y1, r, i, count, a, b = edge
+        active = [other for other in active if other[1] >= x0]
+        for other in active:
+            if other[3] < y0 or other[2] > y1:
                 continue
-            if _segments_meet(*edges[i], *edges[j]):
+            if other[4] == r:
+                gap = abs(other[5] - i)
+                if gap == 1 or gap == count - 1:
+                    continue
+            if _segments_meet(a, b, other[7], other[8]):
                 return True
+        active.append(edge)
     return False
 
 
@@ -182,6 +219,8 @@ def winding(ring: list[Point], point: Point) -> int:
 
 def arc_points(start: Point, end: Point, bulge: float, d: float) -> list[Point]:
     """Start and interior vertices of a bulge arc cut to sagitta ``d``. The end is not included."""
+    # The carrier writes b = 0 as a Chord, so an Arc here always bulges.
+    assert bulge != 0, "an Arc segment with bulge 0"
     chord = math.hypot(end[0] - start[0], end[1] - start[1])
     sweep = 4.0 * math.atan(abs(bulge))
     radius = chord / (2.0 * math.sin(sweep / 2.0))
@@ -226,10 +265,11 @@ def _stroke_lines(glyph: dict[str, Any], d_world: float | None) -> list[list[Poi
     return lines
 
 
-def _linearize_strokes(row: dict[str, Any], hausdorff: float | None) -> dict[str, Any] | Decline:
+def _linearize_strokes(glyphs: list[dict[str, Any]], hausdorff: float | None) -> dict[str, Any] | Decline:
+    """MULTILINESTRING body and count for the stroke glyphs."""
     lines: list[list[Point]] = []
     bound = hausdorff or 0.0
-    for glyph in row["params"]["members"]:
+    for glyph in glyphs:
         found = _stroke_lines(glyph, hausdorff)
         if isinstance(found, tuple):
             return found
@@ -237,22 +277,27 @@ def _linearize_strokes(row: dict[str, Any], hausdorff: float | None) -> dict[str
         if hausdorff is None:
             bound = max(bound, chain_scale(glyph["placement"]["links"]) * glyph["tolerance"]["d"])
     body = ", ".join("(" + ", ".join(f"{x!r} {y!r}" for x, y in line) + ")" for line in lines)
-    return {"wkt": "MULTILINESTRING (" + body + ")", "hausdorff": bound, "lines": len(lines)}
+    return {"wkt": "MULTILINESTRING (" + body + ")", "bound": bound, "lines": len(lines), "noded": False}
 
 
-def _is_stroke_row(row: dict[str, Any]) -> bool:
-    members = row["params"].get("members") or []
-    return bool(members) and all(
-        glyph["kind"] == "Compound"
-        and (glyph["params"].get("members") or [{}])[0].get("kind") == "BulgePolyline"
-        for glyph in members
-    )
+def _is_stroke_glyph(glyph: dict[str, Any]) -> bool:
+    return glyph["kind"] == "Compound" and (glyph["params"].get("members") or [{}])[0].get("kind") == "BulgePolyline"
 
 
 def _glyph_contours(glyph: dict[str, Any], d_world: float | None) -> list[list[Point]] | Decline:
     members = glyph["params"].get("members") if glyph["kind"] == "Compound" else None
     if not members or members[0]["kind"] != "Ring" or len(members) < 2:
         return ("ID_UnsupportedEntity", "member is not a glyph outline")
+    ring_params = members[0]["params"]
+    if ring_params.get("windingRule") != "nonzero":
+        return ("ID_UnsupportedEntity", f"winding rule {ring_params.get('windingRule')} is not linearized")
+    skeleton, recorded = ring_params.get("contours", []), ring_params.get("orientation", [])
+    if len(skeleton) != len(members) - 1 or len(recorded) != len(skeleton):
+        return ("ID_DegenerateEntity", "Ring contours do not match the glyph contours")
+    for chords, sign in zip(skeleton, recorded):
+        area = _signed_area2([tuple(chord["start"]) for chord in chords])
+        if area == 0 or ("ccw" if area > 0 else "cw") != sign:
+            return ("ID_DegenerateEntity", "recorded orientation disagrees with the contour")
     links = glyph["placement"]["links"]
     scale = chain_scale(links)
     tolerance = glyph["tolerance"]
@@ -285,23 +330,11 @@ def _wkt_ring(ring: list[Point]) -> str:
     return "(" + ", ".join(f"{x!r} {y!r}" for x, y in ring + ring[:1]) + ")"
 
 
-def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[str, Any] | Decline:
-    """A text carrier row as ``{"wkt", "hausdorff", "polygons"}``, or a decline.
-
-    A stroke-font row gives ``{"wkt", "hausdorff", "lines"}``.
-
-    ``hausdorff`` is a world bound. Without it the record's sagitta is used
-    and the reported bound is the largest ``k*d`` over the glyphs.
-    """
-    if hausdorff is not None and not (math.isfinite(hausdorff) and hausdorff > 0):
-        return ("ID_ToleranceNonPositive", "hausdorff bound is not a positive finite number")
-    if row.get("record") != "entity" or row.get("kind") != "Compound":
-        return ("ID_UnsupportedEntity", "row is not a text Compound")
-    if _is_stroke_row(row):
-        return _linearize_strokes(row, hausdorff)
+def _linearize_outlines(glyphs: list[dict[str, Any]], hausdorff: float | None) -> dict[str, Any] | Decline:
+    """MULTIPOLYGON body and count for the outline glyphs."""
     rings: list[list[Point]] = []
     bound = 0.0
-    for glyph in row["params"]["members"]:
+    for glyph in glyphs:
         contours = _glyph_contours(glyph, hausdorff)
         if isinstance(contours, tuple):
             return contours
@@ -314,13 +347,7 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
     areas = [_signed_area2(ring) for ring in rings]
     if any(len(ring) < 3 or area == 0 for ring, area in zip(rings, areas)):
         return ("ID_DegenerateEntity", "flattened contour has no area")
-    boxes = [_box(ring) for ring in rings]
-    meet = any(_self_meets(ring) for ring in rings) or any(
-        not _boxes_apart(boxes[i], boxes[j]) and _rings_meet(rings[i], rings[j])
-        for i in range(len(rings))
-        for j in range(i + 1, len(rings))
-    )
-    if meet:
+    if any_meet(rings):
         import nonzero_node
 
         try:
@@ -329,17 +356,19 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
             return ("ID_NonzeroOverlapNotYet", str(error))
         if not merged:
             return ("ID_DegenerateEntity", "text fills nothing")
-        as_float = lambda ring: [(float(x), float(y)) for x, y in ring]
-        polygons = [
-            "(" + ", ".join(_wkt_ring(as_float(ring)) for ring in [shell] + inner) + ")"
-            for shell, inner in merged
-        ]
-        return {
-            "wkt": "MULTIPOLYGON (" + ", ".join(polygons) + ")",
-            "hausdorff": bound,
-            "polygons": len(polygons),
-            "noded": True,
-        }
+        rounded = []
+        for shell, inner in merged:
+            polygon = []
+            for ring in [shell] + inner:
+                # Rounding the rational vertices can make neighbours equal; drop the repeats.
+                points = [(float(x), float(y)) for x, y in ring]
+                points = [p for p, q in zip(points, points[-1:] + points[:-1]) if p != q]
+                if len(points) < 3:
+                    return ("ID_DegenerateEntity", "a noded ring collapses when rounded to floats")
+                polygon.append(points)
+            rounded.append(polygon)
+        polygons = ["(" + ", ".join(_wkt_ring(ring) for ring in polygon) + ")" for polygon in rounded]
+        return {"wkt": "MULTIPOLYGON (" + ", ".join(polygons) + ")", "bound": bound, "polygons": len(polygons), "noded": True}
 
     shells: list[int] = []
     holes: list[int] = []
@@ -366,12 +395,48 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
         "(" + ", ".join([_wkt_ring(ccw(s, True))] + [_wkt_ring(ccw(h, False)) for h in held[s]]) + ")"
         for s in shells
     ]
-    return {
-        "wkt": "MULTIPOLYGON (" + ", ".join(polygons) + ")",
-        "hausdorff": bound,
-        "polygons": len(polygons),
-        "noded": False,
+    return {"wkt": "MULTIPOLYGON (" + ", ".join(polygons) + ")", "bound": bound, "polygons": len(polygons), "noded": False}
+
+
+def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[str, Any] | Decline:
+    """A text carrier row as WKT, or a decline.
+
+    The result has ``wkt``, ``hausdorff``, ``contourHausdorff`` and
+    ``noded``, plus ``polygons`` for outline glyphs and ``lines`` for
+    stroke glyphs. ``hausdorff`` is ``null`` when the outlines were noded.
+
+    The ``hausdorff`` argument is a world bound. Without it the record's
+    sagitta is used and the bound is the largest ``k*d`` over the glyphs.
+    """
+    if hausdorff is not None and not (math.isfinite(hausdorff) and hausdorff > 0):
+        return ("ID_ToleranceNonPositive", "hausdorff bound is not a positive finite number")
+    if row.get("record") != "entity" or row.get("kind") != "Compound":
+        return ("ID_UnsupportedEntity", "row is not a text Compound")
+    glyphs = row["params"].get("members") or []
+    strokes = [glyph for glyph in glyphs if _is_stroke_glyph(glyph)]
+    outlines = [glyph for glyph in glyphs if not _is_stroke_glyph(glyph)]
+    parts = []
+    for chosen, run in ((outlines, _linearize_outlines), (strokes, _linearize_strokes)):
+        if chosen:
+            part = run(chosen, hausdorff)
+            if isinstance(part, tuple):
+                return part
+            parts.append(part)
+    if not parts:
+        return ("ID_UnsupportedEntity", "row has no glyphs")
+    bound = max(part["bound"] for part in parts)
+    noded = any(part["noded"] for part in parts)
+    out: dict[str, Any] = {
+        "wkt": parts[0]["wkt"] if len(parts) == 1 else "GEOMETRYCOLLECTION (" + ", ".join(p["wkt"] for p in parts) + ")",
+        "hausdorff": None if noded else bound,
+        "contourHausdorff": bound,
+        "noded": noded,
     }
+    for part in parts:
+        for key in ("polygons", "lines"):
+            if key in part:
+                out[key] = part[key]
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -26,8 +26,8 @@ _PER_MASTER = 120
 # Units of resolution, chosen so heights and coordinates are exact in master units.
 _TEXTS = [
     {"level": 5, "font": 41, "just": 2, "length": 70000, "height": 70000, "rotation": 30.0, "x": 123456, "y": -65432, "text": "el e"},
-    {"level": 12, "font": 41, "just": 7, "length": 2000, "height": 2000, "rotation": -90.0, "x": 0, "y": 600, "text": "l"},
-    {"level": 3, "font": 7, "just": 0, "length": 1000, "height": 2000, "rotation": 0.0, "x": 10, "y": 20, "text": "squeezed"},
+    {"level": 12, "font": 41, "just": 2, "length": 2000, "height": 2000, "rotation": -90.0, "x": 0, "y": 600, "text": "l"},
+    {"level": 3, "font": 7, "just": 2, "length": 1000, "height": 2000, "rotation": 0.0, "x": 10, "y": 20, "text": "squeezed"},
 ]
 
 
@@ -178,3 +178,17 @@ def test_cli_writes_json_lines(dgn: Path, ttf: Path, capsys, tmp_path: Path) -> 
     v8 = tmp_path / "v8.dgn"
     v8.write_bytes(bytes.fromhex("d0cf11e0a1b11ae1") + bytes(600))
     assert dgn_text.main([str(v8)]) == 2
+
+
+def test_other_justification_and_wide_text_decline_by_name(ttf: Path) -> None:
+    data = (_SEED / "seed_2d.dgn").read_bytes()
+    stream = list(dgn_text.elements(data))
+    end = stream[-1][0] + len(stream[-1][1])
+    centred = _text({**_TEXTS[1], "just": 7})
+    wide = bytearray(_text({**_TEXTS[1], "text": "ab"}))
+    wide[60:62] = b"\xff\xfd"
+    rows = dgn_text.extract_bytes(data[:end] + centred + bytes(wide) + b"\xff\xff", fonts={41: ttf})
+    assert [(row["id"], row["reason"]) for row in rows] == [
+        ("ID_TextEntity", "DGN justification code 7 is not read: only left bottom (2)"),
+        ("ID_TextEntity", "DGN 16-bit text (0xFF 0xFD) is not read"),
+    ]

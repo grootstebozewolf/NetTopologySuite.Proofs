@@ -24,10 +24,13 @@ at 1240 and 1248, in units of resolution). A coordinate in master units
 is ``(raw - origin) / (uor * subunits)``. A character size in master
 units is ``multiplier * 6 / 1000 / (uor * subunits)``.
 
-The stored origin is the lower left of the text whatever the
-justification code, and it is read as the left baseline point. The
-height is read as the cap height. Unequal length and height is not a
-similarity. A 3D file declines every text as ID_ThreeDNotYet. A V8 file
+Only justification code 2 (left bottom) is read, with the stored origin
+as the left baseline point; any other code declines by name, since
+whether the origin then moves with the justification is not settled
+here. The height is read as the cap height. Unequal length and height is
+a width factor, applied to the glyph numbers. Text stored as 16-bit
+characters (the ``0xFF 0xFD`` prefix) declines by name rather than being
+decoded as latin-1. A 3D file declines every text as ID_ThreeDNotYet. A V8 file
 is not an element stream and is refused.
 
 OGR's DGN driver (MIT) is the reference reader in the tests; its code is
@@ -106,7 +109,9 @@ def text_element(raw: bytes, tcb: Mapping[str, Any]) -> dict[str, Any]:
         "type": 17,
         "font": raw[36],
         "justificationCode": raw[37],
-        "justification": "left-baseline",
+        # Only code 2 (left bottom) is read: the origin is then the left baseline point.
+        "justification": "left-baseline" if raw[37] == 2 else f"DGN justification code {raw[37]}",
+        "wide": raw[60:62] == b"\xff\xfd",
         "width": _int32(raw, 38) * size,
         "height": _int32(raw, 42) * size,
         "rotation": _int32(raw, 46) / 360000.0,
@@ -163,7 +168,11 @@ def extract_bytes(
         if not fonts:
             decline("ID_TextEntity", "ID_TextEntity")
             continue
-        run = text_glyphs.dgn_text_run(text_element(raw, tcb), fonts)
+        element = text_element(raw, tcb)
+        if element["wide"]:
+            decline("ID_TextEntity", "DGN 16-bit text (0xFF 0xFD) is not read")
+            continue
+        run = text_glyphs.dgn_text_run(element, fonts)
         if isinstance(run, tuple):
             decline(run[0], run[1])
             continue

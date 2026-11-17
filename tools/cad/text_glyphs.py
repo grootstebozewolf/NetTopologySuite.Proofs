@@ -1100,8 +1100,8 @@ def dgn_text_run(element: Mapping[str, Any], fonts: Mapping[Any, Path | str]) ->
     """
     if int(element.get("type", 17)) != 17:
         return ("ID_TextEntity", "not a DGN type 17 text element")
-    if element.get("justification", 0) not in (0, "left-baseline"):
-        return ("ID_TextEntity", "text alignment is not left baseline")
+    if element.get("justification", "left-baseline") != "left-baseline":
+        return ("ID_TextEntity", f"{element['justification']} is not read: only left bottom (2)")
     number = element.get("font")
     path = fonts.get(number, fonts.get(str(number)))
     if path is None:

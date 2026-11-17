@@ -154,10 +154,13 @@ def test_overlapping_glyphs_are_noded_into_one_polygon(ttf: Path) -> None:
     row = _row(ttf, "ll")
     apart = glyph_linearize.linearize_row(row, hausdorff=0.01)
     assert (apart["polygons"], apart["noded"]) == (2, False)
+    assert apart["hausdorff"] == apart["contourHausdorff"] == 0.01
     # Second stem moved to overlap the first by half its width.
     row["params"]["members"][1]["placement"]["links"][0]["translate"][0] = 50.0
     out = glyph_linearize.linearize_row(row, hausdorff=0.01)
     assert (out["polygons"], out["noded"]) == (1, True)
+    # The per-contour bound is not proved for the merged boundary, so it is not offered as one.
+    assert out["hausdorff"] is None and out["contourHausdorff"] == 0.01
     shape = shapely.from_wkt(out["wkt"])
     scale = 7.0 / _CAP
     assert shape.is_valid
@@ -264,3 +267,93 @@ def test_cli_runs_dxf_text_to_wkt(tmp_path: Path, ttf: Path, capsys) -> None:
     xs = [x for rings in _polygons(text["wkt"]) for ring in rings for x, _ in ring]
     assert min(xs) < 10 < max(xs)
     assert line["decline"] == "ID_UnsupportedEntity"
+
+
+def test_mixed_outline_and_stroke_mtext_is_a_geometry_collection(ttf: Path, tmp_path: Path) -> None:
+    from test_stroke_glyphs import _SHP
+
+    shp = tmp_path / "carrierstroke.shp"
+    shp.write_bytes(_SHP)
+    doc = _doc()
+    doc.modelspace().add_mtext(r"l{\fCarrierStroke.shp;L}l", dxfattribs={"style": "GLYPH", "char_height": 7})
+    (row,) = dxf_extract.extract_document(doc, fonts={"carriertext.ttf": ttf, "carrierstroke.shp": shp}, file_id="mix")
+    kinds = [glyph["params"]["members"][0]["kind"] for glyph in row["params"]["members"]]
+    assert kinds == ["Ring", "BulgePolyline", "Ring"]
+    out = glyph_linearize.linearize_row(row, hausdorff=0.001)
+    assert (out["polygons"], out["lines"], out["noded"], out["hausdorff"]) == (2, 1, False, 0.001)
+    shape = shapely.from_wkt(out["wkt"])
+    assert shape.geom_type == "GeometryCollection"
+    polygons, lines = shape.geoms
+    assert (polygons.geom_type, len(polygons.geoms), lines.geom_type) == ("MultiPolygon", 2, "MultiLineString")
+    assert polygons.is_valid
+    # The L stroke is 7 tall and its foot runs 12 font units, scaled to the 700-unit cap.
+    assert lines.length == pytest.approx(7 + 12 * 7 / 21)
+
+
+def test_evenodd_ring_and_wrong_orientation_decline(ttf: Path) -> None:
+    import copy
+
+    row = _row(ttf, "e")
+    evenodd = copy.deepcopy(row)
+    evenodd["params"]["members"][0]["params"]["members"][0]["params"]["windingRule"] = "evenodd"
+    assert glyph_linearize.linearize_row(evenodd, hausdorff=0.01) == (
+        "ID_UnsupportedEntity",
+        "winding rule evenodd is not linearized",
+    )
+    flipped = copy.deepcopy(row)
+    flipped["params"]["members"][0]["params"]["members"][0]["params"]["orientation"] = ["ccw", "ccw"]
+    assert glyph_linearize.linearize_row(flipped, hausdorff=0.01) == (
+        "ID_DegenerateEntity",
+        "recorded orientation disagrees with the contour",
+    )
+
+
+def test_wang_count_is_exact_at_an_integer_boundary() -> None:
+    from fractions import Fraction
+    import random
+
+    quad = [(0.0, 0.0), (50.0, 100.0), (100.0, 0.0)]
+    # sqrt(2 * 200 / (8 * 0.5)) is exactly 10.
+    assert glyph_linearize.wang_count(quad, 0.5) == 10
+    rng = random.Random(7)
+    for _ in range(300):
+        points = [(rng.uniform(-50, 50), rng.uniform(-50, 50)) for _ in range(rng.choice((3, 4)))]
+        d = rng.choice((1e-4, 0.01, 0.3, 2.0))
+        n = glyph_linearize.wang_count(points, d)
+        p = len(points) - 1
+        q = [(Fraction(x), Fraction(y)) for x, y in points]
+        m2 = max((a[0] - 2 * b[0] + c[0]) ** 2 + (a[1] - 2 * b[1] + c[1]) ** 2 for a, b, c in zip(q, q[1:], q[2:]))
+        need = Fraction(p * (p - 1)) ** 2 * m2
+        assert Fraction(n) ** 4 * 64 * Fraction(d) ** 2 >= need
+        assert n == 1 or Fraction(n - 1) ** 4 * 64 * Fraction(d) ** 2 < need
+
+
+def test_arc_with_zero_bulge_is_refused() -> None:
+    with pytest.raises(AssertionError):
+        glyph_linearize.arc_points((0.0, 0.0), (1.0, 0.0), 0.0, 0.01)
+
+
+def test_meet_sweep_agrees_with_every_pair() -> None:
+    import random
+
+    def brute(rings) -> bool:
+        edges = [(r, i, len(ring), ring[i], ring[(i + 1) % len(ring)]) for r, ring in enumerate(rings) for i in range(len(ring))]
+        for k, (r, i, n, a, b) in enumerate(edges):
+            for r2, j, _n, c, d in edges[k + 1 :]:
+                if r == r2 and abs(i - j) in (1, n - 1):
+                    continue
+                if glyph_linearize._segments_meet(a, b, c, d):
+                    return True
+        return False
+
+    rng = random.Random(11)
+    seen = {True: 0, False: 0}
+    for _ in range(400):
+        rings = []
+        for _ in range(rng.randint(1, 4)):
+            cx, cy = rng.randint(0, 12), rng.randint(0, 12)
+            rings.append([(float(cx + rng.randint(-3, 3)), float(cy + rng.randint(-3, 3))) for _ in range(rng.randint(3, 6))])
+        expected = brute(rings)
+        assert glyph_linearize.any_meet(rings) == expected
+        seen[expected] += 1
+    assert seen[True] > 50 and seen[False] > 50
