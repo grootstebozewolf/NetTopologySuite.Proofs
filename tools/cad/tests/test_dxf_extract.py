@@ -664,8 +664,8 @@ def test_normal_plane_entities_with_a_minus_z_normal_decline() -> None:
     msp.add_ellipse((0, 0), (2, 0), 1.0, dxfattribs={"extrusion": (0, 0, -1)})
     rows = dxf_extract.extract_document(doc, mode="lenient", file_id="normal")
     assert [(r["id"], r["reason"]) for r in rows] == [
-        ("ID_TiltedPlacement", "MTEXT with a -Z extrusion is drawn mirrored; not read"),
-        ("ID_TiltedPlacement", "ELLIPSE with a -Z extrusion is drawn mirrored; not read"),
+        ("ID_UnsupportedEntity", "MTEXT with a -Z extrusion is drawn mirrored about its anchor; not read"),
+        ("ID_UnsupportedEntity", "ELLIPSE with a -Z extrusion is drawn mirrored about its anchor; not read"),
     ]
 
 
@@ -730,3 +730,153 @@ def test_attached_attribs_are_considered_without_fonts() -> None:
     rows = dxf_extract.extract_document(doc, file_id="attrib", on_considered=seen.append)
     assert seen == ["LINE", "ATTDEF", "ATTRIB"]
     assert [r.get("kind", r.get("id")) for r in rows] == ["Chord", "ID_TextEntity", "ID_TextEntity"]
+
+
+def _ids(rows: list[dict]) -> list[tuple[str, str]]:
+    return [(row.get("kind") or row["id"], row["provenance"]["handle"]) for row in rows]
+
+
+@pytest.mark.parametrize(
+    "attribs",
+    [{"xscale": 2, "yscale": 1}, {"extrusion": (0, 1, 1)}],
+    ids=["stretched", "tilted"],
+)
+def test_a_declined_insert_keeps_its_attribs(attribs: dict) -> None:
+    """A stretched title block declines, but its attribute text is still considered."""
+    doc = ezdxf.new("R2018")
+    doc.blocks.new("TITLE").add_line((0, 0), (10, 0))
+    insert = doc.modelspace().add_blockref("TITLE", (0, 0), dxfattribs=attribs)
+    a = insert.add_attrib("NAME", "plan", (1, 1))
+    b = insert.add_attrib("DATE", "2026", (1, 2))
+    seen: list[str] = []
+    rows = dxf_extract.extract_document(doc, file_id="title", on_considered=seen.append)
+    assert seen == ["INSERT", "ATTRIB", "ATTRIB"]
+    assert rows[0]["record"] == "decline"
+    assert _ids(rows[1:]) == [("ID_TextEntity", a.dxf.handle), ("ID_TextEntity", b.dxf.handle)]
+    assert [row["provenance"]["blockPath"] for row in rows[1:]] == [["TITLE"], ["TITLE"]]
+
+
+@pytest.mark.parametrize("block", ["EMPTY", "LOOP"])
+def test_empty_and_cyclic_inserts_keep_their_attribs(block: str) -> None:
+    doc = ezdxf.new("R2018")
+    doc.blocks.new("EMPTY")
+    doc.blocks.new("LOOP").add_blockref("LOOP", (0, 0))
+    insert = doc.modelspace().add_blockref(block, (0, 0))
+    insert.add_attrib("T", "v", (0, 1))
+    seen: list[str] = []
+    rows = dxf_extract.extract_document(doc, file_id="kept", on_considered=seen.append)
+    # LOOP: the outer INSERT is entered once; the INSERT inside it is the cyclic one.
+    assert seen == ["INSERT", "ATTRIB"]
+    assert rows[0]["id"] == "ID_DegenerateEntity"
+
+
+def test_an_invisible_insert_declines_its_attribs() -> None:
+    doc = ezdxf.new("R2018")
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    insert = doc.modelspace().add_blockref("B", (0, 0), dxfattribs={"invisible": 1})
+    insert.add_attrib("T", "v", (0, 1))
+    rows = dxf_extract.extract_document(doc, file_id="hidden")
+    assert [(row["id"], row["reason"]) for row in rows] == [
+        ("ID_UnsupportedEntity", "invisible: not drawn"),
+        ("ID_UnsupportedEntity", "attribute of an invisible or malformed INSERT: not drawn"),
+    ]
+
+
+def test_extrusion_fails_closed_for_types_not_known_to_be_ocs_or_world() -> None:
+    """A type is placed under its extrusion only when it is listed as OCS or world."""
+    assert not (dxf_extract.OCS_TYPES & dxf_extract.WORLD_TYPES)
+    doc = ezdxf.new("R2018")
+    doc.modelspace().add_point((1, 2), dxfattribs={"extrusion": (0, 0, -1)})
+    doc.modelspace().add_point((1, 2), dxfattribs={"extrusion": (0, 1, 1)})
+    rows = dxf_extract.extract_document(doc, file_id="unknown")
+    assert [(row["id"], row["reason"]) for row in rows] == [
+        ("ID_UnsupportedEntity", "POINT with a -Z extrusion: not known to be OCS or world coordinates"),
+        ("ID_TiltedPlacement", "extrusion is not +/- Z"),
+    ]
+
+
+def test_every_record_type_has_a_stated_coordinate_system(monkeypatch) -> None:
+    """A newly mapped type that is in no list is declined under -Z, not mirrored."""
+    monkeypatch.setattr(dxf_extract, "WORLD_TYPES", frozenset({"SPLINE"}))  # forget LINE
+    doc = ezdxf.new("R2018")
+    doc.modelspace().add_line((0, 0), (1, 0), dxfattribs={"extrusion": (0, 0, -1)})
+    rows = dxf_extract.extract_document(doc, file_id="forgot")
+    assert rows[0]["record"] == "decline"
+
+
+class _Fake:
+    """An entity whose stored values ezdxf did not validate (as a loaded file can hold)."""
+
+    def __init__(self, **values):
+        self.dxf = self
+        self._values = values
+
+    def get(self, key, default=None):
+        if key not in self._values:
+            raise ezdxf.lldxf.const.DXFAttributeError(key)
+        return self._values[key]
+
+
+def test_malformed_invisible_and_thickness_do_not_read_as_drawn() -> None:
+    assert dxf_extract._invisible(_Fake()) is False
+    assert dxf_extract._invisible(_Fake(invisible="x")) is None
+    assert dxf_extract._thickness(_Fake()) == 0.0
+    assert math.isnan(dxf_extract._thickness(_Fake(thickness="x")))
+
+
+def test_a_declined_minsert_cell_names_its_cell() -> None:
+    doc = ezdxf.new("R2018")
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    insert = doc.modelspace().add_blockref("B", (0, 0), dxfattribs={"xscale": 2, "yscale": 1})
+    insert.grid(size=(1, 2), spacing=(5, 5))
+    rows = dxf_extract.extract_document(doc, file_id="cells")
+    assert [row["reason"] for row in rows] == [
+        "xscale != yscale (MINSERT cell B#0)",
+        "xscale != yscale (MINSERT cell B#1)",
+    ]
+
+
+# Each of the totality oracle's named restorations, with its rows spelled out by hand
+# rather than by the oracle's copy of the extractor's decisions.
+def _restoration(case: str):
+    doc = ezdxf.new("R2018", setup=True)
+    msp = doc.modelspace()
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    if case == "ATTDEF":
+        block = doc.blocks.new("D")
+        block.add_line((0, 0), (1, 0))
+        block.add_attdef("C", (0, 1), text="c", dxfattribs={"flags": 2})  # constant
+        block.add_attdef("V", (0, 2), text="v")  # a template
+        msp.add_blockref("D", (0, 0))
+        return doc, [("Chord", "LINE"), ("ID_TextEntity", "ATTDEF"), ("ID_TextEntity", "ATTDEF")]
+    if case == "stretched":
+        msp.add_blockref("B", (0, 0), dxfattribs={"xscale": 2, "yscale": 1})
+        return doc, [("ID_NotSimilarityPlacement", "INSERT")]
+    if case == "tilted":
+        msp.add_blockref("B", (0, 0), dxfattribs={"extrusion": (0, 1, 1)})
+        return doc, [("ID_TiltedPlacement", "INSERT")]
+    if case == "empty":
+        doc.blocks.new("E")
+        msp.add_blockref("E", (0, 0))
+        return doc, [("ID_DegenerateEntity", "INSERT")]
+    if case == "cyclic":
+        loop = doc.blocks.new("L")
+        loop.add_line((0, 0), (1, 1))
+        loop.add_blockref("L", (2, 2))
+        msp.add_blockref("L", (0, 0))
+        return doc, [("Chord", "LINE"), ("ID_DegenerateEntity", "INSERT")]
+    if case == "DIMENSION":
+        msp.add_linear_dim(base=(0, 3), p1=(0, 0), p2=(5, 0)).render()
+        return doc, [("ID_DimensionEntity", "DIMENSION")]
+    if case == "LEADER":
+        msp.add_leader([(0, 0), (2, 2), (4, 2)])
+        return doc, [("ID_DimensionEntity", "LEADER")]
+    raise AssertionError(case)
+
+
+@pytest.mark.parametrize("case", ["ATTDEF", "stretched", "tilted", "empty", "cyclic", "DIMENSION", "LEADER"])
+def test_restorations_by_hand(case: str) -> None:
+    doc, expected = _restoration(case)
+    seen: list[str] = []
+    rows = dxf_extract.extract_document(doc, file_id=case, on_considered=seen.append)
+    assert [(row.get("kind") or row["id"], kind) for row, kind in zip(rows, seen)] == expected
