@@ -68,8 +68,10 @@ def _drawn_types(doc, entities, stack: tuple[str, ...] = ()) -> Counter:
     MINSERT cells from ``multi_insert()`` and the named restorations.
 
     It walks the block definitions, not ezdxf's placed ``virtual_entities()``: inside a
-    mirrored block ezdxf cannot keep a tilted INSERT as an INSERT and explodes it early,
-    while the extractor judges every INSERT by its own scales and extrusion.
+    block inserted with x and y scaled but z not, ezdxf cannot keep a tilted INSERT as an
+    INSERT (its frame is sheared out of the plane) and explodes it early, while the
+    extractor judges every INSERT by its own scales and extrusion. Mirroring alone, or a
+    uniform x, y and z scale, keeps it an INSERT.
     """
     found: Counter = Counter()
     for entity in entities:
