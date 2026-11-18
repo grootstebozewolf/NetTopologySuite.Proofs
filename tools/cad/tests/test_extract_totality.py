@@ -21,7 +21,8 @@ difference by name (``_RESTORED``) instead of leaving it out of the check:
   one is drawn, any other declines as a template).
 * INSERT that is not a similarity (unequal scales, or extrusion not +/-Z),
   of an empty block, or of a block that contains itself: one considered
-  INSERT that declines; ezdxf expands it, yields nothing, or recurses
+  INSERT that declines, plus its attached ATTRIBs, which do not depend on
+  the INSERT's link; ezdxf expands it, yields nothing, or recurses
   without end, respectively (the last reported upstream:
   https://github.com/mozman/ezdxf/issues/1475).
 * DIMENSION, LEADER: one considered entity that declines; ezdxf expands
@@ -82,11 +83,12 @@ def _drawn_types(doc, entities, stack: tuple[str, ...] = ()) -> Counter:
             found[kind] += 1
             continue
         for copy in _grid(entity):
+            # Attached attributes are drawn whether or not the INSERT's block is entered.
+            found["ATTRIB"] += len(copy.attribs)
             if _whole_insert(doc, copy, stack):
                 found["INSERT"] += 1
                 continue
             found += _drawn_types(doc, doc.blocks.get(copy.dxf.name), stack + (copy.dxf.name,))
-            found["ATTRIB"] += len(copy.attribs)
     return found
 
 
@@ -125,9 +127,12 @@ def _random_doc(rng: random.Random, *, wide: bool = False):
                     # A stretched or tilted INSERT: one considered entity.
                     target = rng.choice(names)
                     if rng.random() < 0.5:
-                        layout.add_blockref(target, (x, y), dxfattribs={"xscale": 2, "yscale": 1})
+                        whole = layout.add_blockref(target, (x, y), dxfattribs={"xscale": 2, "yscale": 1})
                     else:
-                        layout.add_blockref(target, (x, y), dxfattribs={"extrusion": (0, 1, 1)})
+                        whole = layout.add_blockref(target, (x, y), dxfattribs={"extrusion": (0, 1, 1)})
+                    # Its attributes are still considered, each on its own.
+                    for k in range(rng.randint(0, 2)):
+                        whole.add_attrib(f"W{k}", "v", (x, y + k))
                 continue
             if pick < 0.2:
                 layout.add_line((x, y), (x + 1, y + 2))
@@ -335,13 +340,14 @@ def _instances(doc, entities, m, out: list, stack: tuple[str, ...] = ()) -> None
             out.append((entity.dxftype(), _source(entity), _geometry(entity, m)))
             continue
         for copy in _grid(entity):
+            # Attached attributes are already in the space the INSERT sits in, and are
+            # drawn whether or not the INSERT's block is entered.
+            for attrib in copy.attribs:
+                out.append(("ATTRIB", _source(attrib), None))
             if _whole_insert(doc, copy, stack):
                 out.append(("INSERT", _source(copy), None))
                 continue
             _instances(doc, doc.blocks.get(copy.dxf.name), copy.matrix44() @ m, out, stack + (copy.dxf.name,))
-            # Attached attributes are already in the space the INSERT sits in.
-            for attrib in copy.attribs:
-                out.append(("ATTRIB", _source(attrib), None))
 
 
 @pytest.mark.parametrize(

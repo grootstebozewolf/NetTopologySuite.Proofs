@@ -9,6 +9,8 @@ is ported.
 A considered entity is a modelspace entity, except a similarity INSERT,
 which is replaced by the entities of its block (nested inserts compose).
 A non-similarity INSERT is one considered entity and declines as a whole.
+Its attached ATTRIBs are still considered, each on its own: they sit in
+the INSERT's space and do not depend on its link.
 ``len(records) + len(declines) == len(considered)``. Nothing is dropped.
 
 Placement links are applied local-to-world: the entity OCS link, then
@@ -19,7 +21,9 @@ such link, for the entities whose coordinates are in their OCS
 inserts). LINE and SPLINE store world coordinates, so their extrusion
 moves nothing and is ignored. MTEXT and ELLIPSE store world coordinates
 but are drawn in their normal's plane: with a -Z normal they would be
-mirrored about their own anchor, so they decline as ID_TiltedPlacement.
+mirrored about their own anchor, so they decline as ID_UnsupportedEntity
+(a tilted normal is ID_TiltedPlacement). Any other type declines a
+non-+Z extrusion: only ``WORLD_TYPES`` ignore it.
 
 Elevation is world z: an INSERT maps its block's z through its own z,
 ``zscale`` and, under a -Z extrusion, a sign flip; an OCS entity under a
@@ -154,13 +158,16 @@ THREED_TYPES = {
     "SOLID",
 }
 # Entities whose coordinates are in their Object Coordinate System, set by the extrusion.
-# Every other entity (LINE, SPLINE, ELLIPSE, MTEXT, POINT, ...) stores world coordinates;
-# its extrusion only orients thickness or the plane normal.
 OCS_TYPES = frozenset(
     {"ARC", "CIRCLE", "LWPOLYLINE", "POLYLINE", "HATCH", "MPOLYGON", "TEXT", "ATTRIB", "ATTDEF", "SOLID", "TRACE", "INSERT"}
 )
+# Entities that store world coordinates and are drawn the same under any extrusion
+# (it only orients thickness, which declines on its own).
+WORLD_TYPES = frozenset({"LINE", "SPLINE"})
 # World-coordinate entities whose drawing still depends on the plane normal.
 NORMAL_TYPES = frozenset({"MTEXT", "ELLIPSE"})
+# Any other type with an extrusion other than +Z declines: a type is added to OCS_TYPES or
+# WORLD_TYPES on purpose, never mapped by default.
 CIRCULAR_KINDS = {"Arc", "Circle", "BulgePolyline", "Ring"}
 # Spiral uses the clothoid Linearizes bound on these tolerances.
 STEPPED_KINDS = CIRCULAR_KINDS | {"Spiral"}
@@ -564,20 +571,28 @@ def _chain_member(segment: dict[str, Any]) -> dict[str, Any]:
 _WIDTH_DECLINE = ("ID_UnsupportedEntity", "polyline width: drawn as a filled band, not a curve")
 
 
-def _invisible(entity: Any) -> bool:
-    """Group code 60: the entity is not drawn."""
+def _invisible(entity: Any) -> bool | None:
+    """Group code 60: the entity is not drawn. None is a value that is not an integer."""
     try:
-        return bool(int(entity.dxf.get("invisible", 0)))
-    except Exception:  # an entity type without the attribute
+        value = entity.dxf.get("invisible", 0)
+    except AttributeError:  # ezdxf's DXFAttributeError: this type has no such attribute
         return False
+    try:
+        return bool(int(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def _thickness(entity: Any) -> float:
-    """The entity's extrusion thickness, 0 when it has none."""
+    """The entity's extrusion thickness, 0 when it has none, NaN when it is not a number."""
     try:
-        return _num(entity.dxf.get("thickness", 0.0))
-    except Exception:  # an entity type without a thickness attribute
+        value = entity.dxf.get("thickness", 0.0)
+    except AttributeError:  # ezdxf's DXFAttributeError: this type has no such attribute
         return 0.0
+    try:
+        return _num(value)
+    except (TypeError, ValueError):
+        return math.nan
 
 
 def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
@@ -900,11 +915,44 @@ def extract_document(
         stack: tuple[str, ...],
         label: str | None = None,
         z_factor: float = 1.0,
+        cell: str | None = None,
+        parent_hidden: bool = False,
     ) -> None:
-        """Emit one considered entity. A local z maps to world z as ``z_offset + z_factor * z``."""
+        """Emit one considered entity, then an INSERT's attached attributes.
 
+        A local z maps to world z as ``z_offset + z_factor * z``. ``cell`` names the
+        MINSERT cell the entity was copied into; ``parent_hidden`` marks an attribute
+        of an invisible INSERT.
+        """
+        emit_self(entity, prefix, block_path, z_offset, stack, label, z_factor, cell, parent_hidden)
+        if entity.dxftype() == "INSERT" and int(getattr(entity, "mcount", 1) or 1) <= 1:
+            # Attached attributes have their own handles and sit in the space the INSERT
+            # sits in, not in its block, so they are considered whatever the INSERT's own
+            # link decides: a declined INSERT does not take its attributes with it.
+            name = str(entity.dxf.name)
+            hidden = parent_hidden or _invisible(entity) is not False
+            for attrib in entity.attribs:
+                emit(
+                    attrib, prefix, block_path + [label or name], z_offset, stack + (name,),
+                    z_factor=z_factor, cell=cell, parent_hidden=hidden,
+                )
+
+    def emit_self(
+        entity: Any,
+        prefix: list[dict[str, Any]],
+        block_path: list[str],
+        z_offset: float,
+        stack: tuple[str, ...],
+        label: str | None,
+        z_factor: float,
+        cell: str | None,
+        parent_hidden: bool,
+    ) -> None:
         def add(row: dict[str, Any]) -> None:
             # Every row is one considered entity: this one.
+            if cell is not None and row["record"] == "decline":
+                # Cells share the MINSERT's handle and block path; the reason tells them apart.
+                row["reason"] += f" (MINSERT cell {cell})"
             rows.append(row)
             if on_considered is not None:
                 on_considered(entity.dxftype())
@@ -914,7 +962,14 @@ def extract_document(
             add(_decl(units, f"header convention {units}", prov))
             return
         kind = entity.dxftype()
-        if _invisible(entity):
+        if parent_hidden:
+            add(_decl("ID_UnsupportedEntity", "attribute of an invisible or malformed INSERT: not drawn", prov, name=kind))
+            return
+        invisible = _invisible(entity)
+        if invisible is None:
+            add(_decl("ID_DegenerateEntity", "invisible flag (group 60) is not an integer", prov))
+            return
+        if invisible:
             add(_decl("ID_UnsupportedEntity", "invisible: not drawn", prov, name=kind))
             return
         if kind == "INSERT":
@@ -925,7 +980,8 @@ def extract_document(
                 # multi_insert() gives each copy as a plain INSERT, attributes included.
                 for index, copy in enumerate(entity.multi_insert()):
                     copy.dxf.handle = entity.dxf.get("handle")
-                    emit(copy, prefix, block_path, z_offset, stack, label=f"{name}#{index}", z_factor=z_factor)
+                    label = f"{name}#{index}"
+                    emit(copy, prefix, block_path, z_offset, stack, label=label, z_factor=z_factor, cell=label)
                 return
             if name in stack:
                 add(_decl("ID_DegenerateEntity", f"cyclic block {name}", prov))
@@ -961,23 +1017,28 @@ def extract_document(
             child_factor = z_factor * flip * zscale
             for child in children:
                 emit(child, child_prefix, block_path + [label or name], child_offset, stack + (name,), z_factor=child_factor)
-            # Attached attributes are placed in the space the INSERT sits in, not in the block.
-            for attrib in entity.attribs:
-                emit(attrib, prefix, block_path + [label or name], z_offset, stack + (name,), z_factor=z_factor)
             return
         extr = _extrusion_link(entity)
         if kind in OCS_TYPES:
             if isinstance(extr, str):
                 add(_decl(extr, "extrusion is not +/- Z", prov))
                 return
-        elif kind in NORMAL_TYPES and extr is not None:
-            # World coordinates, but drawn in the plane the normal sets: a -Z normal mirrors
-            # it about its own anchor, which no link here expresses.
-            reason = "extrusion is not +/- Z" if isinstance(extr, str) else f"{kind} with a -Z extrusion is drawn mirrored; not read"
-            add(_decl("ID_TiltedPlacement", reason, prov))
-            return
-        else:
+        elif kind in WORLD_TYPES:
             extr = None  # world coordinates: the extrusion does not move them
+        elif isinstance(extr, str):
+            add(_decl(extr, "extrusion is not +/- Z", prov))
+            return
+        elif extr is not None:
+            # MTEXT and ELLIPSE store world coordinates but are drawn in the plane the
+            # normal sets: a -Z normal mirrors them about their own anchor, which no link
+            # here expresses. Any other type is not known to be OCS or world: fail closed.
+            reason = (
+                f"{kind} with a -Z extrusion is drawn mirrored about its anchor; not read"
+                if kind in NORMAL_TYPES
+                else f"{kind} with a -Z extrusion: not known to be OCS or world coordinates"
+            )
+            add(_decl("ID_UnsupportedEntity", reason, prov, name=kind))
+            return
         thickness = _thickness(entity)
         if thickness != 0:
             # Thickness extrudes the entity along Z: it spans more than one elevation.
