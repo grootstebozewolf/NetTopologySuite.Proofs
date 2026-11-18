@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Nonzero-winding fill of closed polylines that cross, touch or overlap.
+"""Nonzero (or even-odd) fill of closed polylines that cross, touch or overlap.
 
 Input is a list of rings (vertex lists, closed implicitly) in any
 orientation. Output is the region where the summed winding number is not
-zero, as polygons: a counter-clockwise shell with clockwise holes.
+zero (or, with ``rule="evenodd"``, is odd), as polygons: a counter-clockwise shell with clockwise holes.
 
 Every decision is exact rational arithmetic on the input numbers:
 
@@ -141,15 +141,19 @@ def _mid(p: QPoint, q: QPoint) -> QPoint:
     return ((p[0] + q[0]) / 2, (p[1] + q[1]) / 2)
 
 
-def boundary_edges(edges: list[QEdge]) -> list[QEdge]:
+def _filled(winding_number: int, rule: str) -> bool:
+    return winding_number % 2 != 0 if rule == "evenodd" else winding_number != 0
+
+
+def boundary_edges(edges: list[QEdge], rule: str = "nonzero") -> list[QEdge]:
     """Sub-edges between zero and nonzero winding, filled side on the left."""
     winding = _Winding(edges)
     kept: list[QEdge] = []
     for p, q in sorted({(min(a, b), max(a, b)) for a, b in node(edges)}):
         m = _mid(p, q)
         n = _left_normal(p, q)
-        left = winding.beside(m, n) != 0
-        right = winding.beside(m, (-n[0], -n[1])) != 0
+        left = _filled(winding.beside(m, n), rule)
+        right = _filled(winding.beside(m, (-n[0], -n[1])), rule)
         if left != right:
             kept.append((p, q) if left else (q, p))
     return kept
@@ -221,11 +225,13 @@ def _area2(ring: list[QPoint]) -> Fraction:
     return sum((_cross(a[0], a[1], b[0], b[1]) for a, b in zip(ring, ring[1:] + ring[:1])), Fraction(0))
 
 
-def nonzero_polygons(rings: list[list[tuple[float, float]]]) -> list[Polygon]:
+def nonzero_polygons(rings: list[list[tuple[float, float]]], rule: str = "nonzero") -> list[Polygon]:
     """Polygons of the nonzero-winding fill. Empty when nothing is filled."""
     exact = [[(Fraction(x), Fraction(y)) for x, y in ring] for ring in rings]
     edges = [edge for ring in exact for edge in _ring_edges(ring)]
-    closed = stitch(boundary_edges(edges))
+    if rule not in ("nonzero", "evenodd"):
+        raise ValueError(f"unknown fill rule {rule}")
+    closed = stitch(boundary_edges(edges, rule))
     shells = [ring for ring in closed if _area2(ring) > 0]
     holes = [ring for ring in closed if _area2(ring) < 0]
     probes = [_Winding(_ring_edges(shell)) for shell in shells]
