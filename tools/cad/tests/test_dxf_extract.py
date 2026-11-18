@@ -716,3 +716,17 @@ def test_elevation_is_ezdxfs_world_z(seed: int) -> None:
     (world,) = m.transform_vertices([circle.ocs().to_wcs(circle.dxf.center)])
     expected = row["dimension"].get("elevation", 0.0)
     assert expected == pytest.approx(world.z, abs=1e-9)
+
+
+def test_attached_attribs_are_considered_without_fonts() -> None:
+    """An INSERT's ATTRIBs were never visited; they are considered entities now."""
+    doc = ezdxf.new("R2018")
+    block = doc.blocks.new("TAG")
+    block.add_line((0, 0), (1, 0))
+    block.add_attdef("T", (0, 1))
+    insert = doc.modelspace().add_blockref("TAG", (0, 0))
+    insert.add_attrib("T", "v", (0, 1))
+    seen: list[str] = []
+    rows = dxf_extract.extract_document(doc, file_id="attrib", on_considered=seen.append)
+    assert seen == ["LINE", "ATTDEF", "ATTRIB"]
+    assert [r.get("kind", r.get("id")) for r in rows] == ["Chord", "ID_TextEntity", "ID_TextEntity"]
