@@ -1,7 +1,11 @@
 """Totality: the extractor considers exactly the entities a drawing draws.
 
 The extractor yields one row (a record or a named decline) per considered
-entity. Here the considered set is checked against an independent
+entity. Two levels are checked: the types of the considered entities
+against ezdxf's ``recursive_decompose``, and each record's source entity
+and placed geometry against every drawn instance, placed by composing
+ezdxf's own insert matrices (``recursive_decompose`` misplaces a grid
+nested in a scaled or mirrored block; that is pinned here). Here the considered set is checked against an independent
 enumeration: ezdxf's ``recursive_decompose``, which expands every INSERT,
 including MINSERT grids and attached ATTRIBs. ezdxf skips every ATTDEF, so
 the ATTDEFs of each drawn block instance are added back: the extractor
@@ -110,3 +114,137 @@ def test_minsert_grid_is_one_copy_per_cell() -> None:
         (round(col * 7 * c - row * 5 * s, 9), round(col * 7 * s + row * 5 * c, 9)) for row in range(2) for col in range(3)
     )
     assert offsets == pytest.approx(expected)
+
+
+# --- instance level: the same source entities, in the same places -----------------------
+
+import math
+
+from ezdxf.math import Matrix44
+
+
+def _place(point, links) -> tuple[float, float]:
+    x, y = point
+    for link in links:
+        if link["reflect"]:
+            x = -x
+        x, y = x * link["scale"], y * link["scale"]
+        angle = math.radians(link["rotate"])
+        x, y = math.cos(angle) * x - math.sin(angle) * y, math.sin(angle) * x + math.cos(angle) * y
+        x, y = x + link["translate"][0], y + link["translate"][1]
+    return (x, y)
+
+
+def _ours(row: dict) -> list[float] | None:
+    """Placed geometry of a record, flattened; None for a decline."""
+    if row["record"] != "entity":
+        return None
+    links, params = row["placement"]["links"], row["params"]
+    scale = math.prod(link["scale"] for link in links)
+    if row["kind"] == "Chord":
+        return [*_place(params["start"], links), *_place(params["end"], links)]
+    if row["kind"] in ("Circle", "Arc"):
+        return [*_place(params["center"], links), params["radius"] * scale]
+    if row["kind"] == "BulgePolyline":
+        segments = params["segments"]
+        points = [segment["start"] for segment in segments]
+        if not params["closed"]:
+            points.append(segments[-1]["end"])
+        return [v for point in points for v in _place(point, links)]
+    raise AssertionError(row["kind"])
+
+
+def _geometry(entity, m) -> list[float] | None:
+    """Placed geometry of a drawn entity under matrix ``m``; None for what the extractor declines."""
+    kind = entity.dxftype()
+    if kind == "LINE":
+        start, end = m.transform_vertices([entity.dxf.start, entity.dxf.end])
+        return [start.x, start.y, end.x, end.y]
+    if kind in ("CIRCLE", "ARC"):
+        (centre,) = m.transform_vertices([entity.ocs().to_wcs(entity.dxf.center)])
+        return [centre.x, centre.y, entity.dxf.radius * m.transform_direction((1, 0, 0)).magnitude]
+    if kind == "LWPOLYLINE":
+        ocs, z = entity.ocs(), entity.dxf.elevation
+        points = m.transform_vertices([ocs.to_wcs((x, y, z)) for x, y in entity.get_points("xy")])
+        return [v for point in points for v in (point.x, point.y)]
+    return None
+
+
+def _source(entity) -> str:
+    origin = getattr(entity, "origin_of_copy", None)
+    return str((origin or entity).dxf.get("handle", ""))
+
+
+def _instances(doc, entities, m, out: list) -> None:
+    """The position oracle: every drawn instance as (type, source handle, geometry).
+
+    Each INSERT and each MINSERT cell (ezdxf's ``multi_insert``) contributes ezdxf's own
+    ``matrix44()``, composed by matrix product with the matrices above it. This avoids
+    ``recursive_decompose``, which folds a nested INSERT into one through
+    ``Insert.transform``: ezdxf 1.4.4 then keeps a nested grid's spacing unscaled and its
+    rows unmirrored (pinned below). ATTDEFs are drawn instances too; ezdxf skips them.
+    """
+    for entity in entities:
+        if entity.dxftype() != "INSERT":
+            out.append((entity.dxftype(), _source(entity), _geometry(entity, m)))
+            continue
+        copies = entity.multi_insert() if int(getattr(entity, "mcount", 1) or 1) > 1 else [entity]
+        for copy in copies:
+            _instances(doc, doc.blocks.get(copy.dxf.name), copy.matrix44() @ m, out)
+            # Attached attributes are already in the space the INSERT sits in.
+            for attrib in copy.attribs:
+                out.append(("ATTRIB", _source(attrib), None))
+
+
+@pytest.mark.parametrize(
+    ("outer", "theirs_agree"),
+    [({"xscale": 2, "yscale": 2}, False), ({"xscale": -1, "rotation": 30}, False), ({"rotation": 30}, True)],
+)
+def test_recursive_decompose_misplaces_a_nested_grid(outer: dict, theirs_agree: bool) -> None:
+    """Pins two ezdxf 1.4.4 defects the position oracle avoids. In a scaled block a nested
+    grid keeps its unscaled spacing; in a mirrored one its rows run the wrong way. The
+    extractor matches the matrix composition; if ezdxf fixes this, this goes red."""
+    doc = ezdxf.new("R2018")
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    doc.blocks.new("O").add_blockref("B", (3, 4), dxfattribs={"rotation": 20}).grid(size=(2, 2), spacing=(4, 5))
+    doc.modelspace().add_blockref("O", (100, 0), dxfattribs=outer)
+    drawn: list = []
+    _instances(doc, doc.modelspace(), Matrix44(), drawn)
+    rows = dxf_extract.extract_document(doc, file_id="pin")
+    ours = sorted(round(v, 6) for row in rows for v in _place(row["params"]["start"], row["placement"]["links"]))
+    oracle = sorted(round(v, 6) for _kind, _src, geometry in drawn for v in geometry[:2])
+    theirs = sorted(
+        round(v, 6) for e in recursive_decompose(doc.modelspace()) for v in (e.dxf.start.x, e.dxf.start.y)
+    )
+    assert ours == pytest.approx(oracle)
+    assert (theirs == pytest.approx(oracle)) is theirs_agree
+
+
+@pytest.mark.parametrize("seed", range(80))
+def test_records_are_the_drawn_instances_in_their_places(seed: int) -> None:
+    doc = _random_doc(random.Random(seed))
+    seen: list[str] = []
+    rows = dxf_extract.extract_document(doc, file_id="total", on_considered=seen.append)
+
+    drawn: list = []
+    _instances(doc, doc.modelspace(), Matrix44(), drawn)
+    theirs: dict[tuple[str, str], list] = {}
+    for kind, source, geometry in drawn:
+        theirs.setdefault((kind, source), []).append(geometry)
+
+    for kind, row in zip(seen, rows):
+        key = (kind, row["provenance"]["handle"])
+        mine = _ours(row)
+        candidates = theirs.get(key, [])
+        match = next(
+            (
+                index
+                for index, other in enumerate(candidates)
+                if (mine is None) == (other is None)
+                and (mine is None or (len(mine) == len(other) and mine == pytest.approx(other, abs=1e-6)))
+            ),
+            None,
+        )
+        assert match is not None, (key, mine, candidates)
+        candidates.pop(match)
+    assert all(not left for left in theirs.values()), {k: v for k, v in theirs.items() if v}

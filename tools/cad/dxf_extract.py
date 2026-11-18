@@ -222,6 +222,10 @@ def _provenance(
 ) -> dict[str, Any]:
     layer = getattr(entity.dxf, "layer", "0") or "0"
     handle = str(getattr(entity.dxf, "handle", "") or "")
+    origin = getattr(entity, "origin_of_copy", None)
+    if not handle and origin is not None:
+        # A virtual copy (an attribute copied into a MINSERT cell) reports its source entity.
+        handle = str(origin.dxf.get("handle", "") or "")
     return {
         "format": source_format,
         "version": version,
