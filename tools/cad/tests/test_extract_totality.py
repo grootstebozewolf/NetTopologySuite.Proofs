@@ -346,7 +346,8 @@ def _instances(doc, entities, m, out: list, stack: tuple[str, ...] = ()) -> None
 def test_recursive_decompose_misplaces_a_nested_grid(outer: dict, theirs_agree: bool) -> None:
     """Pins two ezdxf 1.4.4 defects the position oracle avoids. In a scaled block a nested
     grid keeps its unscaled spacing; in a mirrored one its rows run the wrong way. The
-    extractor matches the matrix composition; if ezdxf fixes this, this goes red."""
+    extractor matches the matrix composition; if ezdxf fixes this, this goes red.
+    Reported upstream: https://github.com/mozman/ezdxf/issues/1474"""
     doc = ezdxf.new("R2018")
     doc.blocks.new("B").add_line((0, 0), (1, 0))
     doc.blocks.new("O").add_blockref("B", (3, 4), dxfattribs={"rotation": 20}).grid(size=(2, 2), spacing=(4, 5))
