@@ -9,12 +9,25 @@ is ported.
 A considered entity is a modelspace entity, except a similarity INSERT,
 which is replaced by the entities of its block (nested inserts compose).
 A non-similarity INSERT is one considered entity and declines as a whole.
+Its attached ATTRIBs are still considered, each on its own: they sit in
+the INSERT's space and do not depend on its link.
 ``len(records) + len(declines) == len(considered)``. Nothing is dropped.
 
 Placement links are applied local-to-world: the entity OCS link, then
 the inner block insert, then the outer block insert. ``s`` is -1 when an
 odd number of links have ``reflect`` true. A DXF extrusion of -Z is one
-such link. Scale is the shared absolute value of xscale and yscale.
+such link, for the entities whose coordinates are in their OCS
+(``OCS_TYPES``: arcs, circles, polylines, hatches, text, attributes,
+inserts). LINE and SPLINE store world coordinates, so their extrusion
+moves nothing and is ignored. MTEXT and ELLIPSE store world coordinates
+but are drawn in their normal's plane: with a -Z normal they would be
+mirrored about their own anchor, so they decline as ID_UnsupportedEntity
+(a tilted normal is ID_TiltedPlacement). Any other type declines a
+non-+Z extrusion: only ``WORLD_TYPES`` ignore it.
+
+Elevation is world z: an INSERT maps its block's z through its own z,
+``zscale`` and, under a -Z extrusion, a sign flip; an OCS entity under a
+-Z extrusion turns its own z around. Scale is the shared absolute value of xscale and yscale.
 Both negative is a half-turn (``reflect`` stays false and 180 degrees are
 added to the source rotation) so two reflections are not stored as one.
 
@@ -25,13 +38,32 @@ Modes (ADR-0005):
   polyline into a Ring (winding rule ``nonzero``, because a polyline
   states no hatch rule). A non-finite bulge (NaN or infinity) is
   ``ID_DegenerateEntity`` in both modes. ``b = 0`` is a Chord in both
-  modes; the bulge value is kept.
+  modes; the bulge value is kept. An invisible entity (group 60) is
+  not drawn and declines as ``ID_UnsupportedEntity``. A curve-fit or
+  spline-fit 2D polyline declines the same way: its vertex list mixes
+  the fitted curve with the vertices it was fitted to. A polyline with a constant or
+  per-segment width is drawn as a filled band, so strict declines it as
+  ``ID_UnsupportedEntity`` with that reason. An entity with a nonzero
+  thickness is extruded along its extrusion, so strict declines it as
+  ``ID_ThreeDNotYet``. Lenient keeps both as their centre line or base
+  plane and lists what it dropped in the record's ``lenient`` field:
+  ``{"ignored": "width", "value": <largest width>}`` or
+  ``{"ignored": "thickness", "value": <thickness>}``. Thickness is kept
+  only along a +/-Z extrusion, where the plan view is the entity itself;
+  a negative or non-finite width declines. Strict records never carry
+  ``lenient``. A closed polyline whose last vertex
+  repeats its first exactly, with bulge 0, drops that vertex in both
+  modes: the closing segment it makes has no length and draws nothing.
+  With a nonzero bulge there, or a repeat anywhere else, the zero-length
+  segment is still ``ID_DegenerateEntity``.
 
 A Ring records ``orientation`` (``cw`` or ``ccw``) from the source
 contour sign, one entry per contour. Vertices are copied in source
 order and are not reversed. A hatch with boundary paths is a Ring in
-both modes: group 75 odd parity is ``evenodd`` and entire area is
-``nonzero``. An empty hatch, outermost style, or an ellipse or spline
+both modes: group 75 odd parity is ``evenodd``. Entire area (style 2)
+fills inside the outer boundary whatever the islands' direction, which
+``nonzero`` over the stored paths does not say, so it declines as
+``ID_HatchRegion``. An empty hatch, outermost style, or an ellipse or spline
 edge stays ``ID_HatchRegion``. A 2D POLYLINE is a Compound of chord and
 one-segment bulge members in vertex order. A 3D or mesh POLYLINE stays
 ``ID_ThreeDNotYet``.
@@ -53,6 +85,17 @@ ID_DegenerateEntity, ID_UnsupportedEntity (with the source name).
 DXF does not emit ID_AngleConventionUnknown. ``$ANGDIR`` and
 ``$ANGBASE`` are display provenance, not a decline. Another format may
 emit that id.
+
+An arrayed INSERT (MINSERT) is one INSERT per grid cell, as ezdxf's
+``multi_insert()`` gives them; each copy's block path entry is the block
+name with ``#`` and the copy's index.
+
+An INSERT's attached ATTRIBs are considered entities too, placed by the
+links outside that INSERT (their coordinates are already in its space).
+An invisible ATTRIB declines; a non-constant ATTDEF in a block is a
+template the INSERT does not draw and declines; a constant ATTDEF is drawn.
+
+A TEXT, MTEXT, ATTRIB or constant ATTDEF declines as ``ID_TextEntity``.
 
 ID_NonzeroOverlapNotYet is in the schema for overlapping nonzero-winding
 contours. Year 0 does not detect overlap, so this extractor never emits
@@ -120,6 +163,17 @@ THREED_TYPES = {
     "REGION",
     "SOLID",
 }
+# Entities whose coordinates are in their Object Coordinate System, set by the extrusion.
+OCS_TYPES = frozenset(
+    {"ARC", "CIRCLE", "LWPOLYLINE", "POLYLINE", "HATCH", "MPOLYGON", "TEXT", "ATTRIB", "ATTDEF", "SOLID", "TRACE", "INSERT"}
+)
+# Entities that store world coordinates and are drawn the same under any extrusion
+# (it only orients thickness, which declines on its own).
+WORLD_TYPES = frozenset({"LINE", "SPLINE"})
+# World-coordinate entities whose drawing still depends on the plane normal.
+NORMAL_TYPES = frozenset({"MTEXT", "ELLIPSE"})
+# Any other type with an extrusion other than +Z declines: a type is added to OCS_TYPES or
+# WORLD_TYPES on purpose, never mapped by default.
 CIRCULAR_KINDS = {"Arc", "Circle", "BulgePolyline", "Ring"}
 # Spiral uses the clothoid Linearizes bound on these tolerances.
 STEPPED_KINDS = CIRCULAR_KINDS | {"Spiral"}
@@ -201,6 +255,10 @@ def _provenance(
 ) -> dict[str, Any]:
     layer = getattr(entity.dxf, "layer", "0") or "0"
     handle = str(getattr(entity.dxf, "handle", "") or "")
+    origin = getattr(entity, "origin_of_copy", None)
+    if not handle and origin is not None:
+        # A virtual copy (an attribute copied into a MINSERT cell) reports its source entity.
+        handle = str(origin.dxf.get("handle", "") or "")
     return {
         "format": "DXF",
         "version": version,
@@ -334,6 +392,7 @@ def _entity(
     elevation: float,
     provenance: dict[str, Any],
     source_name: str | None = None,
+    lenient: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     row: dict[str, Any] = {
         "record": "entity",
@@ -347,6 +406,8 @@ def _entity(
     }
     if source_name is not None:
         row["sourceName"] = source_name
+    if lenient:
+        row["lenient"] = lenient
     return row
 
 
@@ -378,6 +439,10 @@ def _segment(start: list[float], end: list[float], bulge: float) -> dict[str, An
 
 
 def _bulge_segments(points: list[tuple[float, float, float]], closed: bool) -> list[dict[str, Any]] | str:
+    if closed and len(points) > 1 and points[-1][:2] == points[0][:2] and points[-1][2] == 0:
+        # A closed polyline that repeats its first vertex at the end has a zero-length
+        # closing segment. With no bulge on it, it draws nothing, so it is dropped.
+        points = points[:-1]
     if len(points) < 2:
         return "ID_DegenerateEntity"
     span = len(points) if closed else len(points) - 1
@@ -511,9 +576,58 @@ def _chain_member(segment: dict[str, Any]) -> dict[str, Any]:
     return {"kind": "BulgePolyline", "params": {"closed": False, "segments": [segment]}}
 
 
-def _map_polyline(entity: Any) -> dict[str, Any] | str:
+# A polyline with width is drawn as a filled band, not as its centre line.
+_WIDTH_DECLINE = ("ID_UnsupportedEntity", "polyline width: drawn as a filled band, not a curve")
+
+
+def _width_note(widths: list[float], mode: str) -> list[dict[str, Any]] | tuple[str, str]:
+    """No note for no width. Lenient keeps the centre line and notes the largest width;
+    strict, or a width that is negative or not finite, declines."""
+    if all(w == 0 for w in widths):
+        return []
+    if mode != "lenient":
+        return _WIDTH_DECLINE
+    if not all(_finite(w) and w >= 0 for w in widths):
+        return ("ID_DegenerateEntity", "polyline width is negative or not finite")
+    return [{"ignored": "width", "value": max(widths)}]
+
+
+def _invisible(entity: Any) -> bool | None:
+    """Group code 60: the entity is not drawn. None is a value that is not an integer."""
+    try:
+        value = entity.dxf.get("invisible", 0)
+    except AttributeError:  # ezdxf's DXFAttributeError: this type has no such attribute
+        return False
+    try:
+        return bool(int(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _thickness(entity: Any) -> float:
+    """The entity's extrusion thickness, 0 when it has none, NaN when it is not a number."""
+    try:
+        value = entity.dxf.get("thickness", 0.0)
+    except AttributeError:  # ezdxf's DXFAttributeError: this type has no such attribute
+        return 0.0
+    try:
+        return _num(value)
+    except (TypeError, ValueError):
+        return math.nan
+
+
+def _map_polyline(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, str]:
     if entity.is_3d_polyline or entity.is_polygon_mesh or entity.is_poly_face_mesh or not entity.is_2d_polyline:
         return "ID_ThreeDNotYet"
+    if int(entity.dxf.get("flags", 0)) & 6:
+        # Curve-fit (2) or spline-fit (4): the vertex list mixes the fitted curve with the
+        # vertices it was fitted to, and which of them are drawn is not settled here.
+        return ("ID_UnsupportedEntity", "curve-fit or spline-fit polyline: its drawn vertices are not read")
+    widths = [_num(entity.dxf.get(key, 0.0)) for key in ("default_start_width", "default_end_width")]
+    widths += [_num(v.dxf.get(key, 0.0)) for v in entity.vertices for key in ("start_width", "end_width")]
+    width = _width_note(widths, mode)
+    if isinstance(width, tuple):
+        return width
     points: list[tuple[float, float, float]] = []
     for vertex in entity.vertices:
         loc = vertex.dxf.location
@@ -528,16 +642,21 @@ def _map_polyline(entity: Any) -> dict[str, Any] | str:
         "kind": "Compound",
         "elevation": 0.0,
         "params": {"members": [_chain_member(segment) for segment in segments]},
+        "lenient": width,
     }
 
 
 def _hatch_rule(entity: Any) -> str | None:
-    """Group 75. 0 is odd parity, 2 is entire area. Outermost is not a winding rule."""
+    """Group 75. 0 (odd parity) is ``evenodd``; 1 (outermost) and 2 (entire area) decline.
+
+    Entire area fills everything inside the outer boundary, islands included. ``nonzero``
+    over the paths as stored is not that: an island wound against the outer path comes out
+    as a hole. Saying it would need the contours reoriented, and the carrier keeps their
+    source orientation, so the hatch declines instead.
+    """
     style = int(getattr(entity.dxf, "hatch_style", 0))
     if style == 0:
         return "evenodd"
-    if style == 2:
-        return "nonzero"
     return None
 
 
@@ -613,6 +732,11 @@ def _hatch_elevation(entity: Any) -> float | str:
 
 
 def _map_hatch(entity: Any) -> dict[str, Any] | str:
+    if entity.dxftype() == "MPOLYGON":
+        offset = entity.dxf.get("offset_vector", (0.0, 0.0, 0.0))
+        if any(abs(_num(v)) > _EPS for v in offset):
+            # Group 11 of an MPOLYGON; what it moves is not settled here.
+            return "ID_HatchRegion"
     rule = _hatch_rule(entity)
     if rule is None:
         return "ID_HatchRegion"
@@ -650,7 +774,7 @@ def _materialize(
     return {"members": members}
 
 
-def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
+def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, str]:
     """Return a mapping dict or a decline id.
 
     The dict has kind, params, and elevation. Decline ids are strings.
@@ -663,7 +787,7 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
     if dxftype in HATCH_TYPES:
         return _map_hatch(entity)
     if dxftype == "POLYLINE":
-        return _map_polyline(entity)
+        return _map_polyline(entity, mode)
     if dxftype in THREED_TYPES:
         return "ID_ThreeDNotYet"
     if dxftype == "LINE":
@@ -678,6 +802,11 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
             return "ID_DegenerateEntity"
         return {"kind": "Chord", "elevation": zs, "params": {"start": a, "end": b}}
     if dxftype == "LWPOLYLINE":
+        widths = [_num(entity.dxf.get("const_width", 0.0))]
+        widths += [_num(w) for _x, _y, start, end in entity.get_points("xyse") for w in (start, end)]
+        width = _width_note(widths, mode)
+        if isinstance(width, tuple):
+            return width
         raw = [(_num(x), _num(y), _num(b)) for x, y, b in entity.get_points("xyb")]
         closed = bool(entity.closed)
         segments = _bulge_segments(raw, closed)
@@ -687,11 +816,12 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
         if not _finite(elevation):
             return "ID_DegenerateEntity"
         if mode == "lenient" and closed:
-            return _ring([segments], "nonzero", elevation)
+            return {**_ring([segments], "nonzero", elevation), "lenient": width}
         return {
             "kind": "BulgePolyline",
             "elevation": elevation,
             "params": {"closed": closed, "segments": segments},
+            "lenient": width,
         }
     if dxftype == "ARC":
         center = entity.dxf.center
@@ -784,11 +914,14 @@ def extract_document(
     mode: str = "strict",
     tolerance: dict[str, Any] | None = None,
     file_id: str = "unnamed",
+    on_considered: Any = None,
 ) -> list[dict[str, Any]]:
     """Extract carrier records and declines from an ezdxf document.
 
     ``mode`` is ``strict`` or ``lenient``. ``tolerance`` is a schema
     tolerance object; the default is sourceDefault.
+    ``on_considered``, when given, is called with the DXF type of each
+    considered entity, once per row, in row order.
     """
     if mode not in ("strict", "lenient"):
         raise ValueError("mode must be strict or lenient")
@@ -805,19 +938,82 @@ def extract_document(
         block_path: list[str],
         z_offset: float,
         stack: tuple[str, ...],
+        label: str | None = None,
+        z_factor: float = 1.0,
+        cell: str | None = None,
+        parent_hidden: bool = False,
     ) -> None:
+        """Emit one considered entity, then an INSERT's attached attributes.
+
+        A local z maps to world z as ``z_offset + z_factor * z``. ``cell`` names the
+        MINSERT cell the entity was copied into; ``parent_hidden`` marks an attribute
+        of an invisible INSERT.
+        """
+        emit_self(entity, prefix, block_path, z_offset, stack, label, z_factor, cell, parent_hidden)
+        if entity.dxftype() == "INSERT" and int(getattr(entity, "mcount", 1) or 1) <= 1:
+            # Attached attributes have their own handles and sit in the space the INSERT
+            # sits in, not in its block, so they are considered whatever the INSERT's own
+            # link decides: a declined INSERT does not take its attributes with it.
+            name = str(entity.dxf.name)
+            hidden = parent_hidden or _invisible(entity) is not False
+            for attrib in entity.attribs:
+                emit(
+                    attrib, prefix, block_path + [label or name], z_offset, stack + (name,),
+                    z_factor=z_factor, cell=cell, parent_hidden=hidden,
+                )
+
+    def emit_self(
+        entity: Any,
+        prefix: list[dict[str, Any]],
+        block_path: list[str],
+        z_offset: float,
+        stack: tuple[str, ...],
+        label: str | None,
+        z_factor: float,
+        cell: str | None,
+        parent_hidden: bool,
+    ) -> None:
+        def add(row: dict[str, Any]) -> None:
+            # Every row is one considered entity: this one.
+            if cell is not None and row["record"] == "decline":
+                # Cells share the MINSERT's handle and block path; the reason tells them apart.
+                row["reason"] += f" (MINSERT cell {cell})"
+            rows.append(row)
+            if on_considered is not None:
+                on_considered(entity.dxftype())
+
         prov = _provenance(entity, version, file_id, block_path)
         if isinstance(units, str):
-            rows.append(_decl(units, f"header convention {units}", prov))
+            add(_decl(units, f"header convention {units}", prov))
             return
-        if entity.dxftype() == "INSERT":
+        kind = entity.dxftype()
+        if parent_hidden:
+            add(_decl("ID_UnsupportedEntity", "attribute of an invisible or malformed INSERT: not drawn", prov, name=kind))
+            return
+        invisible = _invisible(entity)
+        if invisible is None:
+            add(_decl("ID_DegenerateEntity", "invisible flag (group 60) is not an integer", prov))
+            return
+        if invisible:
+            add(_decl("ID_UnsupportedEntity", "invisible: not drawn", prov, name=kind))
+            return
+        if kind == "INSERT":
             name = str(entity.dxf.name)
+            count = int(getattr(entity, "mcount", 1) or 1)
+            if count > 1:
+                # An arrayed INSERT (MINSERT) draws its block once per grid cell. ezdxf's
+                # multi_insert() gives each copy as a plain INSERT, attributes included.
+                for index, copy in enumerate(entity.multi_insert()):
+                    copy.dxf.handle = entity.dxf.get("handle")
+                    label = f"{name}#{index}"
+                    emit(copy, prefix, block_path, z_offset, stack, label=label, z_factor=z_factor, cell=label)
+                return
             if name in stack:
-                rows.append(_decl("ID_DegenerateEntity", f"cyclic block {name}", prov))
+                add(_decl("ID_DegenerateEntity", f"cyclic block {name}", prov))
                 return
             extr = _extrusion_link(entity)
             if isinstance(extr, str):
-                rows.append(_decl(extr, "INSERT extrusion is not +/- Z", prov))
+                add(_decl(extr, "INSERT extrusion is not +/- Z", prov))
                 return
             link = _insert_link(entity)
             if isinstance(link, str):
@@ -826,45 +1022,86 @@ def extract_document(
                     if link == "ID_NotSimilarityPlacement"
                     else link
                 )
-                rows.append(_decl(link, reason, prov))
+                add(_decl(link, reason, prov))
                 return
             iz = _insert_z(entity)
-            if isinstance(iz, str):
-                rows.append(_decl(iz, "non-finite INSERT z", prov))
+            zscale = _num(entity.dxf.get("zscale", 1.0))
+            if isinstance(iz, str) or not _finite(zscale):
+                add(_decl("ID_DegenerateEntity", "non-finite INSERT z or zscale", prov))
                 return
             children = list(_iter_block(doc, name))
             if not children:
-                rows.append(_decl("ID_DegenerateEntity", f"empty block {name}", prov))
+                add(_decl("ID_DegenerateEntity", f"empty block {name}", prov))
                 return
             child_prefix = [link] + prefix
+            # Under a -Z extrusion the INSERT's OCS z runs along world -z.
+            flip = -1.0 if extr is not None else 1.0
             if extr is not None:
                 child_prefix = [extr] + child_prefix
+            child_offset = z_offset + z_factor * flip * iz
+            child_factor = z_factor * flip * zscale
             for child in children:
-                emit(child, child_prefix, block_path + [name], z_offset + iz, stack + (name,))
+                emit(child, child_prefix, block_path + [label or name], child_offset, stack + (name,), z_factor=child_factor)
             return
         extr = _extrusion_link(entity)
-        if isinstance(extr, str):
-            rows.append(_decl(extr, "extrusion is not +/- Z", prov))
+        if kind in OCS_TYPES:
+            if isinstance(extr, str):
+                add(_decl(extr, "extrusion is not +/- Z", prov))
+                return
+        elif kind in WORLD_TYPES:
+            extr = None  # world coordinates: the extrusion does not move them
+        elif isinstance(extr, str):
+            add(_decl(extr, "extrusion is not +/- Z", prov))
             return
+        elif extr is not None:
+            # MTEXT and ELLIPSE store world coordinates but are drawn in the plane the
+            # normal sets: a -Z normal mirrors them about their own anchor, which no link
+            # here expresses. Any other type is not known to be OCS or world: fail closed.
+            reason = (
+                f"{kind} with a -Z extrusion is drawn mirrored about its anchor; not read"
+                if kind in NORMAL_TYPES
+                else f"{kind} with a -Z extrusion: not known to be OCS or world coordinates"
+            )
+            add(_decl("ID_UnsupportedEntity", reason, prov, name=kind))
+            return
+        notes: list[dict[str, Any]] = []
+        thickness = _thickness(entity)
+        if thickness != 0:
+            # Thickness extrudes the entity along its extrusion: it spans more than one
+            # elevation. Along +/-Z the plan view is the entity itself, so lenient keeps
+            # it and says so; along a tilted extrusion the plan view changes.
+            if not _finite(thickness):
+                add(_decl("ID_DegenerateEntity", "non-finite thickness", prov))
+                return
+            if mode != "lenient" or isinstance(_extrusion_link(entity), str):
+                add(_decl("ID_ThreeDNotYet", "thickness extrudes the entity in Z", prov))
+                return
+            notes.append({"ignored": "thickness", "value": thickness})
+        # A -Z OCS also turns its z around.
+        z_sign = -1.0 if extr is not None else 1.0
         mapped = _map_geometry(entity, mode)
+        if isinstance(mapped, tuple):
+            # A decline id with its own reason.
+            add(_decl(mapped[0], mapped[1], prov, name=kind if mapped[0] == "ID_UnsupportedEntity" else None))
+            return
         if isinstance(mapped, str):
             if mapped == "ID_UnsupportedEntity":
-                name = entity.dxftype()
-                rows.append(_decl(mapped, f"unsupported {name}", prov, name=name))
+                add(_decl(mapped, f"unsupported {kind}", prov, name=kind))
             else:
-                rows.append(_decl(mapped, mapped, prov))
+                add(_decl(mapped, mapped, prov))
             return
         bad = _tolerance_ok(mapped["kind"], tol)
         if bad:
-            rows.append(_decl(bad, f"{tol['kind']} on {mapped['kind']}", prov))
+            add(_decl(bad, f"{tol['kind']} on {mapped['kind']}", prov))
             return
         links = ([extr] + prefix) if extr else list(prefix)
-        elevation = _num(mapped["elevation"]) + z_offset
+        elevation = z_offset + z_factor * z_sign * _num(mapped["elevation"])
         if not _finite(elevation):
-            rows.append(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
+            add(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
             return
         params = _materialize(mapped["kind"], mapped["params"], links, units, tol, elevation, prov)
-        rows.append(_entity(mapped["kind"], params, links, units, tol, elevation, prov))
+        notes += mapped.get("lenient", [])
+        add(_entity(mapped["kind"], params, links, units, tol, elevation, prov, lenient=notes))
 
     for entity in doc.modelspace():
         emit(entity, [], [], 0.0, ())
