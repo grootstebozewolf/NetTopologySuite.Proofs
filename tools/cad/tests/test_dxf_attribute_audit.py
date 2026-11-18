@@ -13,6 +13,8 @@ Classes:
 * ignored: it does not change the 2D geometry drawn (appearance, data,
   structure), or only matters where the entity already declines.
 * declines: a non-default value makes the entity decline.
+* lenient: a non-default value makes the entity decline in strict mode; lenient
+  keeps it and names what it left out in the record's ``lenient`` field.
 """
 
 from __future__ import annotations
@@ -43,10 +45,10 @@ _COMMON = {
 _LEGACY_ELEVATION = "read"
 
 AUDIT: dict[str, dict[str, str]] = {
-    "LINE": {"start": "read", "end": "read", "thickness": "declines"},
+    "LINE": {"start": "read", "end": "read", "thickness": "lenient"},
     "ARC": {"center": "read", "radius": "read", "start_angle": "read", "end_angle": "read",
-            "thickness": "declines", "elevation": _LEGACY_ELEVATION},
-    "CIRCLE": {"center": "read", "radius": "read", "thickness": "declines", "elevation": _LEGACY_ELEVATION},
+            "thickness": "lenient", "elevation": _LEGACY_ELEVATION},
+    "CIRCLE": {"center": "read", "radius": "read", "thickness": "lenient", "elevation": _LEGACY_ELEVATION},
     "ELLIPSE": {"center": "read", "major_axis": "read", "ratio": "read", "start_param": "read", "end_param": "read"},
     "SPLINE": {
         "degree": "read", "flags": "read",  # periodic
@@ -54,17 +56,17 @@ AUDIT: dict[str, dict[str, str]] = {
         "control_point_tolerance": "ignored", "knot_tolerance": "ignored", "fit_tolerance": "ignored",
         "start_tangent": "ignored", "end_tangent": "ignored",  # fit-point splines decline
     },
-    "LWPOLYLINE": {"const_width": "declines", "count": "ignored", "elevation": "read", "flags": "read",
-                   "thickness": "declines"},
+    "LWPOLYLINE": {"const_width": "lenient", "count": "ignored", "elevation": "read", "flags": "read",
+                   "thickness": "lenient"},
     "POLYLINE": {
-        "default_start_width": "declines", "default_end_width": "declines", "elevation": "read",
-        "flags": "read", "thickness": "declines",
+        "default_start_width": "lenient", "default_end_width": "lenient", "elevation": "read",
+        "flags": "read", "thickness": "lenient",
         # Meshes and fitted polylines decline, so these never shape a record.
         "m_count": "ignored", "n_count": "ignored", "m_smooth_density": "ignored",
         "n_smooth_density": "ignored", "smooth_type": "ignored",
     },
     "VERTEX": {
-        "location": "read", "bulge": "read", "start_width": "declines", "end_width": "declines",
+        "location": "read", "bulge": "read", "start_width": "lenient", "end_width": "lenient",
         "flags": "ignored", "tangent": "ignored",  # fit and mesh vertices: their polylines decline
         "vtx0": "ignored", "vtx1": "ignored", "vtx2": "ignored", "vtx3": "ignored", "vertex_identifier": "ignored",
         "invisible": "ignored",  # a vertex is never drawn on its own
@@ -91,7 +93,7 @@ AUDIT: dict[str, dict[str, str]] = {
     "TEXT": {
         "text": "read", "insert": "read", "align_point": "read", "halign": "read", "valign": "read",
         "height": "read", "rotation": "read", "oblique": "read", "width": "read", "style": "read",
-        "text_generation_flag": "read", "thickness": "declines", "elevation": _LEGACY_ELEVATION,
+        "text_generation_flag": "read", "thickness": "lenient", "elevation": _LEGACY_ELEVATION,
     },
     "MTEXT": {
         "text": "read", "insert": "read", "char_height": "read", "width": "read", "rotation": "read",
@@ -125,7 +127,7 @@ def test_every_attribute_is_classified(kind: str) -> None:
     stale = set(AUDIT[kind]) - _attributes(kind)
     assert not missing, f"{kind}: decide whether these change the drawn geometry: {sorted(missing)}"
     assert not stale, f"{kind}: no longer ezdxf attributes: {sorted(stale)}"
-    assert set(classified.values()) <= {"read", "ignored", "declines"}
+    assert set(classified.values()) <= {"read", "ignored", "declines", "lenient"}
 
 
 def test_arcalignedtext_has_no_ezdxf_class_and_declines() -> None:
@@ -180,21 +182,45 @@ def _drawing(kind: str, attribute: str | None):
 # Text kinds only become records once a font map turns them into glyphs, so their
 # declining attributes have no record to compare with here.
 _TEXT_KINDS = {"TEXT", "MTEXT", "ATTRIB", "ATTDEF"}
-_DECLINING = sorted(
-    (kind, attribute)
-    for kind in sorted((_HANDLED | {"VERTEX"}) - _TEXT_KINDS)
-    for attribute, verdict in {**_COMMON, **AUDIT[kind]}.items()
-    if verdict == "declines" and attribute in _attributes(kind)
+def _classified(wanted: str) -> list[tuple[str, str]]:
+    return sorted(
+        (kind, attribute)
+        for kind in sorted((_HANDLED | {"VERTEX"}) - _TEXT_KINDS)
+        for attribute, verdict in {**_COMMON, **AUDIT[kind]}.items()
+        if verdict == wanted and attribute in _attributes(kind)
+    )
+
+
+_DECLINING = _classified("declines")
+_LENIENT = _classified("lenient")
+_drawn = lambda rows: [row for row in rows if row["record"] == "entity"]
+
+
+# A "lenient" attribute declines in strict mode only; lenient is test_lenient_attributes_are_named.
+@pytest.mark.parametrize(
+    ("kind", "attribute", "mode"),
+    [(*case, mode) for case in _DECLINING for mode in ("strict", "lenient")] + [(*case, "strict") for case in _LENIENT],
 )
-
-
-@pytest.mark.parametrize(("kind", "attribute"), _DECLINING)
-def test_declining_attributes_decline(kind: str, attribute: str) -> None:
-    drawn = lambda rows: [row for row in rows if row["record"] == "entity"]
+def test_declining_attributes_decline(kind: str, attribute: str, mode: str) -> None:
     baseline = dxf_extract.extract_document(_drawing(kind, None), mode="lenient", file_id="audit")
-    assert drawn(baseline), (kind, "the baseline must be a record, or the check proves nothing", baseline)
-    rows = dxf_extract.extract_document(_drawing(kind, attribute), mode="lenient", file_id="audit")
-    assert not drawn(rows), (kind, attribute, rows)
+    assert _drawn(baseline), (kind, "the baseline must be a record, or the check proves nothing", baseline)
+    # Strict declines more, so the lenient baseline being a record is not enough there.
+    if mode == "strict" and not _drawn(dxf_extract.extract_document(_drawing(kind, None), file_id="audit")):
+        pytest.skip(f"{kind} is no strict record even without {attribute}")
+    rows = dxf_extract.extract_document(_drawing(kind, attribute), mode=mode, file_id="audit")
+    assert not _drawn(rows), (kind, attribute, rows)
+
+
+@pytest.mark.parametrize(("kind", "attribute"), _LENIENT)
+def test_lenient_attributes_are_named(kind: str, attribute: str) -> None:
+    """Lenient keeps the record, unchanged but for a note naming what it left out."""
+    (baseline,) = _drawn(dxf_extract.extract_document(_drawing(kind, None), mode="lenient", file_id="audit"))
+    (row,) = _drawn(dxf_extract.extract_document(_drawing(kind, attribute), mode="lenient", file_id="audit"))
+    ignored = "thickness" if attribute == "thickness" else "width"
+    assert row.pop("lenient") == [{"ignored": ignored, "value": 0.5}]
+    row["provenance"]["handle"] = baseline["provenance"]["handle"]
+    assert row == baseline
+    assert "lenient" not in baseline
 
 
 _R12 = Path(__file__).resolve().parents[1] / "fixtures" / "r12_group38.dxf"

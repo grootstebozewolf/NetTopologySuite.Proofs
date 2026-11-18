@@ -591,8 +591,7 @@ def test_closed_2d_polyline_and_hatch_path_repeating_the_first_vertex() -> None:
     assert len(ring["params"]["contours"][0]) == 3
 
 
-@pytest.mark.parametrize("mode", ["strict", "lenient"])
-def test_polyline_width_declines_instead_of_drawing_a_hairline(mode: str) -> None:
+def _wide_polylines():
     doc = ezdxf.new("R2018")
     msp = doc.modelspace()
     msp.add_lwpolyline([(0, 0), (5, 0), (5, 3)], dxfattribs={"const_width": 0.8}, close=True)
@@ -601,7 +600,11 @@ def test_polyline_width_declines_instead_of_drawing_a_hairline(mode: str) -> Non
     tapered = msp.add_polyline2d([(0, 0), (5, 0), (5, 2)])
     tapered.vertices[1].dxf.end_width = 0.3
     msp.add_lwpolyline([(0, 0), (5, 0)], dxfattribs={"const_width": 0.0})
-    rows = dxf_extract.extract_document(doc, mode=mode, file_id="width")
+    return doc
+
+
+def test_polyline_width_declines_instead_of_drawing_a_hairline() -> None:
+    rows = dxf_extract.extract_document(_wide_polylines(), file_id="width")
     for row in rows:
         VALIDATOR.validate(row)
     *banded, plain = rows
@@ -613,6 +616,58 @@ def test_polyline_width_declines_instead_of_drawing_a_hairline(mode: str) -> Non
     ]
     assert all(r["reason"] == "polyline width: drawn as a filled band, not a curve" for r in banded)
     assert plain["record"] == "entity"
+    assert "lenient" not in plain
+
+
+def test_lenient_keeps_the_centre_line_and_names_the_width() -> None:
+    rows = dxf_extract.extract_document(_wide_polylines(), mode="lenient", file_id="width")
+    for row in rows:
+        VALIDATOR.validate(row)
+    assert [(row["kind"], row.get("lenient")) for row in rows] == [
+        ("Ring", [{"ignored": "width", "value": 0.8}]),  # closed: a Ring in lenient mode
+        ("BulgePolyline", [{"ignored": "width", "value": 1.0}]),
+        ("Compound", [{"ignored": "width", "value": 0.5}]),
+        ("Compound", [{"ignored": "width", "value": 0.3}]),
+        ("BulgePolyline", None),
+    ]
+    strict = dxf_extract.extract_document(_wide_polylines(), file_id="width")
+    assert strict[-1] == rows[-1]  # no width: the same record in both modes
+
+
+def test_lenient_declines_a_width_that_is_no_width() -> None:
+    doc = ezdxf.new("R2018")
+    doc.modelspace().add_lwpolyline([(0, 0, -1.0, -1.0, 0.0), (5, 0, 0.0, 0.0, 0.0)], format="xyseb")
+    (row,) = dxf_extract.extract_document(doc, mode="lenient", file_id="width")
+    assert (row["id"], row["reason"]) == ("ID_DegenerateEntity", "polyline width is negative or not finite")
+
+
+def test_lenient_keeps_the_base_plane_of_a_thickness_along_z() -> None:
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    msp.add_line((0, 0), (1, 0), dxfattribs={"thickness": 3})
+    msp.add_circle((0, 0), 1, dxfattribs={"thickness": -2, "extrusion": (0, 0, -1)})
+    msp.add_lwpolyline([(0, 0), (1, 0)], dxfattribs={"thickness": 1, "const_width": 0.25})
+    # Along a tilted extrusion the plan view is not the entity: still a decline.
+    msp.add_line((0, 0), (1, 0), dxfattribs={"thickness": 3, "extrusion": (0, 1, 1)})
+    rows = dxf_extract.extract_document(doc, mode="lenient", file_id="thick")
+    for row in rows:
+        VALIDATOR.validate(row)
+    *kept, tilted = rows
+    assert [(row["kind"], row["lenient"]) for row in kept] == [
+        ("Chord", [{"ignored": "thickness", "value": 3.0}]),
+        ("Circle", [{"ignored": "thickness", "value": -2.0}]),
+        ("BulgePolyline", [{"ignored": "thickness", "value": 1.0}, {"ignored": "width", "value": 0.25}]),
+    ]
+    assert kept[1]["placement"]["s"] == -1  # the -Z extrusion is still the reflecting link
+    assert (tilted["id"], tilted["reason"]) == ("ID_ThreeDNotYet", "thickness extrudes the entity in Z")
+
+
+def test_strict_records_never_carry_lenient() -> None:
+    assert "lenient" in SCHEMA["$defs"]["entity"]["properties"]
+    doc = _wide_polylines()
+    doc.modelspace().add_line((0, 0), (1, 0), dxfattribs={"thickness": 3})
+    rows = dxf_extract.extract_document(doc, file_id="strict")
+    assert all("lenient" not in row for row in rows)
 
 
 def test_thickness_declines_as_3d_for_every_kind() -> None:

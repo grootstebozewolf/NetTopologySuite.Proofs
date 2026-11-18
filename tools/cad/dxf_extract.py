@@ -42,10 +42,16 @@ Modes (ADR-0005):
   not drawn and declines as ``ID_UnsupportedEntity``. A curve-fit or
   spline-fit 2D polyline declines the same way: its vertex list mixes
   the fitted curve with the vertices it was fitted to. A polyline with a constant or
-  per-segment width is drawn as a filled band, so it declines as
-  ``ID_UnsupportedEntity`` with that reason, in both modes. Any entity
-  with a nonzero thickness is extruded along Z and declines as
-  ``ID_ThreeDNotYet``. A closed polyline whose last vertex
+  per-segment width is drawn as a filled band, so strict declines it as
+  ``ID_UnsupportedEntity`` with that reason. An entity with a nonzero
+  thickness is extruded along its extrusion, so strict declines it as
+  ``ID_ThreeDNotYet``. Lenient keeps both as their centre line or base
+  plane and lists what it dropped in the record's ``lenient`` field:
+  ``{"ignored": "width", "value": <largest width>}`` or
+  ``{"ignored": "thickness", "value": <thickness>}``. Thickness is kept
+  only along a +/-Z extrusion, where the plan view is the entity itself;
+  a negative or non-finite width declines. Strict records never carry
+  ``lenient``. A closed polyline whose last vertex
   repeats its first exactly, with bulge 0, drops that vertex in both
   modes: the closing segment it makes has no length and draws nothing.
   With a nonzero bulge there, or a repeat anywhere else, the zero-length
@@ -386,6 +392,7 @@ def _entity(
     elevation: float,
     provenance: dict[str, Any],
     source_name: str | None = None,
+    lenient: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     row: dict[str, Any] = {
         "record": "entity",
@@ -399,6 +406,8 @@ def _entity(
     }
     if source_name is not None:
         row["sourceName"] = source_name
+    if lenient:
+        row["lenient"] = lenient
     return row
 
 
@@ -571,6 +580,18 @@ def _chain_member(segment: dict[str, Any]) -> dict[str, Any]:
 _WIDTH_DECLINE = ("ID_UnsupportedEntity", "polyline width: drawn as a filled band, not a curve")
 
 
+def _width_note(widths: list[float], mode: str) -> list[dict[str, Any]] | tuple[str, str]:
+    """No note for no width. Lenient keeps the centre line and notes the largest width;
+    strict, or a width that is negative or not finite, declines."""
+    if all(w == 0 for w in widths):
+        return []
+    if mode != "lenient":
+        return _WIDTH_DECLINE
+    if not all(_finite(w) and w >= 0 for w in widths):
+        return ("ID_DegenerateEntity", "polyline width is negative or not finite")
+    return [{"ignored": "width", "value": max(widths)}]
+
+
 def _invisible(entity: Any) -> bool | None:
     """Group code 60: the entity is not drawn. None is a value that is not an integer."""
     try:
@@ -595,7 +616,7 @@ def _thickness(entity: Any) -> float:
         return math.nan
 
 
-def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
+def _map_polyline(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, str]:
     if entity.is_3d_polyline or entity.is_polygon_mesh or entity.is_poly_face_mesh or not entity.is_2d_polyline:
         return "ID_ThreeDNotYet"
     if int(entity.dxf.get("flags", 0)) & 6:
@@ -604,8 +625,9 @@ def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
         return ("ID_UnsupportedEntity", "curve-fit or spline-fit polyline: its drawn vertices are not read")
     widths = [_num(entity.dxf.get(key, 0.0)) for key in ("default_start_width", "default_end_width")]
     widths += [_num(v.dxf.get(key, 0.0)) for v in entity.vertices for key in ("start_width", "end_width")]
-    if any(w != 0 for w in widths):
-        return _WIDTH_DECLINE
+    width = _width_note(widths, mode)
+    if isinstance(width, tuple):
+        return width
     points: list[tuple[float, float, float]] = []
     for vertex in entity.vertices:
         loc = vertex.dxf.location
@@ -620,6 +642,7 @@ def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
         "kind": "Compound",
         "elevation": 0.0,
         "params": {"members": [_chain_member(segment) for segment in segments]},
+        "lenient": width,
     }
 
 
@@ -764,7 +787,7 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, s
     if dxftype in HATCH_TYPES:
         return _map_hatch(entity)
     if dxftype == "POLYLINE":
-        return _map_polyline(entity)
+        return _map_polyline(entity, mode)
     if dxftype in THREED_TYPES:
         return "ID_ThreeDNotYet"
     if dxftype == "LINE":
@@ -781,8 +804,9 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, s
     if dxftype == "LWPOLYLINE":
         widths = [_num(entity.dxf.get("const_width", 0.0))]
         widths += [_num(w) for _x, _y, start, end in entity.get_points("xyse") for w in (start, end)]
-        if any(w != 0 for w in widths):
-            return _WIDTH_DECLINE
+        width = _width_note(widths, mode)
+        if isinstance(width, tuple):
+            return width
         raw = [(_num(x), _num(y), _num(b)) for x, y, b in entity.get_points("xyb")]
         closed = bool(entity.closed)
         segments = _bulge_segments(raw, closed)
@@ -792,11 +816,12 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, s
         if not _finite(elevation):
             return "ID_DegenerateEntity"
         if mode == "lenient" and closed:
-            return _ring([segments], "nonzero", elevation)
+            return {**_ring([segments], "nonzero", elevation), "lenient": width}
         return {
             "kind": "BulgePolyline",
             "elevation": elevation,
             "params": {"closed": closed, "segments": segments},
+            "lenient": width,
         }
     if dxftype == "ARC":
         center = entity.dxf.center
@@ -1039,12 +1064,19 @@ def extract_document(
             )
             add(_decl("ID_UnsupportedEntity", reason, prov, name=kind))
             return
+        notes: list[dict[str, Any]] = []
         thickness = _thickness(entity)
         if thickness != 0:
-            # Thickness extrudes the entity along Z: it spans more than one elevation.
-            reason = "thickness extrudes the entity in Z" if _finite(thickness) else "non-finite thickness"
-            add(_decl("ID_ThreeDNotYet" if _finite(thickness) else "ID_DegenerateEntity", reason, prov))
-            return
+            # Thickness extrudes the entity along its extrusion: it spans more than one
+            # elevation. Along +/-Z the plan view is the entity itself, so lenient keeps
+            # it and says so; along a tilted extrusion the plan view changes.
+            if not _finite(thickness):
+                add(_decl("ID_DegenerateEntity", "non-finite thickness", prov))
+                return
+            if mode != "lenient" or isinstance(_extrusion_link(entity), str):
+                add(_decl("ID_ThreeDNotYet", "thickness extrudes the entity in Z", prov))
+                return
+            notes.append({"ignored": "thickness", "value": thickness})
         # A -Z OCS also turns its z around.
         z_sign = -1.0 if extr is not None else 1.0
         mapped = _map_geometry(entity, mode)
@@ -1068,7 +1100,8 @@ def extract_document(
             add(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
             return
         params = _materialize(mapped["kind"], mapped["params"], links, units, tol, elevation, prov)
-        add(_entity(mapped["kind"], params, links, units, tol, elevation, prov))
+        notes += mapped.get("lenient", [])
+        add(_entity(mapped["kind"], params, links, units, tol, elevation, prov, lenient=notes))
 
     for entity in doc.modelspace():
         emit(entity, [], [], 0.0, ())
