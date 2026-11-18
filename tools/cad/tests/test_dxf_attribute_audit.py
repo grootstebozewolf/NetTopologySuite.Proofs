@@ -17,6 +17,8 @@ Classes:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import ezdxf
 import pytest
 from ezdxf.entities import factory
@@ -36,8 +38,10 @@ _COMMON = {
         "material_handle", "plotstyle_enum", "plotstyle_handle", "shadow_mode", "visualstyle_handle",
     )},
 }
-# R12 group 38: superseded by the point's own z; ezdxf ignores it for geometry too.
-_LEGACY_ELEVATION = "ignored"
+# R11/R12 group 38. ezdxf's loader moves it into the point's z when that z is 0 and then
+# discards the attribute (``elevation_to_z_axis``), so the extractor reads it through the
+# point; fixtures/r12_group38.dxf checks that no height is lost.
+_LEGACY_ELEVATION = "read"
 
 AUDIT: dict[str, dict[str, str]] = {
     "LINE": {"start": "read", "end": "read", "thickness": "declines"},
@@ -190,3 +194,33 @@ def test_declining_attributes_decline(kind: str, attribute: str, ttf) -> None:
     assert drawn(baseline), (kind, "the baseline must be a record, or the check proves nothing", baseline)
     rows = dxf_extract.extract_document(_drawing(kind, attribute), mode="lenient", file_id="audit", fonts=fonts)
     assert not drawn(rows), (kind, attribute, rows)
+
+
+_R12 = Path(__file__).resolve().parents[1] / "fixtures" / "r12_group38.dxf"
+
+
+def test_r12_fixture_stores_z_only_in_group_38() -> None:
+    """Guards the fixture: handles A1 to A4 carry group 38 and no group 30."""
+    text = _R12.read_text(encoding="utf-8")
+    entities = text.split(" 0\nCIRCLE\n", 1)[1]
+    for handle in ("A1", "A2", "A3", "A4"):
+        record = entities.split(f" 5\n{handle}\n", 1)[1].split("  0\n", 1)[0]
+        assert " 38\n5.0\n" in record and " 30\n" not in record, handle
+    assert "AC1009" in text
+
+
+def test_r12_group_38_height_is_read_never_dropped(ttf) -> None:
+    # The file has no STYLE table, so TEXT uses the default style and its "txt" font.
+    rows = dxf_extract.extract_path(_R12, file_id="r12", fonts={"txt.shx": ttf})
+    by_handle = {row["provenance"]["handle"]: row for row in rows}
+    # Group 38 alone: the height is the elevation.
+    for handle in ("A1", "A2"):
+        assert by_handle[handle]["dimension"] == {"space": "2d+elevation", "elevation": 5.0}
+    # An INSERT's group 38 lifts its block.
+    (inside,) = [row for row in rows if row["provenance"]["blockPath"] == ["B"]]
+    assert inside["dimension"] == {"space": "2d+elevation", "elevation": 5.0}
+    # An explicit z wins over group 38, as AutoCAD reads R12.
+    assert by_handle["A5"]["dimension"] == {"space": "2d+elevation", "elevation": 2.5}
+    # TEXT: its glyph outlines sit at the group 38 height.
+    assert by_handle["A3"]["kind"] == "Compound"
+    assert by_handle["A3"]["dimension"] == {"space": "2d+elevation", "elevation": 5.0}

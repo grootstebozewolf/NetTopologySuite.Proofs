@@ -1282,7 +1282,8 @@ def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> Text
     if halign not in _DXF_HALIGN or valign not in _DXF_VALIGN:
         return ("ID_TextEntity", f"unknown text alignment {halign} {valign}")
     style = doc.styles.get(str(dxf.get("style", "Standard")))
-    font = resolve_font(str(style.dxf.get("font", "")) if style is not None else "", fonts)
+    # A STYLE without group 3 uses the DXF default font ("txt"), as AutoCAD does.
+    font = resolve_font(str(style.dxf.get_default("font")) if style is not None else "", fonts)
     if isinstance(font, tuple):
         return font
     flags = int(dxf.get("text_generation_flag", 0))
@@ -1455,7 +1456,8 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
     if not 1 <= attachment <= 9:
         return ("ID_TextEntity", f"unknown text alignment {attachment}")
     style = doc.styles.get(str(dxf.get("style", "Standard")))
-    font = resolve_font(str(style.dxf.get("font", "")) if style is not None else "", fonts)
+    # A STYLE without group 3 uses the DXF default font ("txt"), as AutoCAD does.
+    font = resolve_font(str(style.dxf.get_default("font")) if style is not None else "", fonts)
     if isinstance(font, tuple):
         return font
     # MTEXT starts from the style's width factor and oblique; inline W and Q codes change them.
