@@ -446,8 +446,16 @@ def _hatch(style: int):
     return doc
 
 
+def test_entire_area_hatch_declines() -> None:
+    """Style 2 fills the island too; nonzero over these paths (island wound against the
+    outer one) would make it a hole, so the hatch declines rather than claim nonzero."""
+    for mode in ("strict", "lenient"):
+        (row,) = dxf_extract.extract_document(_hatch(2), mode=mode, file_id="fixture")
+        assert (row["record"], row["id"]) == ("decline", "ID_HatchRegion")
+
+
 def test_hatch_boundary_is_a_ring_and_is_not_flipped() -> None:
-    for style, rule in ((0, "evenodd"), (2, "nonzero")):
+    for style, rule in ((0, "evenodd"),):
         for mode in ("strict", "lenient"):
             rows = dxf_extract.extract_document(_hatch(style), mode=mode, file_id="fixture")
             assert len(rows) == 1

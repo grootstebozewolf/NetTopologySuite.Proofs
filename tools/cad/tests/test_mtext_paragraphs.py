@@ -114,6 +114,7 @@ def _ezdxf_layout(tokens, align, indent, stops, column):
 _ALIGNS = {"l": tl.ParagraphAlignment.LEFT, "j": tl.ParagraphAlignment.JUSTIFIED, "r": tl.ParagraphAlignment.RIGHT, "c": tl.ParagraphAlignment.CENTER}
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed", range(60))
 def test_word_positions_match_ezdxfs_layout_engine(ttf: Path, seed: int) -> None:
     rng = random.Random(seed)

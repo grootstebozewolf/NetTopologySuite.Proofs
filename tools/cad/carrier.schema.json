@@ -522,7 +522,7 @@
               "params": {
                 "type": "object",
                 "additionalProperties": false,
-                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Extractors do not detect overlap of nonzero contours; glyph_linearize.py nodes it exactly. Only nonzero is linearized; a Ring with another rule declines there. TrueType outer contours are clockwise in y-up coordinates, while GIS exterior rings are counter-clockwise: the carrier records the source orientation and intake reverses it, so the extractor must not silently flip it. orientation is that source sign, cw or ccw, one entry per contour.",
+                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Extractors do not detect overlap of nonzero contours; the linearizers node it exactly. carrier_linearize.py fills nonzero and evenodd Rings; glyph_linearize.py (text) fills nonzero only and declines another rule. A DXF hatch of style 2 (entire area) declines at extraction, because nonzero over its stored paths would make an island wound against the outer path a hole. TrueType outer contours are clockwise in y-up coordinates, while GIS exterior rings are counter-clockwise: the carrier records the source orientation and intake reverses it, so the extractor must not silently flip it. orientation is that source sign, cw or ccw, one entry per contour.",
                 "required": ["windingRule", "contours", "orientation"],
                 "properties": {
                   "windingRule": { "enum": ["nonzero", "evenodd"] },

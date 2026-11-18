@@ -50,8 +50,10 @@ Modes (ADR-0005):
 A Ring records ``orientation`` (``cw`` or ``ccw``) from the source
 contour sign, one entry per contour. Vertices are copied in source
 order and are not reversed. A hatch with boundary paths is a Ring in
-both modes: group 75 odd parity is ``evenodd`` and entire area is
-``nonzero``. An empty hatch, outermost style, or an ellipse or spline
+both modes: group 75 odd parity is ``evenodd``. Entire area (style 2)
+fills inside the outer boundary whatever the islands' direction, which
+``nonzero`` over the stored paths does not say, so it declines as
+``ID_HatchRegion``. An empty hatch, outermost style, or an ellipse or spline
 edge stays ``ID_HatchRegion``. A 2D POLYLINE is a Compound of chord and
 one-segment bulge members in vertex order. A 3D or mesh POLYLINE stays
 ``ID_ThreeDNotYet``.
@@ -613,12 +615,16 @@ def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
 
 
 def _hatch_rule(entity: Any) -> str | None:
-    """Group 75. 0 is odd parity, 2 is entire area. Outermost is not a winding rule."""
+    """Group 75. 0 (odd parity) is ``evenodd``; 1 (outermost) and 2 (entire area) decline.
+
+    Entire area fills everything inside the outer boundary, islands included. ``nonzero``
+    over the paths as stored is not that: an island wound against the outer path comes out
+    as a hole. Saying it would need the contours reoriented, and the carrier keeps their
+    source orientation, so the hatch declines instead.
+    """
     style = int(getattr(entity.dxf, "hatch_style", 0))
     if style == 0:
         return "evenodd"
-    if style == 2:
-        return "nonzero"
     return None
 
 

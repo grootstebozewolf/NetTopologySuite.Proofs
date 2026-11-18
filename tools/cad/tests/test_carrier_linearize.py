@@ -65,6 +65,7 @@ def _as_lines(wkt: str):
     return shape.boundary if shape.geom_type == "MultiPolygon" else shape
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("wide", [False, True])
 @pytest.mark.parametrize("seed", range(60))
 def test_every_record_is_within_its_bound_of_ezdxfs_flattening(seed: int, wide: bool) -> None:
@@ -149,16 +150,21 @@ def test_bspline_with_a_break_or_decreasing_knots_declines() -> None:
     broken = _row("BSpline", {"degree": 2, "controlPoints": controls, "weights": [1] * 6, "knots": [0, 0, 0, 0.5, 0.5, 0.5, 1, 1, 1]})
     assert carrier_linearize.linearize_record(broken)[0] == "ID_DegenerateEntity"
     backwards = _row("BSpline", {"degree": 2, "controlPoints": controls, "weights": [1] * 6, "knots": [0, 0, 0, 0.7, 0.3, 0.5, 1, 1, 1]})
-    assert carrier_linearize.linearize_record(backwards)[1] == "B-spline knots decrease"
+    assert carrier_linearize.linearize_record(backwards)[1] == "B-spline knots decrease or span nothing"
 
 
 def test_rational_bspline_and_other_kinds_decline() -> None:
     rational = _row("BSpline", {"degree": 3, "controlPoints": [[0, 0], [1, 2], [3, 1], [4, 0]], "weights": [1, 2, 1, 1], "knots": [0, 0, 0, 0, 1, 1, 1, 1]})
     assert carrier_linearize.linearize_record(rational)[1].startswith("rational B-spline")
     assert carrier_linearize.linearize_record(_row("Spiral", {}))[0] == "ID_UnsupportedEntity"
-    loose = _row("Chord", {"start": [0, 0], "end": [1, 0]})
+    # The extractor's default tolerance states no chord height: a curve declines...
+    loose = _row("Arc", {"center": [0, 0], "radius": 1, "startAngle": 0, "endAngle": 90})
     loose["tolerance"] = {"kind": "sourceDefault"}
     assert carrier_linearize.linearize_record(loose)[0] == "ID_ToleranceKindUnsupported"
+    # ...but a Chord is exact and needs none.
+    line = _row("Chord", {"start": [0, 0], "end": [1, 0]})
+    line["tolerance"] = {"kind": "sourceDefault"}
+    assert carrier_linearize.linearize_record(line) == {"wkt": "LINESTRING (0 0, 1 0)", "hausdorff": 0.0}
 
 
 def test_evenodd_and_nonzero_hatch_regions_differ_where_contours_nest() -> None:
@@ -171,7 +177,8 @@ def test_evenodd_and_nonzero_hatch_regions_differ_where_contours_nest() -> None:
         row = _row("Ring", {"windingRule": rule, "contours": [contour(square(0, 10)), contour(square(3, 4))], "orientation": ["ccw", "ccw"]})
         out = carrier_linearize.linearize_record(row)
         assert shapely.from_wkt(out["wkt"]).area == pytest.approx(area)
-        assert out["hausdorff"] == 0.01 and out["noded"] is False
+        # Chords only: exact, so the bound is 0.
+        assert out["hausdorff"] == 0.0 and out["noded"] is False
 
 
 def test_cli_writes_one_line_per_record(tmp_path, capsys) -> None:
@@ -189,3 +196,109 @@ def test_cli_writes_one_line_per_record(tmp_path, capsys) -> None:
     out = json.loads(line)
     ring = shapely.from_wkt(out["wkt"])
     assert ring.is_closed and ring.length == pytest.approx(4 * math.pi, rel=1e-3)
+
+
+def test_angle_units_other_than_degree_and_radian_decline() -> None:
+    for unit in ("grad", "dms", "surveyor"):
+        arc = _row("Arc", {"center": [0, 0], "radius": 1, "startAngle": 0, "endAngle": 50, "angleUnit": unit})
+        assert carrier_linearize.linearize_record(arc) == ("ID_UnsupportedEntity", f"arc angles in {unit}")
+    radians = _row("Arc", {"center": [0, 0], "radius": 1, "startAngle": 0, "endAngle": math.pi / 2, "angleUnit": "radian"})
+    end = list(shapely.from_wkt(carrier_linearize.linearize_record(radians)["wkt"]).coords)[-1]
+    assert end == pytest.approx((0, 1))
+
+
+def test_zero_sweep_arc_declines_and_a_whole_turn_is_a_circle() -> None:
+    zero = _row("Arc", {"center": [0, 0], "radius": 1, "startAngle": 30, "endAngle": 30})
+    assert carrier_linearize.linearize_record(zero) == ("ID_DegenerateEntity", "an arc of zero sweep")
+    whole = _row("Arc", {"center": [0, 0], "radius": 1, "startAngle": 0, "endAngle": 360})
+    ring = shapely.from_wkt(carrier_linearize.linearize_record(whole)["wkt"])
+    coords = list(ring.coords)
+    assert coords[0] == pytest.approx(coords[-1]) and len(coords) > 4
+    assert all(math.hypot(x, y) == pytest.approx(1) for x, y in coords)
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        _row("Compound", {"members": []}),
+        _row("BulgePolyline", {"closed": False, "segments": []}),
+        _row("BSpline", {"degree": 3, "controlPoints": [[0, 0], [1, 2], [3, 1], [4, 0]], "weights": [1] * 4}),
+        _row("Ring", {"windingRule": "nonzero", "contours": []}),
+        _row("Chord", {"start": [0, 0]}),
+        _row("Arc", {"center": "x", "radius": 1, "startAngle": 0, "endAngle": 1}),
+        {"record": "entity", "kind": "Circle"},
+    ],
+)
+def test_malformed_records_decline_instead_of_raising(row) -> None:
+    out = carrier_linearize.linearize_record(row)
+    assert isinstance(out, tuple) and out[0].startswith("ID_")
+
+
+def test_cli_survives_a_bad_row(tmp_path, capsys) -> None:
+    import json
+
+    good = _row("Chord", {"start": [0, 0], "end": [1, 0]})
+    lines = [json.dumps(_row("Compound", {"members": []})), "{not json", json.dumps(good)]
+    records = tmp_path / "mixed.jsonl"
+    records.write_text("\n".join(lines), encoding="utf-8")
+    assert carrier_linearize.main([str(records)]) == 0
+    out = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert [("decline" in o, "wkt" in o) for o in out] == [(True, False), (True, False), (False, True)]
+
+
+def test_bspline_clamping_is_checked_and_equal_weights_are_polynomial() -> None:
+    controls = [[0, 0], [1, 2], [3, 1], [4, 0]]
+    unclamped = _row("BSpline", {"degree": 3, "controlPoints": controls, "weights": [1] * 4, "knots": [0, 1, 2, 3, 4, 5, 6, 7]})
+    assert carrier_linearize.linearize_record(unclamped)[0] == "ID_UnclampedKnots"
+    short = _row("BSpline", {"degree": 3, "controlPoints": controls, "weights": [1] * 4, "knots": [0, 0, 0, 1, 1, 1]})
+    assert carrier_linearize.linearize_record(short)[0] == "ID_UnclampedKnots"
+    plain = _row("BSpline", {"degree": 3, "controlPoints": controls, "weights": [1] * 4, "knots": [0, 0, 0, 0, 1, 1, 1, 1]})
+    scaled = _row("BSpline", {"degree": 3, "controlPoints": controls, "weights": [2.5] * 4, "knots": [0, 0, 0, 0, 1, 1, 1, 1]})
+    nearly = _row("BSpline", {"degree": 3, "controlPoints": controls, "weights": [1, 1 + 5e-10, 1, 1], "knots": [0, 0, 0, 0, 1, 1, 1, 1]})
+    reference = carrier_linearize.linearize_record(plain)["wkt"]
+    assert carrier_linearize.linearize_record(scaled)["wkt"] == reference
+    assert carrier_linearize.linearize_record(nearly)["wkt"] == reference
+
+
+def test_angle_step_cuts_arcs_and_reports_the_matching_bound() -> None:
+    arc = _row("Arc", {"center": [0, 0], "radius": 10, "startAngle": 0, "endAngle": 90})
+    arc["tolerance"] = {"kind": "angleStep", "alpha": 10, "angleUnit": "degree", "direction": "ccw-ocs"}
+    out = carrier_linearize.linearize_record(arc)
+    points = list(shapely.from_wkt(out["wkt"]).coords)
+    steps = [math.atan2(b[1], b[0]) - math.atan2(a[1], a[0]) for a, b in zip(points, points[1:])]
+    assert max(steps) <= math.radians(10) + 1e-12 and len(steps) in (9, 10)
+    assert out["hausdorff"] == pytest.approx(10 * (1 - math.cos(math.radians(5))))
+    bezier = _row("Bezier", {"degree": 2, "controlPoints": [[0, 0], [1, 2], [2, 0]]})
+    bezier["tolerance"] = arc["tolerance"]
+    assert carrier_linearize.linearize_record(bezier)[0] == "ID_ToleranceKindUnsupported"
+
+
+def test_full_circle_keeps_three_segments_at_any_tolerance() -> None:
+    circle = _row("Circle", {"center": [0, 0], "radius": 1})
+    ring = shapely.from_wkt(carrier_linearize.linearize_record(circle, hausdorff=5.0)["wkt"])
+    assert len(ring.coords) == 4 and shapely.Polygon(ring).area > 0
+
+
+@pytest.mark.parametrize("seed", range(30))
+def test_ring_fast_path_agrees_with_exact_noding(seed: int) -> None:
+    """Nested, non-meeting contours: the winding fast path and full noding fill the same region."""
+    import nonzero_node
+
+    rng = random.Random(seed)
+    def contour(x, y, size, clockwise):
+        corners = [(x, y), (x + size, y), (x + size, y + size), (x, y + size)]
+        corners = corners[::-1] if clockwise else corners
+        return [{"kind": "Chord", "start": list(a), "end": list(b), "bulge": 0} for a, b in zip(corners, corners[1:] + corners[:1])]
+    contours = [contour(0, 0, 20, rng.random() < 0.5)]
+    for _ in range(rng.randint(1, 4)):
+        size = rng.uniform(1, 4)
+        contours.append(contour(rng.uniform(1, 15), rng.uniform(1, 15), size, rng.random() < 0.5))
+    for rule in ("nonzero", "evenodd"):
+        row = _row("Ring", {"windingRule": rule, "contours": contours, "orientation": ["ccw"] * len(contours)})
+        rings = [[tuple(seg["start"]) for seg in c] for c in contours]
+        out = carrier_linearize.linearize_record(row)
+        if isinstance(out, tuple) or out["noded"]:
+            continue  # contours that touch take the noded path
+        exact = nonzero_node.nonzero_polygons(rings, rule)
+        expected = shapely.MultiPolygon([shapely.Polygon([(float(x), float(y)) for x, y in s], [[(float(x), float(y)) for x, y in h] for h in hs]) for s, hs in exact])
+        assert shapely.from_wkt(out["wkt"]).symmetric_difference(expected).area == pytest.approx(0, abs=1e-9)

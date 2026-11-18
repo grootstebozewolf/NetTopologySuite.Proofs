@@ -165,9 +165,9 @@
     {
       "entity": "HATCH",
       "groupCodes": [10, 70, 71, 75, 91, 210],
-      "convention": "Boundary paths stay in source order, and group 75 odd parity is evenodd while entire area is nonzero.",
+      "convention": "Boundary paths stay in source order, and group 75 odd parity is evenodd; entire area declines, since nonzero over stored paths can hole an island.",
       "versions": ["R14", "R2000+"],
-      "traps": ["hatch style outermost is not a winding rule"],
+      "traps": ["hatch style outermost is not a winding rule", "entire area is not nonzero over source directions"],
       "kind": "Ring",
       "declineIds": ["ID_HatchRegion"],
       "note": "Group 75 is the hatch style and group 91 counts boundary paths (Autodesk DXF Reference, HATCH)."
@@ -175,9 +175,9 @@
     {
       "entity": "MPOLYGON",
       "groupCodes": [10, 70, 91],
-      "convention": "Boundary paths stay in source order, and group 75 odd parity is evenodd while entire area is nonzero.",
+      "convention": "Boundary paths stay in source order, and group 75 odd parity is evenodd; entire area declines, since nonzero over stored paths can hole an island.",
       "versions": ["R2000+"],
-      "traps": ["hatch style outermost is not a winding rule"],
+      "traps": ["hatch style outermost is not a winding rule", "entire area is not nonzero over source directions"],
       "kind": "Ring",
       "declineIds": ["ID_HatchRegion"],
       "note": "MPOLYGON stores hatch-style boundary paths (Autodesk DXF Reference, MPOLYGON)."

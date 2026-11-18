@@ -174,6 +174,7 @@ def _random_doc(rng: random.Random, *, wide: bool = False):
     return doc
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("wide", [False, True])
 @pytest.mark.parametrize("seed", range(80))
 def test_considered_entities_match_ezdxfs_expansion(seed: int, wide: bool) -> None:
@@ -184,6 +185,7 @@ def test_considered_entities_match_ezdxfs_expansion(seed: int, wide: bool) -> No
     assert Counter(seen) == _drawn_types(doc, doc.modelspace())
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed", range(80))
 def test_count_oracle_agrees_with_recursive_decompose(seed: int) -> None:
     """Without the restored cases, the one-level walk is exactly ezdxf's recursive_decompose."""
@@ -367,6 +369,7 @@ def test_recursive_decompose_misplaces_a_nested_grid(outer: dict, theirs_agree: 
     assert (theirs == pytest.approx(oracle)) is theirs_agree
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("wide", [False, True])
 @pytest.mark.parametrize("seed", range(80))
 def test_records_are_the_drawn_instances_in_their_places(seed: int, wide: bool) -> None:

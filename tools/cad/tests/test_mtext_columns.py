@@ -85,6 +85,7 @@ class _Recorder(tl.ContentRenderer):
         pass
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed", range(40))
 def test_word_positions_match_ezdxf_across_columns(ttf: Path, seed: int) -> None:
     rng = random.Random(seed)
