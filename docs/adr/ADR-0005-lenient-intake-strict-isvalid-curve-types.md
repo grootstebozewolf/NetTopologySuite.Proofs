@@ -96,3 +96,37 @@ defines away).
   backlog).
 - The research doc's §6.1/§6.2 divergence rows resolve to this ADR; its
   `SUMMARY warn` dies with the flatten landing (`615-b`).
+
+## Addendum — 2026-11-18: lenient CAD extraction states what it left out
+
+*Added at the PO's request (#1035). Decisions 1 and 2 are unchanged; this
+records how the CAD carrier (`tools/cad/carrier.schema.json`) applies the
+same posture.*
+
+The CAD extractor has the same two modes. **Strict** declines every named
+case. **Lenient** may also normalize, as Decision 1's intake does, but a
+lenient record must never silently claim more than it holds:
+
+- A normalization that keeps the geometry (an ellipse of ratio 1 as an
+  Arc, a closed polyline as a nonzero Ring) needs no note.
+- A normalization that drops something the source draws is allowed only
+  when the drop is named in the record's optional `lenient` field, as
+  `{"ignored": <what>, "value": <number>}`. Two are allowed:
+  - `width`: a polyline with width becomes its centre line; `value` is
+    its largest width. A negative or non-finite width still declines.
+  - `thickness`: an entity extruded along a ±Z extrusion becomes its base
+    plane, whose plan view is the same; `value` is the thickness. Along a
+    tilted extrusion it still declines.
+- A strict record never carries `lenient`; absent means nothing was left
+  out. Linearizers copy the notes to their output, because their
+  Hausdorff bound is to the record, not to what the source draws.
+
+Adding another `ignored` value is a schema change and extends this
+addendum. The attribute audit (`tools/cad/tests/test_dxf_attribute_audit.py`)
+checks every such attribute in both modes: strict declines, and lenient
+gives the record without the attribute plus exactly one note naming it.
+
+*Rejected alternative:* lenient emitting the centre line or base plane
+with no note. The record would be a confident falsehood about what the
+drawing shows, which is the failure the carrier's fail-closed rule exists
+to prevent.
