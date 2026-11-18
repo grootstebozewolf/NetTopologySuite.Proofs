@@ -22,7 +22,8 @@ difference by name (``_RESTORED``) instead of leaving it out of the check:
 * INSERT that is not a similarity (unequal scales, or extrusion not +/-Z),
   of an empty block, or of a block that contains itself: one considered
   INSERT that declines; ezdxf expands it, yields nothing, or recurses
-  without end, respectively.
+  without end, respectively (the last reported upstream:
+  https://github.com/mozman/ezdxf/issues/1475).
 * DIMENSION, LEADER: one considered entity that declines; ezdxf expands
   them into their lines, solids and text.
 """
