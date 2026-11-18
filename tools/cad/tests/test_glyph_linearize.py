@@ -357,3 +357,15 @@ def test_meet_sweep_agrees_with_every_pair() -> None:
         assert glyph_linearize.any_meet(rings) == expected
         seen[expected] += 1
     assert seen[True] > 50 and seen[False] > 50
+
+
+def test_lenient_thickness_on_text_travels_with_the_wkt(ttf: Path) -> None:
+    doc = _doc()
+    doc.modelspace().add_text("l", dxfattribs={"style": "GLYPH", "height": 7, "thickness": 1.5})
+    fonts = {"carriertext.ttf": ttf}
+    (strict,) = dxf_extract.extract_document(doc, fonts=fonts, file_id="thick")
+    assert strict["id"] == "ID_ThreeDNotYet"
+    (row,) = dxf_extract.extract_document(doc, mode="lenient", fonts=fonts, file_id="thick")
+    assert row["lenient"] == [{"ignored": "thickness", "value": 1.5}]
+    out = glyph_linearize.linearize_row(row, hausdorff=0.001)
+    assert out["lenient"] == row["lenient"] and out["wkt"].startswith("MULTIPOLYGON")

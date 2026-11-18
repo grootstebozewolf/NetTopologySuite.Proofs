@@ -40,6 +40,10 @@ Every row ends as WKT or a named decline. A malformed record (a missing
 key, an empty list) declines as ID_DegenerateEntity rather than stopping
 a run. Ellipse and Spiral records decline: their own Linearizes bounds
 are not here.
+
+A record's ``lenient`` notes (what lenient extraction left out of it,
+such as a polyline's width) are copied to the output: the bound is to the
+record, not to what the source draws.
 """
 
 from __future__ import annotations
@@ -329,7 +333,11 @@ def linearize_record(row: dict[str, Any], hausdorff: float | None = None) -> dic
     if not isinstance(row, dict) or row.get("record") != "entity":
         return ("ID_UnsupportedEntity", "row is not an entity record")
     try:
-        return _linearize(row, hausdorff)
+        out = _linearize(row, hausdorff)
+        if isinstance(out, dict) and row.get("lenient"):
+            # The bound is to the record; what lenient left out of it travels with the WKT.
+            out = {**out, "lenient": row["lenient"]}
+        return out
     except _Declined as declined:
         return declined.decline
     except (KeyError, IndexError, TypeError, ValueError, ZeroDivisionError, OverflowError) as error:

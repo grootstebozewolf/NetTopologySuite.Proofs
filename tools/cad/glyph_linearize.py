@@ -436,6 +436,9 @@ def linearize_row(row: dict[str, Any], hausdorff: float | None = None) -> dict[s
         for key in ("polygons", "lines"):
             if key in part:
                 out[key] = part[key]
+    if row.get("lenient"):
+        # The bound is to the record; what lenient left out of it travels with the WKT.
+        out["lenient"] = row["lenient"]
     return out
 
 

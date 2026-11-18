@@ -302,3 +302,15 @@ def test_ring_fast_path_agrees_with_exact_noding(seed: int) -> None:
         exact = nonzero_node.nonzero_polygons(rings, rule)
         expected = shapely.MultiPolygon([shapely.Polygon([(float(x), float(y)) for x, y in s], [[(float(x), float(y)) for x, y in h] for h in hs]) for s, hs in exact])
         assert shapely.from_wkt(out["wkt"]).symmetric_difference(expected).area == pytest.approx(0, abs=1e-9)
+
+
+def test_lenient_notes_travel_with_the_wkt() -> None:
+    """The bound is to the record; what lenient left out of the record is not dropped."""
+    doc = ezdxf.new("R2018")
+    doc.modelspace().add_lwpolyline([(0, 0), (5, 0), (5, 3)], dxfattribs={"const_width": 0.8, "thickness": 2})
+    doc.modelspace().add_lwpolyline([(0, 0), (5, 0), (5, 3)])
+    wide, plain = dxf_extract.extract_document(doc, mode="lenient", file_id="notes")
+    out = carrier_linearize.linearize_record(wide, _BOUND)
+    assert out["wkt"] == "LINESTRING (0.0 0.0, 5.0 0.0, 5.0 3.0)"
+    assert out["lenient"] == [{"ignored": "thickness", "value": 2.0}, {"ignored": "width", "value": 0.8}]
+    assert "lenient" not in carrier_linearize.linearize_record(plain, _BOUND)
