@@ -1,52 +1,123 @@
 """Totality: the extractor considers exactly the entities a drawing draws.
 
 The extractor yields one row (a record or a named decline) per considered
-entity. Two levels are checked: the types of the considered entities
-against ezdxf's ``recursive_decompose``, and each record's source entity
-and placed geometry against every drawn instance, placed by composing
-ezdxf's own insert matrices (``recursive_decompose`` misplaces a grid
-nested in a scaled or mirrored block; that is pinned here). Here the considered set is checked against an independent
-enumeration: ezdxf's ``recursive_decompose``, which expands every INSERT,
-including MINSERT grids and attached ATTRIBs. ezdxf skips every ATTDEF, so
-the ATTDEFs of each drawn block instance are added back: the extractor
-considers them too (a constant one is drawn, any other declines by name).
+entity. Two relations are checked on random drawings:
+
+* Counts: the types of the considered entities equal every block
+  instance's content from ezdxf's block table (MINSERT cells through
+  ``multi_insert()``). Where nothing is restored, that walk is checked to
+  equal ezdxf's ``recursive_decompose``.
+* Instances: each record's source entity and placed geometry match one
+  drawn instance, placed by composing ezdxf's insert matrices.
+
+Where the extractor counts differently on purpose, the oracle restores the
+difference by name (``_RESTORED``) instead of leaving it out of the check:
+
+* ATTDEF: ezdxf skips every one; the extractor considers them (a constant
+  one is drawn, any other declines as a template).
+* INSERT that is not a similarity (unequal scales, or extrusion not +/-Z),
+  of an empty block, or of a block that contains itself: one considered
+  INSERT that declines; ezdxf expands it, yields nothing, or recurses
+  without end, respectively.
+* DIMENSION, LEADER: one considered entity that declines; ezdxf expands
+  them into their lines, solids and text.
 """
 
 from __future__ import annotations
 
+import math
 import random
 from collections import Counter
 
 import ezdxf
 import pytest
 from ezdxf.disassemble import recursive_decompose
+from ezdxf.math import Matrix44
 
 import dxf_extract
 
+# Kept whole: the extractor considers each of these once and declines it.
+_KEPT_WHOLE = ("DIMENSION", "LEADER")
+_RESTORED = ("ATTDEF", "non-similarity INSERT", "empty-block INSERT", "cyclic INSERT", *_KEPT_WHOLE)
 
-def _attdefs(doc, entity) -> Counter:
-    """ATTDEFs drawn under one INSERT, once per grid copy, nested blocks included."""
+
+def _whole_insert(doc, insert, stack: tuple[str, ...]) -> bool:
+    """An INSERT the extractor considers as one entity instead of entering its block."""
+    name = insert.dxf.name
+    if name in stack:
+        return True  # cyclic
+    ex, ey, ez = insert.dxf.extrusion
+    if abs(ex) > 1e-9 or abs(ey) > 1e-9:
+        return True  # tilted
+    if not math.isclose(abs(insert.dxf.xscale), abs(insert.dxf.yscale), rel_tol=1e-9):
+        return True  # not a similarity
+    return not any(entity.dxftype() != "ENDBLK" for entity in doc.blocks.get(name))  # empty
+
+
+def _grid(insert):
+    return list(insert.multi_insert()) if int(getattr(insert, "mcount", 1) or 1) > 1 else [insert]
+
+
+def _drawn_types(doc, entities, stack: tuple[str, ...] = ()) -> Counter:
+    """The count oracle: every block instance's content, from ezdxf's block table, with
+    MINSERT cells from ``multi_insert()`` and the named restorations.
+
+    It walks the block definitions, not ezdxf's placed ``virtual_entities()``: inside a
+    mirrored block ezdxf cannot keep a tilted INSERT as an INSERT and explodes it early,
+    while the extractor judges every INSERT by its own scales and extrusion.
+    """
     found: Counter = Counter()
-    if entity.dxftype() != "INSERT":
-        return found
-    copies = int(getattr(entity, "mcount", 1) or 1)
-    for child in doc.blocks.get(entity.dxf.name):
-        if child.dxftype() == "ATTDEF":
-            found["ATTDEF"] += copies
-        elif child.dxftype() == "INSERT":
-            for kind, number in _attdefs(doc, child).items():
-                found[kind] += copies * number
+    for entity in entities:
+        kind = entity.dxftype()
+        if kind == "ENDBLK":
+            continue
+        if kind != "INSERT":
+            found[kind] += 1
+            continue
+        for copy in _grid(entity):
+            if _whole_insert(doc, copy, stack):
+                found["INSERT"] += 1
+                continue
+            found += _drawn_types(doc, doc.blocks.get(copy.dxf.name), stack + (copy.dxf.name,))
+            found["ATTRIB"] += len(copy.attribs)
     return found
 
 
-def _random_doc(rng: random.Random):
-    doc = ezdxf.new("R2018")
+def _random_doc(rng: random.Random, *, wide: bool = False):
+    """A random drawing. ``wide`` adds the entity kinds and inserts the restorations cover."""
+    doc = ezdxf.new("R2018", setup=wide)
     names: list[str] = []
 
     def fill(layout, depth: int) -> None:
         for _ in range(rng.randint(1, 5)):
             pick = rng.random()
             x, y = rng.uniform(-20, 20), rng.uniform(-20, 20)
+            if wide and rng.random() < 0.35:
+                extra = rng.randrange(9)
+                if extra == 0:
+                    layout.add_ellipse((x, y), (3, 1), 0.5)
+                elif extra == 1:
+                    layout.add_open_spline([(x, y), (x + 1, y + 2), (x + 3, y + 1), (x + 4, y)])
+                elif extra == 2:
+                    layout.add_polyline2d([(x, y), (x + 2, y), (x + 2, y + 1)], close=rng.random() < 0.5)
+                elif extra == 3:
+                    layout.add_hatch().paths.add_polyline_path([(x, y), (x + 4, y), (x + 4, y + 3)], is_closed=True)
+                elif extra == 4:
+                    layout.add_mtext("m", dxfattribs={"insert": (x, y)})
+                elif extra == 5:
+                    layout.add_solid([(x, y), (x + 1, y), (x, y + 1)])
+                elif extra == 6:
+                    layout.add_leader([(x, y), (x + 2, y + 2), (x + 4, y + 2)])
+                elif extra == 7 and depth == 0:
+                    layout.add_linear_dim(base=(x, y + 3), p1=(x, y), p2=(x + 5, y)).render()
+                elif names:
+                    # A stretched or tilted INSERT: one considered entity.
+                    target = rng.choice(names)
+                    if rng.random() < 0.5:
+                        layout.add_blockref(target, (x, y), dxfattribs={"xscale": 2, "yscale": 1})
+                    else:
+                        layout.add_blockref(target, (x, y), dxfattribs={"extrusion": (0, 1, 1)})
+                continue
             if pick < 0.2:
                 layout.add_line((x, y), (x + 1, y + 2))
             elif pick < 0.3:
@@ -77,23 +148,35 @@ def _random_doc(rng: random.Random):
 
     for index in range(rng.randint(1, 4)):
         name = f"B{index}"
-        fill(doc.blocks.new(name), depth=1)  # may insert only blocks made before it: no cycles
+        fill(doc.blocks.new(name), depth=1)  # inserts only blocks made before it: no cycles here
         names.append(name)
+    if wide:
+        doc.blocks.new("EMPTY")
+        cyclic = doc.blocks.new("LOOP")
+        cyclic.add_line((0, 0), (1, 1))
+        cyclic.add_blockref("LOOP", (2, 2))
+        names += ["EMPTY", "LOOP"]
     fill(doc.modelspace(), depth=0)
     return doc
 
 
+@pytest.mark.parametrize("wide", [False, True])
 @pytest.mark.parametrize("seed", range(80))
-def test_considered_entities_match_ezdxfs_decomposition(seed: int) -> None:
-    doc = _random_doc(random.Random(seed))
+def test_considered_entities_match_ezdxfs_expansion(seed: int, wide: bool) -> None:
+    doc = _random_doc(random.Random(seed), wide=wide)
     seen: list[str] = []
     rows = dxf_extract.extract_document(doc, file_id="total", on_considered=seen.append)
     assert len(seen) == len(rows)
+    assert Counter(seen) == _drawn_types(doc, doc.modelspace())
 
-    drawn = Counter(entity.dxftype() for entity in recursive_decompose(doc.modelspace()))
-    for entity in doc.modelspace():
-        drawn += _attdefs(doc, entity)
-    assert Counter(seen) == drawn
+
+@pytest.mark.parametrize("seed", range(80))
+def test_count_oracle_agrees_with_recursive_decompose(seed: int) -> None:
+    """Without the restored cases, the one-level walk is exactly ezdxf's recursive_decompose."""
+    doc = _random_doc(random.Random(seed))
+    drawn = _drawn_types(doc, doc.modelspace())
+    drawn["ATTDEF"] = 0
+    assert +drawn == Counter(entity.dxftype() for entity in recursive_decompose(doc.modelspace()))
 
 
 def test_minsert_grid_is_one_copy_per_cell() -> None:
@@ -107,8 +190,6 @@ def test_minsert_grid_is_one_copy_per_cell() -> None:
         (round(row["placement"]["links"][0]["translate"][0], 9), round(row["placement"]["links"][0]["translate"][1], 9))
         for row in rows
     )
-    import math
-
     c, s = math.cos(math.radians(30)), math.sin(math.radians(30))
     expected = sorted(
         (round(col * 7 * c - row * 5 * s, 9), round(col * 7 * s + row * 5 * c, 9)) for row in range(2) for col in range(3)
@@ -117,11 +198,6 @@ def test_minsert_grid_is_one_copy_per_cell() -> None:
 
 
 # --- instance level: the same source entities, in the same places -----------------------
-
-import math
-
-from ezdxf.math import Matrix44
-
 
 def _place(point, links) -> tuple[float, float]:
     x, y = point
@@ -151,7 +227,7 @@ def _ours(row: dict) -> list[float] | None:
         if not params["closed"]:
             points.append(segments[-1]["end"])
         return [v for point in points for v in _place(point, links)]
-    raise AssertionError(row["kind"])
+    return None  # other kinds are matched by source entity only
 
 
 def _geometry(entity, m) -> list[float] | None:
@@ -175,7 +251,7 @@ def _source(entity) -> str:
     return str((origin or entity).dxf.get("handle", ""))
 
 
-def _instances(doc, entities, m, out: list) -> None:
+def _instances(doc, entities, m, out: list, stack: tuple[str, ...] = ()) -> None:
     """The position oracle: every drawn instance as (type, source handle, geometry).
 
     Each INSERT and each MINSERT cell (ezdxf's ``multi_insert``) contributes ezdxf's own
@@ -185,12 +261,16 @@ def _instances(doc, entities, m, out: list) -> None:
     rows unmirrored (pinned below). ATTDEFs are drawn instances too; ezdxf skips them.
     """
     for entity in entities:
+        if entity.dxftype() == "ENDBLK":
+            continue
         if entity.dxftype() != "INSERT":
             out.append((entity.dxftype(), _source(entity), _geometry(entity, m)))
             continue
-        copies = entity.multi_insert() if int(getattr(entity, "mcount", 1) or 1) > 1 else [entity]
-        for copy in copies:
-            _instances(doc, doc.blocks.get(copy.dxf.name), copy.matrix44() @ m, out)
+        for copy in _grid(entity):
+            if _whole_insert(doc, copy, stack):
+                out.append(("INSERT", _source(copy), None))
+                continue
+            _instances(doc, doc.blocks.get(copy.dxf.name), copy.matrix44() @ m, out, stack + (copy.dxf.name,))
             # Attached attributes are already in the space the INSERT sits in.
             for attrib in copy.attribs:
                 out.append(("ATTRIB", _source(attrib), None))
@@ -220,9 +300,10 @@ def test_recursive_decompose_misplaces_a_nested_grid(outer: dict, theirs_agree: 
     assert (theirs == pytest.approx(oracle)) is theirs_agree
 
 
+@pytest.mark.parametrize("wide", [False, True])
 @pytest.mark.parametrize("seed", range(80))
-def test_records_are_the_drawn_instances_in_their_places(seed: int) -> None:
-    doc = _random_doc(random.Random(seed))
+def test_records_are_the_drawn_instances_in_their_places(seed: int, wide: bool) -> None:
+    doc = _random_doc(random.Random(seed), wide=wide)
     seen: list[str] = []
     rows = dxf_extract.extract_document(doc, file_id="total", on_considered=seen.append)
 
