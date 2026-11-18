@@ -25,7 +25,11 @@ Modes (ADR-0005):
   polyline into a Ring (winding rule ``nonzero``, because a polyline
   states no hatch rule). A non-finite bulge (NaN or infinity) is
   ``ID_DegenerateEntity`` in both modes. ``b = 0`` is a Chord in both
-  modes; the bulge value is kept. A closed polyline whose last vertex
+  modes; the bulge value is kept. A polyline with a constant or
+  per-segment width is drawn as a filled band, so it declines as
+  ``ID_UnsupportedEntity`` with that reason, in both modes. Any entity
+  with a nonzero thickness is extruded along Z and declines as
+  ``ID_ThreeDNotYet``. A closed polyline whose last vertex
   repeats its first exactly, with bulge 0, drops that vertex in both
   modes: the closing segment it makes has no length and draws nothing.
   With a nonzero bulge there, or a repeat anywhere else, the zero-length
@@ -540,9 +544,25 @@ def _chain_member(segment: dict[str, Any]) -> dict[str, Any]:
     return {"kind": "BulgePolyline", "params": {"closed": False, "segments": [segment]}}
 
 
-def _map_polyline(entity: Any) -> dict[str, Any] | str:
+# A polyline with width is drawn as a filled band, not as its centre line.
+_WIDTH_DECLINE = ("ID_UnsupportedEntity", "polyline width: drawn as a filled band, not a curve")
+
+
+def _thickness(entity: Any) -> float:
+    """The entity's extrusion thickness, 0 when it has none."""
+    try:
+        return _num(entity.dxf.get("thickness", 0.0))
+    except Exception:  # an entity type without a thickness attribute
+        return 0.0
+
+
+def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
     if entity.is_3d_polyline or entity.is_polygon_mesh or entity.is_poly_face_mesh or not entity.is_2d_polyline:
         return "ID_ThreeDNotYet"
+    widths = [_num(entity.dxf.get(key, 0.0)) for key in ("default_start_width", "default_end_width")]
+    widths += [_num(v.dxf.get(key, 0.0)) for v in entity.vertices for key in ("start_width", "end_width")]
+    if any(w != 0 for w in widths):
+        return _WIDTH_DECLINE
     points: list[tuple[float, float, float]] = []
     for vertex in entity.vertices:
         loc = vertex.dxf.location
@@ -679,7 +699,7 @@ def _materialize(
     return {"members": members}
 
 
-def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
+def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, str]:
     """Return a mapping dict or a decline id.
 
     The dict has kind, params, and elevation. Decline ids are strings.
@@ -707,6 +727,10 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
             return "ID_DegenerateEntity"
         return {"kind": "Chord", "elevation": zs, "params": {"start": a, "end": b}}
     if dxftype == "LWPOLYLINE":
+        widths = [_num(entity.dxf.get("const_width", 0.0))]
+        widths += [_num(w) for _x, _y, start, end in entity.get_points("xyse") for w in (start, end)]
+        if any(w != 0 for w in widths):
+            return _WIDTH_DECLINE
         raw = [(_num(x), _num(y), _num(b)) for x, y, b in entity.get_points("xyb")]
         closed = bool(entity.closed)
         segments = _bulge_segments(raw, closed)
@@ -950,10 +974,20 @@ def extract_document(
         if isinstance(extr, str):
             add(_decl(extr, "extrusion is not +/- Z", prov))
             return
+        thickness = _thickness(entity)
+        if thickness != 0:
+            # Thickness extrudes the entity along Z: it spans more than one elevation.
+            reason = "thickness extrudes the entity in Z" if _finite(thickness) else "non-finite thickness"
+            add(_decl("ID_ThreeDNotYet" if _finite(thickness) else "ID_DegenerateEntity", reason, prov))
+            return
         if entity.dxftype() in ("TEXT", "MTEXT", "ATTRIB", "ATTDEF") and fonts:
             add(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
             return
         mapped = _map_geometry(entity, mode)
+        if isinstance(mapped, tuple):
+            # A decline id with its own reason.
+            add(_decl(mapped[0], mapped[1], prov, name=entity.dxftype() if mapped[0] == "ID_UnsupportedEntity" else None))
+            return
         if isinstance(mapped, str):
             if mapped == "ID_UnsupportedEntity":
                 name = entity.dxftype()

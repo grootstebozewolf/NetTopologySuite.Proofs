@@ -580,3 +580,49 @@ def test_closed_2d_polyline_and_hatch_path_repeating_the_first_vertex() -> None:
     VALIDATOR.validate(ring)
     assert len(polyline["params"]["members"]) == 3
     assert len(ring["params"]["contours"][0]) == 3
+
+
+@pytest.mark.parametrize("mode", ["strict", "lenient"])
+def test_polyline_width_declines_instead_of_drawing_a_hairline(mode: str) -> None:
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (5, 0), (5, 3)], dxfattribs={"const_width": 0.8}, close=True)
+    msp.add_lwpolyline([(0, 0, 0.0, 1.0, 0.0), (5, 0, 0.0, 0.0, 0.0)], format="xyseb")
+    msp.add_polyline2d([(0, 0), (5, 0)], dxfattribs={"default_start_width": 0.5, "default_end_width": 0.5})
+    tapered = msp.add_polyline2d([(0, 0), (5, 0), (5, 2)])
+    tapered.vertices[1].dxf.end_width = 0.3
+    msp.add_lwpolyline([(0, 0), (5, 0)], dxfattribs={"const_width": 0.0})
+    rows = dxf_extract.extract_document(doc, mode=mode, file_id="width")
+    for row in rows:
+        VALIDATOR.validate(row)
+    *banded, plain = rows
+    assert [(r["id"], r["name"]) for r in banded] == [
+        ("ID_UnsupportedEntity", "LWPOLYLINE"),
+        ("ID_UnsupportedEntity", "LWPOLYLINE"),
+        ("ID_UnsupportedEntity", "POLYLINE"),
+        ("ID_UnsupportedEntity", "POLYLINE"),
+    ]
+    assert all(r["reason"] == "polyline width: drawn as a filled band, not a curve" for r in banded)
+    assert plain["record"] == "entity"
+
+
+def test_thickness_declines_as_3d_for_every_kind() -> None:
+    doc = ezdxf.new("R2018")
+    doc.styles.add("GLYPH", font="carriertext.ttf")
+    msp = doc.modelspace()
+    msp.add_line((0, 0), (1, 0), dxfattribs={"thickness": 3})
+    msp.add_circle((0, 0), 1, dxfattribs={"thickness": -2})
+    msp.add_arc((0, 0), 1, 0, 90, dxfattribs={"thickness": 0.5})
+    msp.add_lwpolyline([(0, 0), (1, 0)], dxfattribs={"thickness": 1})
+    msp.add_text("l", dxfattribs={"thickness": 1, "style": "GLYPH", "height": 7})
+    msp.add_line((0, 0), (1, 0), dxfattribs={"thickness": 0})
+    seen: list[str] = []
+    rows = dxf_extract.extract_document(doc, file_id="thick", fonts={"carriertext.ttf": "unused.ttf"}, on_considered=seen.append)
+    for row in rows:
+        VALIDATOR.validate(row)
+    *thick, flat = rows
+    assert [r["id"] for r in thick] == ["ID_ThreeDNotYet"] * 5
+    assert all(r["reason"] == "thickness extrudes the entity in Z" for r in thick)
+    assert flat["kind"] == "Chord"
+    # Still one row per considered entity.
+    assert seen == ["LINE", "CIRCLE", "ARC", "LWPOLYLINE", "TEXT", "LINE"]
