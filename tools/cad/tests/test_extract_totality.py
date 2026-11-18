@@ -8,7 +8,11 @@ entity. Two relations are checked on random drawings:
   ``multi_insert()``). Where nothing is restored, that walk is checked to
   equal ezdxf's ``recursive_decompose``.
 * Instances: each record's source entity and placed geometry match one
-  drawn instance, placed by composing ezdxf's insert matrices.
+  drawn instance, placed by composing ezdxf's insert matrices. Geometry
+  is compared for lines, circles, arcs, polylines, 2D polylines and hatch
+  paths (vertices, and the midpoint of every bulged segment, which pins
+  the arc's direction under a mirror) and spline control points; other
+  kinds are matched by source entity.
 
 Where the extractor counts differently on purpose, the oracle restores the
 difference by name (``_RESTORED``) instead of leaving it out of the check:
@@ -99,9 +103,13 @@ def _random_doc(rng: random.Random, *, wide: bool = False):
                 elif extra == 1:
                     layout.add_open_spline([(x, y), (x + 1, y + 2), (x + 3, y + 1), (x + 4, y)])
                 elif extra == 2:
-                    layout.add_polyline2d([(x, y), (x + 2, y), (x + 2, y + 1)], close=rng.random() < 0.5)
+                    layout.add_polyline2d(
+                        [(x, y, 0.5), (x + 2, y, 0.0), (x + 2, y + 1, -0.3)], format="xyb", close=rng.random() < 0.5
+                    )
                 elif extra == 3:
-                    layout.add_hatch().paths.add_polyline_path([(x, y), (x + 4, y), (x + 4, y + 3)], is_closed=True)
+                    layout.add_hatch().paths.add_polyline_path(
+                        [(x, y, 0.0), (x + 4, y, 0.6), (x + 4, y + 3, 0.0)], is_closed=True
+                    )
                 elif extra == 4:
                     layout.add_mtext("m", dxfattribs={"insert": (x, y)})
                 elif extra == 5:
@@ -125,7 +133,10 @@ def _random_doc(rng: random.Random, *, wide: bool = False):
             elif pick < 0.4:
                 layout.add_arc((x, y), 2, 10, 200)
             elif pick < 0.5:
-                layout.add_lwpolyline([(x, y), (x + 3, y), (x + 3, y + 2)], close=rng.random() < 0.5)
+                bulge = rng.choice([0.0, 0.0, 0.4, -0.7])
+                layout.add_lwpolyline(
+                    [(x, y, bulge), (x + 3, y, 0.0), (x + 3, y + 2, -bulge)], format="xyb", close=rng.random() < 0.5
+                )
             elif pick < 0.6:
                 layout.add_text("t", dxfattribs={"insert": (x, y)})
             elif pick < 0.65:
@@ -222,12 +233,39 @@ def _ours(row: dict) -> list[float] | None:
     if row["kind"] in ("Circle", "Arc"):
         return [*_place(params["center"], links), params["radius"] * scale]
     if row["kind"] == "BulgePolyline":
-        segments = params["segments"]
-        points = [segment["start"] for segment in segments]
-        if not params["closed"]:
-            points.append(segments[-1]["end"])
-        return [v for point in points for v in _place(point, links)]
+        return _chain(params["segments"], not params["closed"], links)
+    if row["kind"] == "Compound":
+        segments = []
+        for member in params["members"]:
+            if member["kind"] == "Chord":
+                segments.append({**member["params"], "bulge": 0.0})
+            else:
+                segments.extend(member["params"]["segments"])
+        closed = segments[-1]["end"] == segments[0]["start"]
+        return _chain(segments, not closed, links)
+    if row["kind"] == "Ring":
+        return [v for contour in params["contours"] for v in _chain(contour, False, links)]
+    if row["kind"] in ("Bezier", "BSpline"):
+        return [v for point in params["controlPoints"] for v in _place(point, links)]
     return None  # other kinds are matched by source entity only
+
+
+def _bulge_mid(a, b, bulge: float) -> tuple[float, float]:
+    """Midpoint of a bulge arc from ``a`` to ``b``: off the chord midpoint by the sagitta, to its right."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    return ((a[0] + b[0]) / 2 + bulge * dy / 2, (a[1] + b[1]) / 2 - bulge * dx / 2)
+
+
+def _chain(segments, open_end: bool, links) -> list[float]:
+    """Each segment's start, its arc midpoint when it bulges, and the last end when open; all placed."""
+    points = []
+    for segment in segments:
+        points.append(segment["start"])
+        if segment["bulge"]:
+            points.append(_bulge_mid(segment["start"], segment["end"], segment["bulge"]))
+    if open_end:
+        points.append(segments[-1]["end"])
+    return [v for point in points for v in _place(point, links)]
 
 
 def _geometry(entity, m) -> list[float] | None:
@@ -240,10 +278,35 @@ def _geometry(entity, m) -> list[float] | None:
         (centre,) = m.transform_vertices([entity.ocs().to_wcs(entity.dxf.center)])
         return [centre.x, centre.y, entity.dxf.radius * m.transform_direction((1, 0, 0)).magnitude]
     if kind == "LWPOLYLINE":
-        ocs, z = entity.ocs(), entity.dxf.elevation
-        points = m.transform_vertices([ocs.to_wcs((x, y, z)) for x, y in entity.get_points("xy")])
+        vertices = [(x, y, b) for x, y, b in entity.get_points("xyb")]
+        return _their_chain(vertices, bool(entity.closed), entity.ocs(), entity.dxf.elevation, m)
+    if kind == "POLYLINE":
+        vertices = [(v.dxf.location.x, v.dxf.location.y, v.dxf.get("bulge", 0.0)) for v in entity.vertices]
+        return _their_chain(vertices, bool(entity.is_closed), entity.ocs(), entity.dxf.elevation.z, m)
+    if kind == "HATCH":
+        out = []
+        for path in entity.paths:
+            out += _their_chain(list(path.vertices), True, entity.ocs(), entity.dxf.elevation.z, m)
+        return out
+    if kind == "SPLINE":
+        points = m.transform_vertices(entity.control_points)
         return [v for point in points for v in (point.x, point.y)]
     return None
+
+
+def _their_chain(vertices, closed: bool, ocs, z: float, m) -> list[float]:
+    """The same points from ezdxf's entity: vertices and bulge midpoints in its OCS, then to WCS."""
+    count = len(vertices)
+    points = []
+    for index in range(count if closed else count - 1):
+        (x0, y0, bulge), (x1, y1, _b) = vertices[index], vertices[(index + 1) % count]
+        points.append((x0, y0))
+        if bulge:
+            points.append(_bulge_mid((x0, y0), (x1, y1), bulge))
+    if not closed:
+        points.append(vertices[-1][:2])
+    placed = m.transform_vertices([ocs.to_wcs((x, y, z)) for x, y in points])
+    return [v for point in placed for v in (point.x, point.y)]
 
 
 def _source(entity) -> str:
