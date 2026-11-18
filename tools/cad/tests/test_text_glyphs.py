@@ -299,7 +299,8 @@ def test_text_in_a_mirrored_insert_and_negative_extrusion_composes(ttf: Path) ->
     msp.add_text("l", height=7, dxfattribs={"style": "GLYPH", "extrusion": (0, 0, -1)})
     placed, flipped = _rows(doc, {"carriertext.ttf": ttf})
     assert placed["provenance"]["blockPath"] == ["TAG"]
-    assert placed["dimension"] == {"space": "2d+elevation", "elevation": 3}
+    # INSERT at z = 1 with zscale 2; the text at block z = 2: world z = 1 + 2 * 2.
+    assert placed["dimension"] == {"space": "2d+elevation", "elevation": 5}
     assert placed["placement"]["s"] == -1
     glyph = placed["params"]["members"][0]
     assert len(glyph["placement"]["links"]) == 3

@@ -1473,6 +1473,12 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
     paragraphs = _mtext_paragraphs(content, height, fonts, style_width, style_oblique)
     if paragraphs and isinstance(paragraphs[0], str):
         return paragraphs
+    if int(dxf.get("line_spacing_style", 1)) == 2 and any(
+        abs(item[2] - 1.0) > _EPS for paragraph in paragraphs for item in paragraph[1]
+    ):
+        # Exact spacing fixes the line pitch whatever the heights in a line; the layout here
+        # (as ezdxf's) sets each line by its tallest word. They only agree at one height.
+        return ("ID_TextEntity", "MTEXT exact line spacing with mixed heights")
     return TextBlock(
         lines=(),
         paragraphs=paragraphs,

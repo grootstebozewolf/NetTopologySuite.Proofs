@@ -14,7 +14,16 @@ A non-similarity INSERT is one considered entity and declines as a whole.
 Placement links are applied local-to-world: the entity OCS link, then
 the inner block insert, then the outer block insert. ``s`` is -1 when an
 odd number of links have ``reflect`` true. A DXF extrusion of -Z is one
-such link. Scale is the shared absolute value of xscale and yscale.
+such link, for the entities whose coordinates are in their OCS
+(``OCS_TYPES``: arcs, circles, polylines, hatches, text, attributes,
+inserts). LINE and SPLINE store world coordinates, so their extrusion
+moves nothing and is ignored. MTEXT and ELLIPSE store world coordinates
+but are drawn in their normal's plane: with a -Z normal they would be
+mirrored about their own anchor, so they decline as ID_TiltedPlacement.
+
+Elevation is world z: an INSERT maps its block's z through its own z,
+``zscale`` and, under a -Z extrusion, a sign flip; an OCS entity under a
+-Z extrusion turns its own z around. Scale is the shared absolute value of xscale and yscale.
 Both negative is a half-turn (``reflect`` stays false and 180 degrees are
 added to the source rotation) so two reflections are not stored as one.
 
@@ -25,7 +34,10 @@ Modes (ADR-0005):
   polyline into a Ring (winding rule ``nonzero``, because a polyline
   states no hatch rule). A non-finite bulge (NaN or infinity) is
   ``ID_DegenerateEntity`` in both modes. ``b = 0`` is a Chord in both
-  modes; the bulge value is kept. A polyline with a constant or
+  modes; the bulge value is kept. An invisible entity (group 60) is
+  not drawn and declines as ``ID_UnsupportedEntity``. A curve-fit or
+  spline-fit 2D polyline declines the same way: its vertex list mixes
+  the fitted curve with the vertices it was fitted to. A polyline with a constant or
   per-segment width is drawn as a filled band, so it declines as
   ``ID_UnsupportedEntity`` with that reason, in both modes. Any entity
   with a nonzero thickness is extruded along Z and declines as
@@ -144,6 +156,14 @@ THREED_TYPES = {
     "REGION",
     "SOLID",
 }
+# Entities whose coordinates are in their Object Coordinate System, set by the extrusion.
+# Every other entity (LINE, SPLINE, ELLIPSE, MTEXT, POINT, ...) stores world coordinates;
+# its extrusion only orients thickness or the plane normal.
+OCS_TYPES = frozenset(
+    {"ARC", "CIRCLE", "LWPOLYLINE", "POLYLINE", "HATCH", "MPOLYGON", "TEXT", "ATTRIB", "ATTDEF", "SOLID", "TRACE", "INSERT"}
+)
+# World-coordinate entities whose drawing still depends on the plane normal.
+NORMAL_TYPES = frozenset({"MTEXT", "ELLIPSE"})
 CIRCULAR_KINDS = {"Arc", "Circle", "BulgePolyline", "Ring"}
 # Spiral uses the clothoid Linearizes bound on these tolerances.
 STEPPED_KINDS = CIRCULAR_KINDS | {"Spiral"}
@@ -548,6 +568,14 @@ def _chain_member(segment: dict[str, Any]) -> dict[str, Any]:
 _WIDTH_DECLINE = ("ID_UnsupportedEntity", "polyline width: drawn as a filled band, not a curve")
 
 
+def _invisible(entity: Any) -> bool:
+    """Group code 60: the entity is not drawn."""
+    try:
+        return bool(int(entity.dxf.get("invisible", 0)))
+    except Exception:  # an entity type without the attribute
+        return False
+
+
 def _thickness(entity: Any) -> float:
     """The entity's extrusion thickness, 0 when it has none."""
     try:
@@ -559,6 +587,10 @@ def _thickness(entity: Any) -> float:
 def _map_polyline(entity: Any) -> dict[str, Any] | str | tuple[str, str]:
     if entity.is_3d_polyline or entity.is_polygon_mesh or entity.is_poly_face_mesh or not entity.is_2d_polyline:
         return "ID_ThreeDNotYet"
+    if int(entity.dxf.get("flags", 0)) & 6:
+        # Curve-fit (2) or spline-fit (4): the vertex list mixes the fitted curve with the
+        # vertices it was fitted to, and which of them are drawn is not settled here.
+        return ("ID_UnsupportedEntity", "curve-fit or spline-fit polyline: its drawn vertices are not read")
     widths = [_num(entity.dxf.get(key, 0.0)) for key in ("default_start_width", "default_end_width")]
     widths += [_num(v.dxf.get(key, 0.0)) for v in entity.vertices for key in ("start_width", "end_width")]
     if any(w != 0 for w in widths):
@@ -662,6 +694,11 @@ def _hatch_elevation(entity: Any) -> float | str:
 
 
 def _map_hatch(entity: Any) -> dict[str, Any] | str:
+    if entity.dxftype() == "MPOLYGON":
+        offset = entity.dxf.get("offset_vector", (0.0, 0.0, 0.0))
+        if any(abs(_num(v)) > _EPS for v in offset):
+            # Group 11 of an MPOLYGON; what it moves is not settled here.
+            return "ID_HatchRegion"
     rule = _hatch_rule(entity)
     if rule is None:
         return "ID_HatchRegion"
@@ -833,7 +870,7 @@ def _text_row(
     prefix: list[dict[str, Any]],
     units: dict[str, Any],
     tolerance: dict[str, Any],
-    z_offset: float,
+    elevation: float,
     provenance: dict[str, Any],
 ) -> dict[str, Any]:
     """One TEXT, MTEXT, ATTRIB or constant ATTDEF as a Compound of glyph outlines, or its named decline."""
@@ -842,7 +879,6 @@ def _text_row(
     bad = _tolerance_ok("Compound", tolerance)
     if bad:
         return _decl(bad, f"{tolerance['kind']} on Compound", provenance)
-    elevation = _num(entity.dxf.insert[2]) + z_offset
     if not _finite(elevation):
         return _decl("ID_DegenerateEntity", "non-finite elevation", provenance)
     kind = entity.dxftype()
@@ -916,7 +952,10 @@ def extract_document(
         z_offset: float,
         stack: tuple[str, ...],
         label: str | None = None,
+        z_factor: float = 1.0,
     ) -> None:
+        """Emit one considered entity. A local z maps to world z as ``z_offset + z_factor * z``."""
+
         def add(row: dict[str, Any]) -> None:
             # Every row is one considered entity: this one.
             rows.append(row)
@@ -927,7 +966,11 @@ def extract_document(
         if isinstance(units, str):
             add(_decl(units, f"header convention {units}", prov))
             return
-        if entity.dxftype() == "INSERT":
+        kind = entity.dxftype()
+        if _invisible(entity):
+            add(_decl("ID_UnsupportedEntity", "invisible: not drawn", prov, name=kind))
+            return
+        if kind == "INSERT":
             name = str(entity.dxf.name)
             count = int(getattr(entity, "mcount", 1) or 1)
             if count > 1:
@@ -935,7 +978,7 @@ def extract_document(
                 # multi_insert() gives each copy as a plain INSERT, attributes included.
                 for index, copy in enumerate(entity.multi_insert()):
                     copy.dxf.handle = entity.dxf.get("handle")
-                    emit(copy, prefix, block_path, z_offset, stack, label=f"{name}#{index}")
+                    emit(copy, prefix, block_path, z_offset, stack, label=f"{name}#{index}", z_factor=z_factor)
                 return
             if name in stack:
                 add(_decl("ID_DegenerateEntity", f"cyclic block {name}", prov))
@@ -954,44 +997,60 @@ def extract_document(
                 add(_decl(link, reason, prov))
                 return
             iz = _insert_z(entity)
-            if isinstance(iz, str):
-                add(_decl(iz, "non-finite INSERT z", prov))
+            zscale = _num(entity.dxf.get("zscale", 1.0))
+            if isinstance(iz, str) or not _finite(zscale):
+                add(_decl("ID_DegenerateEntity", "non-finite INSERT z or zscale", prov))
                 return
             children = list(_iter_block(doc, name))
             if not children:
                 add(_decl("ID_DegenerateEntity", f"empty block {name}", prov))
                 return
             child_prefix = [link] + prefix
+            # Under a -Z extrusion the INSERT's OCS z runs along world -z.
+            flip = -1.0 if extr is not None else 1.0
             if extr is not None:
                 child_prefix = [extr] + child_prefix
+            child_offset = z_offset + z_factor * flip * iz
+            child_factor = z_factor * flip * zscale
             for child in children:
-                emit(child, child_prefix, block_path + [label or name], z_offset + iz, stack + (name,))
+                emit(child, child_prefix, block_path + [label or name], child_offset, stack + (name,), z_factor=child_factor)
             # Attached attributes are placed in the space the INSERT sits in, not in the block.
             for attrib in entity.attribs:
-                emit(attrib, prefix, block_path + [label or name], z_offset, stack + (name,))
+                emit(attrib, prefix, block_path + [label or name], z_offset, stack + (name,), z_factor=z_factor)
             return
         extr = _extrusion_link(entity)
-        if isinstance(extr, str):
-            add(_decl(extr, "extrusion is not +/- Z", prov))
+        if kind in OCS_TYPES:
+            if isinstance(extr, str):
+                add(_decl(extr, "extrusion is not +/- Z", prov))
+                return
+        elif kind in NORMAL_TYPES and extr is not None:
+            # World coordinates, but drawn in the plane the normal sets: a -Z normal mirrors
+            # it about its own anchor, which no link here expresses.
+            reason = "extrusion is not +/- Z" if isinstance(extr, str) else f"{kind} with a -Z extrusion is drawn mirrored; not read"
+            add(_decl("ID_TiltedPlacement", reason, prov))
             return
+        else:
+            extr = None  # world coordinates: the extrusion does not move them
         thickness = _thickness(entity)
         if thickness != 0:
             # Thickness extrudes the entity along Z: it spans more than one elevation.
             reason = "thickness extrudes the entity in Z" if _finite(thickness) else "non-finite thickness"
             add(_decl("ID_ThreeDNotYet" if _finite(thickness) else "ID_DegenerateEntity", reason, prov))
             return
-        if entity.dxftype() in ("TEXT", "MTEXT", "ATTRIB", "ATTDEF") and fonts:
-            add(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
+        # A -Z OCS also turns its z around.
+        z_sign = -1.0 if extr is not None else 1.0
+        if kind in ("TEXT", "MTEXT", "ATTRIB", "ATTDEF") and fonts:
+            elevation = z_offset + z_factor * z_sign * _num(entity.dxf.insert[2])
+            add(_text_row(entity, doc, fonts, extr, prefix, units, tol, elevation, prov))
             return
         mapped = _map_geometry(entity, mode)
         if isinstance(mapped, tuple):
             # A decline id with its own reason.
-            add(_decl(mapped[0], mapped[1], prov, name=entity.dxftype() if mapped[0] == "ID_UnsupportedEntity" else None))
+            add(_decl(mapped[0], mapped[1], prov, name=kind if mapped[0] == "ID_UnsupportedEntity" else None))
             return
         if isinstance(mapped, str):
             if mapped == "ID_UnsupportedEntity":
-                name = entity.dxftype()
-                add(_decl(mapped, f"unsupported {name}", prov, name=name))
+                add(_decl(mapped, f"unsupported {kind}", prov, name=kind))
             else:
                 add(_decl(mapped, mapped, prov))
             return
@@ -1000,7 +1059,7 @@ def extract_document(
             add(_decl(bad, f"{tol['kind']} on {mapped['kind']}", prov))
             return
         links = ([extr] + prefix) if extr else list(prefix)
-        elevation = _num(mapped["elevation"]) + z_offset
+        elevation = z_offset + z_factor * z_sign * _num(mapped["elevation"])
         if not _finite(elevation):
             add(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
             return

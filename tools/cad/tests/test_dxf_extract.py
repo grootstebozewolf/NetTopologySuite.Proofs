@@ -41,7 +41,8 @@ def _doc() -> ezdxf.document.Drawing:
     msp.add_ellipse(center=(0, 0), major_axis=(4, 0), ratio=0.5)
     msp.add_blockref(BAD, (0, 0), dxfattribs={"xscale": 2, "yscale": 1})
     msp.add_blockref(BLK, (5, 6), dxfattribs={"xscale": -1, "yscale": 1})
-    tilted = msp.add_line((0, 0), (1, 0))
+    # An OCS entity: its -Z extrusion is a reflection. (A LINE stores world coordinates.)
+    tilted = msp.add_circle((2, 0), radius=1)
     tilted.dxf.extrusion = (0, 0, -1)
     msp.add_line((0, 0, 0), (1, 0, 1))
     msp.add_text("hi", dxfattribs={"insert": (0, 0)})
@@ -236,7 +237,7 @@ def test_extrusion_negative_z_is_a_reflection() -> None:
         r
         for r in rows
         if r["record"] == "entity"
-        and r["kind"] == "Chord"
+        and r["kind"] == "Circle"
         and r["placement"]["s"] == -1
         and r["provenance"]["blockPath"] == []
     ]
@@ -322,8 +323,8 @@ def test_tolerance_nonpositive_and_kind() -> None:
 
 def test_tilted_extrusion_and_unknown_unit() -> None:
     doc = ezdxf.new("R2010")
-    line = doc.modelspace().add_line((0, 0), (1, 0))
-    line.dxf.extrusion = (1, 0, 0)
+    circle = doc.modelspace().add_circle((0, 0), 1)
+    circle.dxf.extrusion = (1, 0, 0)
     rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
     assert rows[0]["id"] == "ID_TiltedPlacement"
     doc.header["$INSUNITS"] = 99
@@ -626,3 +627,84 @@ def test_thickness_declines_as_3d_for_every_kind() -> None:
     assert flat["kind"] == "Chord"
     # Still one row per considered entity.
     assert seen == ["LINE", "CIRCLE", "ARC", "LWPOLYLINE", "TEXT", "LINE"]
+
+
+def test_world_coordinate_entities_ignore_their_extrusion() -> None:
+    """LINE and SPLINE store world coordinates: a -Z or tilted extrusion moves nothing (as in ezdxf)."""
+    from ezdxf import path as ezpath
+
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    entities = [
+        msp.add_line((1, 2), (3, 2), dxfattribs={"extrusion": (0, 0, -1)}),
+        msp.add_line((1, 2), (3, 2), dxfattribs={"extrusion": (0, 1, 1)}),
+        msp.add_open_spline([(1, 2), (2, 3), (3, 2), (4, 3)], dxfattribs={"extrusion": (0, 0, -1)}),
+    ]
+    rows = dxf_extract.extract_document(doc, file_id="wcs")
+    for entity, row in zip(entities, rows):
+        VALIDATOR.validate(row)
+        assert row["record"] == "entity" and row["placement"] == {"links": [], "s": 1}
+        first = row["params"].get("start") or row["params"]["controlPoints"][0]
+        reference = next(iter(ezpath.make_path(entity).control_vertices()))
+        assert first == pytest.approx([reference.x, reference.y])
+
+
+def test_normal_plane_entities_with_a_minus_z_normal_decline() -> None:
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    msp.add_mtext("x", dxfattribs={"extrusion": (0, 0, -1)})
+    msp.add_ellipse((0, 0), (2, 0), 1.0, dxfattribs={"extrusion": (0, 0, -1)})
+    rows = dxf_extract.extract_document(doc, mode="lenient", file_id="normal")
+    assert [(r["id"], r["reason"]) for r in rows] == [
+        ("ID_TiltedPlacement", "MTEXT with a -Z extrusion is drawn mirrored; not read"),
+        ("ID_TiltedPlacement", "ELLIPSE with a -Z extrusion is drawn mirrored; not read"),
+    ]
+
+
+def test_invisible_entities_and_fitted_polylines_decline() -> None:
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    msp.add_line((0, 0), (1, 0), dxfattribs={"invisible": 1})
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    msp.add_blockref("B", (0, 0), dxfattribs={"invisible": 1})
+    for flag in (2, 4):  # curve-fit, spline-fit
+        fitted = msp.add_polyline2d([(0, 0), (1, 1), (2, 0)])
+        fitted.dxf.flags |= flag
+    rows = dxf_extract.extract_document(doc, file_id="vis")
+    for row in rows:
+        VALIDATOR.validate(row)
+    assert [(r["id"], r["name"], r["reason"]) for r in rows] == [
+        ("ID_UnsupportedEntity", "LINE", "invisible: not drawn"),
+        ("ID_UnsupportedEntity", "INSERT", "invisible: not drawn"),
+        ("ID_UnsupportedEntity", "POLYLINE", "curve-fit or spline-fit polyline: its drawn vertices are not read"),
+        ("ID_UnsupportedEntity", "POLYLINE", "curve-fit or spline-fit polyline: its drawn vertices are not read"),
+    ]
+
+
+@pytest.mark.parametrize("seed", range(40))
+def test_elevation_is_ezdxfs_world_z(seed: int) -> None:
+    """World z through nested inserts with zscale and -Z extrusions, against ezdxf's own placement."""
+    import random
+
+    from ezdxf.math import Matrix44
+
+    rng = random.Random(seed)
+    doc = ezdxf.new("R2018")
+    inner = doc.blocks.new("IN")
+    inner.add_circle((1, 1, rng.uniform(-5, 5)), 1, dxfattribs={"extrusion": (0, 0, rng.choice([1, -1]))})
+    outer = doc.blocks.new("OUT")
+    outer.add_blockref(
+        "IN", (2, 3, rng.uniform(-5, 5)),
+        dxfattribs={"zscale": rng.choice([1, 2, -0.5]), "extrusion": (0, 0, rng.choice([1, -1]))},
+    )
+    top = doc.modelspace().add_blockref(
+        "OUT", (0, 0, rng.uniform(-5, 5)),
+        dxfattribs={"zscale": rng.choice([1, 3, -1]), "extrusion": (0, 0, rng.choice([1, -1]))},
+    )
+    (row,) = dxf_extract.extract_document(doc, file_id="z")
+    circle = next(iter(inner))
+    inner_ref = next(iter(outer))
+    m = inner_ref.matrix44() @ top.matrix44()
+    (world,) = m.transform_vertices([circle.ocs().to_wcs(circle.dxf.center)])
+    expected = row["dimension"].get("elevation", 0.0)
+    assert expected == pytest.approx(world.z, abs=1e-9)
