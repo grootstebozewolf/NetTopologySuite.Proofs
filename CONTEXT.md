@@ -313,7 +313,7 @@ Hausdorff *k*·*d*; AngleStep/SegmentCount convert after placement from
 placed radius, else `ID_ToleranceKindUnsupported`. Year-1 certificates:
 `carrier_intake_certified`, `carrier_emit_parse_id`.
 
-**Non-goals.** No DWG parsing in the corpus. No 3D. No rendering semantics for fonts beyond outlines and winding. No claim of round-trip fidelity to CAD; the bridge is one-way, CAD to GIS, through linearization and certified eggs.
+**Non-goals.** No DWG parsing in the corpus. No 3D. No rendering semantics for fonts beyond outlines and winding. No claim of round-trip fidelity to CAD; the bridge is one-way, CAD to GIS, through linearization and certified eggs. **Bézier is outside SQL/MM Part 3 (#863).** No ST_Curve subtype is a Bézier, and none is in the expansion backlog. JTS lists Bézier as a separate non-SQL/MM profile (`PRF-BEZIER`, locationtech/jts #1195). A Bézier fits SQL/MM only as an ST_NURBSCurve with one clamped span and unit weights (`NurbsBezierSpan.v : a41_eq_definition_bz`, claimId `0007-nurbs-bezier-span`). So font vectorization does not wait on #615. TrueType and CFF glyphs reach GIS through this bridge: linearize to a linear `Polygon` or `MultiPolygon` and decide counters by nonzero winding ([`tools/cad/survey/font.json`](tools/cad/survey/font.json), fixture [`tools/cad/fixtures/truetype_e.json`](tools/cad/fixtures/truetype_e.json)). SHX stroke fonts in DWG/DXF draw only lines and bulge arcs, which LineString and CircularString already carry.
 
 ### Exact curves
 

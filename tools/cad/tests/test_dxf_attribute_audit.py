@@ -26,6 +26,7 @@ import pytest
 from ezdxf.entities import factory
 
 import dxf_extract
+from test_text_glyphs import ttf  # noqa: F401
 
 _COMMON = {
     "handle": "read",  # provenance
@@ -179,13 +180,10 @@ def _drawing(kind: str, attribute: str | None):
     return doc
 
 
-# Text kinds only become records once a font map turns them into glyphs, so their
-# declining attributes have no record to compare with here.
-_TEXT_KINDS = {"TEXT", "MTEXT", "ATTRIB", "ATTDEF"}
 def _classified(wanted: str) -> list[tuple[str, str]]:
     return sorted(
         (kind, attribute)
-        for kind in sorted((_HANDLED | {"VERTEX"}) - _TEXT_KINDS)
+        for kind in sorted(_HANDLED | {"VERTEX"})
         for attribute, verdict in {**_COMMON, **AUDIT[kind]}.items()
         if verdict == wanted and attribute in _attributes(kind)
     )
@@ -196,26 +194,31 @@ _LENIENT = _classified("lenient")
 _drawn = lambda rows: [row for row in rows if row["record"] == "entity"]
 
 
+def _extract(kind: str, attribute: str | None, mode: str, ttf: str) -> list[dict]:
+    fonts = {"carriertext.ttf": ttf}
+    return dxf_extract.extract_document(_drawing(kind, attribute), mode=mode, file_id="audit", fonts=fonts)
+
+
 # A "lenient" attribute declines in strict mode only; lenient is test_lenient_attributes_are_named.
 @pytest.mark.parametrize(
     ("kind", "attribute", "mode"),
     [(*case, mode) for case in _DECLINING for mode in ("strict", "lenient")] + [(*case, "strict") for case in _LENIENT],
 )
-def test_declining_attributes_decline(kind: str, attribute: str, mode: str) -> None:
-    baseline = dxf_extract.extract_document(_drawing(kind, None), mode="lenient", file_id="audit")
+def test_declining_attributes_decline(kind: str, attribute: str, mode: str, ttf) -> None:
+    baseline = _extract(kind, None, "lenient", ttf)
     assert _drawn(baseline), (kind, "the baseline must be a record, or the check proves nothing", baseline)
     # Strict declines more, so the lenient baseline being a record is not enough there.
-    if mode == "strict" and not _drawn(dxf_extract.extract_document(_drawing(kind, None), file_id="audit")):
+    if mode == "strict" and not _drawn(_extract(kind, None, "strict", ttf)):
         pytest.skip(f"{kind} is no strict record even without {attribute}")
-    rows = dxf_extract.extract_document(_drawing(kind, attribute), mode=mode, file_id="audit")
+    rows = _extract(kind, attribute, mode, ttf)
     assert not _drawn(rows), (kind, attribute, rows)
 
 
 @pytest.mark.parametrize(("kind", "attribute"), _LENIENT)
-def test_lenient_attributes_are_named(kind: str, attribute: str) -> None:
+def test_lenient_attributes_are_named(kind: str, attribute: str, ttf) -> None:
     """Lenient keeps the record, unchanged but for a note naming what it left out."""
-    (baseline,) = _drawn(dxf_extract.extract_document(_drawing(kind, None), mode="lenient", file_id="audit"))
-    (row,) = _drawn(dxf_extract.extract_document(_drawing(kind, attribute), mode="lenient", file_id="audit"))
+    (baseline,) = _drawn(_extract(kind, None, "lenient", ttf))
+    (row,) = _drawn(_extract(kind, attribute, "lenient", ttf))
     ignored = "thickness" if attribute == "thickness" else "width"
     assert row.pop("lenient") == [{"ignored": ignored, "value": 0.5}]
     row["provenance"]["handle"] = baseline["provenance"]["handle"]
@@ -236,8 +239,9 @@ def test_r12_fixture_stores_z_only_in_group_38() -> None:
     assert "AC1009" in text
 
 
-def test_r12_group_38_height_is_read_never_dropped() -> None:
-    rows = dxf_extract.extract_path(_R12, file_id="r12")
+def test_r12_group_38_height_is_read_never_dropped(ttf) -> None:
+    # The file has no STYLE table, so TEXT uses the default style and its "txt" font.
+    rows = dxf_extract.extract_path(_R12, file_id="r12", fonts={"txt.shx": ttf})
     by_handle = {row["provenance"]["handle"]: row for row in rows}
     # Group 38 alone: the height is the elevation.
     for handle in ("A1", "A2"):
@@ -247,5 +251,6 @@ def test_r12_group_38_height_is_read_never_dropped() -> None:
     assert inside["dimension"] == {"space": "2d+elevation", "elevation": 5.0}
     # An explicit z wins over group 38, as AutoCAD reads R12.
     assert by_handle["A5"]["dimension"] == {"space": "2d+elevation", "elevation": 2.5}
-    # TEXT declines without a font map; its height is checked with glyphs.
-    assert by_handle["A3"]["id"] == "ID_TextEntity"
+    # TEXT: its glyph outlines sit at the group 38 height.
+    assert by_handle["A3"]["kind"] == "Compound"
+    assert by_handle["A3"]["dimension"] == {"space": "2d+elevation", "elevation": 5.0}

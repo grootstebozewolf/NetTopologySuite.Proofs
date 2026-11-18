@@ -681,7 +681,7 @@ def test_thickness_declines_as_3d_for_every_kind() -> None:
     msp.add_text("l", dxfattribs={"thickness": 1, "style": "GLYPH", "height": 7})
     msp.add_line((0, 0), (1, 0), dxfattribs={"thickness": 0})
     seen: list[str] = []
-    rows = dxf_extract.extract_document(doc, file_id="thick", on_considered=seen.append)
+    rows = dxf_extract.extract_document(doc, file_id="thick", fonts={"carriertext.ttf": "unused.ttf"}, on_considered=seen.append)
     for row in rows:
         VALIDATOR.validate(row)
     *thick, flat = rows
