@@ -314,3 +314,84 @@ def test_lenient_notes_travel_with_the_wkt() -> None:
     assert out["wkt"] == "LINESTRING (0.0 0.0, 5.0 0.0, 5.0 3.0)"
     assert out["lenient"] == [{"ignored": "thickness", "value": 2.0}, {"ignored": "width", "value": 0.8}]
     assert "lenient" not in carrier_linearize.linearize_record(plain, _BOUND)
+
+
+def _ellipse_row(center, major, ratio, start, end) -> dict:
+    return _row("Ellipse", {
+        "center": list(center), "majorAxis": list(major), "ratio": ratio,
+        "startParam": start, "endParam": end, "angleUnit": "radian", "direction": "ccw-ocs",
+    })
+
+
+@pytest.mark.parametrize("seed", range(40))
+def test_ellipse_arcs_are_within_their_bound_of_ezdxfs_ellipse(seed: int) -> None:
+    """Partial arcs (including ones that wrap past 2 pi, end < start) against ezdxf's own ellipse,
+    and the bound against the exact curve sampled densely."""
+    from ezdxf.math import ConstructionEllipse
+
+    rng = random.Random(seed)
+    center = (rng.uniform(-50, 50), rng.uniform(-50, 50))
+    angle, length = rng.uniform(0, 2 * math.pi), rng.uniform(0.5, 40)
+    major = (length * math.cos(angle), length * math.sin(angle))
+    ratio = rng.uniform(0.05, 1.0)
+    start, end = rng.uniform(-7, 7), rng.uniform(-7, 7)
+    d = rng.choice([0.001, 0.01, 0.1])
+    row = _ellipse_row(center, major, ratio, start, end)
+    out = carrier_linearize.linearize_record(row, hausdorff=d)
+    assert 0 < out["hausdorff"] <= d
+    ours = shapely.from_wkt(out["wkt"])
+
+    theirs = ConstructionEllipse(
+        center=(*center, 0), major_axis=(*major, 0), ratio=ratio, start_param=start, end_param=end
+    )
+    reference = shapely.LineString([(v.x, v.y) for v in theirs.flattening(_FINE / 10)])
+    assert ours.hausdorff_distance(reference) <= out["hausdorff"] + _FINE / 10 + 1e-9
+
+    # The exact curve, sampled densely: every chord stays within the bound.
+    sweep = (end - start) % (2 * math.pi)
+    nx, ny = -ratio * major[1], ratio * major[0]
+    dense = [
+        (center[0] + major[0] * math.cos(t) + nx * math.sin(t), center[1] + major[1] * math.cos(t) + ny * math.sin(t))
+        for t in (start + sweep * k / 20000 for k in range(20001))
+    ]
+    assert ours.hausdorff_distance(shapely.LineString(dense)) <= out["hausdorff"] + 1e-6 * length
+
+
+def test_ellipse_step_count_is_the_least_that_meets_the_bound() -> None:
+    points, bound = carrier_linearize.ellipse_points((0, 0), (10, 0), 0.5, 0.0, math.pi, 0.01)
+    count = len(points) - 1
+    assert bound <= 0.01 < 10 * (math.pi / (count - 1)) ** 2 / 8
+    # A whole ellipse is closed and keeps three segments at any tolerance.
+    row = _ellipse_row((0, 0), (1, 0), 0.5, 0.0, 2 * math.pi)
+    coarse = carrier_linearize.linearize_record(row, hausdorff=100.0)
+    ring = shapely.from_wkt(coarse["wkt"])
+    assert ring.is_closed and len(ring.coords) == 4
+
+
+def test_ellipse_runs_counter_clockwise_about_its_major_axis() -> None:
+    """From the major axis end (t = 0) a quarter turn reaches the minor axis end, to the left."""
+    row = _ellipse_row((0, 0), (0, 4), 0.5, 0.0, math.pi / 2)  # major axis points up
+    coords = shapely.from_wkt(carrier_linearize.linearize_record(row, hausdorff=0.01)["wkt"]).coords
+    assert coords[0] == pytest.approx((0, 4))
+    assert coords[-1] == pytest.approx((-2, 0))  # the minor axis, a quarter turn CCW from up
+
+
+@pytest.mark.parametrize(
+    ("params", "reason"),
+    [
+        ({"ratio": 0.0}, "an ellipse with no area"),
+        ({"majorAxis": [0, 0]}, "an ellipse with no area"),
+        ({"endParam": 1.0}, "an ellipse arc of zero sweep"),
+        ({"ratio": math.nan}, "a non-finite ellipse number"),
+    ],
+)
+def test_degenerate_ellipses_decline(params: dict, reason: str) -> None:
+    row = _ellipse_row((0, 0), (2, 0), 0.5, 1.0, 2.0)
+    row["params"].update(params)
+    assert carrier_linearize.linearize_record(row, hausdorff=0.01) == ("ID_DegenerateEntity", reason)
+
+
+def test_ellipse_ignores_an_angle_step() -> None:
+    row = _ellipse_row((0, 0), (2, 0), 0.5, 0.0, 1.0)
+    row["tolerance"] = {"kind": "angleStep", "alpha": 5, "angleUnit": "degree", "direction": "ccw-ocs"}
+    assert carrier_linearize.linearize_record(row)[0] == "ID_ToleranceKindUnsupported"
