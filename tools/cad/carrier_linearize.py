@@ -20,12 +20,14 @@ carrier, so every record an extractor writes can reach GIS:
   ``ellipse_points``. Only a sagitta or a world bound applies: an angle
   step or segment count declines.
 * Bezier: Wang's chord count, decided in rationals.
-* BSpline: clamped and polynomial, split into Bezier spans by knot
-  insertion, then Wang's count per span. Weights that are all equal
-  (within 1e-9 of the first, as the extractor tests unit weights) are a
-  polynomial curve. Unequal weights (rational), unclamped knots,
-  decreasing knots, or an interior knot repeated above the degree (a break
-  in the curve) decline.
+* BSpline: clamped, split into Bezier spans by knot insertion. Weights
+  that are all equal (within 1e-9 of the first, as the extractor tests
+  unit weights) are a polynomial curve: Wang's count per span. Unequal
+  positive weights (rational) are split in homogeneous coordinates until
+  each piece's control points lie within the bound of its chord
+  (``rational_points``). Unclamped knots, decreasing knots, non-positive
+  weights, or an interior knot repeated above the degree (a break in the
+  curve) decline.
 * Ring: a MULTIPOLYGON under its winding rule (nonzero or evenodd). When
   the flattened contours do not meet, each is classified by exact winding
   numbers, without noding; when they meet, ``nonzero_node`` fills them
@@ -192,8 +194,11 @@ def _segments_points(segments: list[dict[str, Any]], sagitta: Sagitta, closed: b
     return points, worst
 
 
-def bezier_spans(degree: int, controls: list[Point], knots: list[float]) -> list[list[Point]]:
-    """A clamped B-spline as Bezier spans: insert every interior knot up to multiplicity ``degree`` (Boehm)."""
+def bezier_spans(degree: int, controls: list[tuple[float, ...]], knots: list[float]) -> list[list[tuple[float, ...]]]:
+    """A clamped B-spline as Bezier spans: insert every interior knot up to multiplicity ``degree`` (Boehm).
+
+    Points may have any dimension: a rational spline passes homogeneous ``(w x, w y, w)``.
+    """
     points = [tuple(point) for point in controls]
     knots = list(knots)
     for value in sorted(set(knots[degree + 1 : -degree - 1])):
@@ -203,7 +208,7 @@ def bezier_spans(degree: int, controls: list[Point], knots: list[float]) -> list
             for i in range(span - degree + 1, span + 1):
                 a = (value - knots[i]) / (knots[i + degree] - knots[i])
                 p, q = points[i - 1], points[i]
-                inserted.append(((1 - a) * p[0] + a * q[0], (1 - a) * p[1] + a * q[1]))
+                inserted.append(tuple((1 - a) * u + a * v for u, v in zip(p, q)))
             points = points[: span - degree + 1] + inserted + points[span:]
             knots.insert(span + 1, value)
     return [points[k : k + degree + 1] for k in range(0, len(points) - degree, degree)]
@@ -222,8 +227,8 @@ def _linestring(points: list[Point], links: list[dict[str, Any]], local_bound: f
     return {"wkt": "LINESTRING " + _line(_place(points, links)), "hausdorff": chain_scale(links) * local_bound}
 
 
-def _check_bspline(params: dict[str, Any]) -> list[Point]:
-    """Validated polynomial control points, or a decline."""
+def _check_bspline(params: dict[str, Any]) -> tuple[list[Point], list[float] | None]:
+    """Validated control points, and their weights when the spline is rational (else None)."""
     degree, controls, knots = int(params["degree"]), params["controlPoints"], [float(k) for k in params["knots"]]
     weights = [float(w) for w in params.get("weights") or [1.0] * len(controls)]
     if degree < 1 or len(controls) < degree + 1 or len(weights) != len(controls):
@@ -238,10 +243,58 @@ def _check_bspline(params: dict[str, Any]) -> list[Point]:
         raise _Declined("ID_DegenerateEntity", "B-spline interior knot repeated more often than its degree")
     if weights[0] <= 0 or not all(math.isfinite(w) and w > 0 for w in weights):
         raise _Declined("ID_DegenerateEntity", "B-spline weights are not positive")
+    points = [tuple(point) for point in controls]
     # Equal weights cancel: the curve is polynomial whatever their common value.
     if any(abs(w / weights[0] - 1.0) > _UNIT_EPS for w in weights):
-        raise _Declined("ID_UnsupportedEntity", "rational B-spline: Wang's bound is for polynomial curves")
-    return [tuple(point) for point in controls]
+        return points, weights
+    return points, None
+
+
+_MAX_SPLITS = 48  # halvings of one rational span before it declines
+
+
+def _segment_distance(p: Point, a: Point, b: Point) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length2 = dx * dx + dy * dy
+    t = 0.0 if length2 == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / length2))
+    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
+
+
+def rational_points(span: list[tuple[float, float, float]], d: float) -> tuple[list[Point], float]:
+    """A rational Bezier span, homogeneous ``(w x, w y, w)`` with every ``w > 0``, as chords within ``d``.
+
+    With positive weights each curve point is a convex combination of the control points,
+    so the curve lies in their convex hull. Distance to a segment is convex, so when every
+    control point is within ``e`` of the chord from the first to the last, so is the curve.
+    The chord is within ``e`` of the curve too: the curve's projection onto the chord runs
+    continuously from one end to the other, so each chord point is the foot of a curve point
+    no further than ``e`` from it. The span is halved by de Casteljau in homogeneous
+    coordinates (exact, and weights stay positive) until that holds with ``e <= d``.
+    Returns the vertices and the largest ``e`` used.
+    """
+    out: list[Point] = []
+    worst = 0.0
+    stack = [(span, 0)]
+    while stack:
+        piece, depth = stack.pop()
+        projected = [(x / w, y / w) for x, y, w in piece]
+        e = max(_segment_distance(p, projected[0], projected[-1]) for p in projected[1:-1]) if len(piece) > 2 else 0.0
+        if e <= d:
+            if not out:
+                out.append(projected[0])
+            out.append(projected[-1])
+            worst = max(worst, e)
+            continue
+        if depth >= _MAX_SPLITS:
+            raise _Declined("ID_DegenerateEntity", "rational span does not flatten within the split limit")
+        left, right, level = [piece[0]], [piece[-1]], list(piece)
+        while len(level) > 1:
+            level = [tuple((u + v) / 2 for u, v in zip(p, q)) for p, q in zip(level, level[1:])]
+            left.append(level[0])
+            right.append(level[-1])
+        stack.append((right[::-1], depth + 1))  # popped after the left half: vertices stay in order
+        stack.append((left, depth + 1))
+    return out, worst
 
 
 def _ring(params: dict[str, Any], sagitta: Sagitta, links: list[dict[str, Any]], scale: float) -> dict[str, Any]:
@@ -373,13 +426,22 @@ def _linearize(row: dict[str, Any], hausdorff: float | None) -> dict[str, Any] |
         d = sagitta(0.0)
         return _linestring(_bezier_points([tuple(p) for p in params["controlPoints"]], d), links, d)
     if kind == "BSpline":
-        controls = _check_bspline(params)
+        controls, weights = _check_bspline(params)
         d = sagitta(0.0)
+        degree, knots = int(params["degree"]), [float(k) for k in params["knots"]]
         points: list[Point] = []
-        for span in bezier_spans(int(params["degree"]), controls, [float(k) for k in params["knots"]]):
-            part = _bezier_points(span, d)
+        if weights is None:
+            for span in bezier_spans(degree, controls, knots):
+                part = _bezier_points(span, d)
+                points.extend(part if not points else part[1:])
+            return _linestring(points, links, d)
+        homogeneous = [(x * w, y * w, w) for (x, y), w in zip(controls, weights)]
+        worst = 0.0
+        for span in bezier_spans(degree, homogeneous, knots):
+            part, used = rational_points(span, d)
             points.extend(part if not points else part[1:])
-        return _linestring(points, links, d)
+            worst = max(worst, used)
+        return _linestring(points, links, worst)
     if kind == "Ring":
         return _ring(params, sagitta, links, chain_scale(links))
     raise _Declined("ID_UnsupportedEntity", f"{kind} records are not linearized here")

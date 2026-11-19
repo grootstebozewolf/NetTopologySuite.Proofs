@@ -153,9 +153,9 @@ def test_bspline_with_a_break_or_decreasing_knots_declines() -> None:
     assert carrier_linearize.linearize_record(backwards)[1] == "B-spline knots decrease or span nothing"
 
 
-def test_rational_bspline_and_other_kinds_decline() -> None:
-    rational = _row("BSpline", {"degree": 3, "controlPoints": [[0, 0], [1, 2], [3, 1], [4, 0]], "weights": [1, 2, 1, 1], "knots": [0, 0, 0, 0, 1, 1, 1, 1]})
-    assert carrier_linearize.linearize_record(rational)[1].startswith("rational B-spline")
+def test_other_kinds_decline() -> None:
+    bad = _row("BSpline", {"degree": 3, "controlPoints": [[0, 0], [1, 2], [3, 1], [4, 0]], "weights": [1, -2, 1, 1], "knots": [0, 0, 0, 0, 1, 1, 1, 1]})
+    assert carrier_linearize.linearize_record(bad) == ("ID_DegenerateEntity", "B-spline weights are not positive")
     assert carrier_linearize.linearize_record(_row("Spiral", {}))[0] == "ID_UnsupportedEntity"
     # The extractor's default tolerance states no chord height: a curve declines...
     loose = _row("Arc", {"center": [0, 0], "radius": 1, "startAngle": 0, "endAngle": 90})
@@ -395,3 +395,64 @@ def test_ellipse_ignores_an_angle_step() -> None:
     row = _ellipse_row((0, 0), (2, 0), 0.5, 0.0, 1.0)
     row["tolerance"] = {"kind": "angleStep", "alpha": 5, "angleUnit": "degree", "direction": "ccw-ocs"}
     assert carrier_linearize.linearize_record(row)[0] == "ID_ToleranceKindUnsupported"
+
+
+_S = math.sqrt(0.5)
+# A whole circle of radius 2 about (1, -1): the standard 9-point degree-2 NURBS.
+_CIRCLE = {
+    "degree": 2,
+    "controlPoints": [[1 + 2 * x, -1 + 2 * y] for x, y in [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0)]],
+    "weights": [1, _S, 1, _S, 1, _S, 1, _S, 1],
+    "knots": [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4],
+}
+
+
+@pytest.mark.parametrize("d", [0.1, 0.01, 0.0001])
+def test_rational_circle_vertices_are_on_the_circle(d: float) -> None:
+    """A rational quadratic draws a true circle: every vertex lies on it, every chord's sagitta is within the bound."""
+    out = carrier_linearize.linearize_record(_row("BSpline", _CIRCLE), hausdorff=d)
+    assert 0 < out["hausdorff"] <= d
+    coords = list(shapely.from_wkt(out["wkt"]).coords)
+    assert coords[0] == pytest.approx(coords[-1])
+    for x, y in coords:
+        assert math.hypot(x - 1, y + 1) == pytest.approx(2, abs=1e-12)
+    sagittas = [2 - math.hypot((a[0] + b[0]) / 2 - 1, (a[1] + b[1]) / 2 + 1) for a, b in zip(coords, coords[1:])]
+    assert max(sagittas) <= out["hausdorff"] + 1e-12
+    # No more than twice the chords the circle itself needs at this bound.
+    needed = math.ceil(2 * math.pi / (2 * math.acos(1 - d / 2)))
+    assert len(coords) - 1 <= 2 * needed
+
+
+@pytest.mark.parametrize("seed", range(40))
+def test_rational_bsplines_are_within_their_bound_of_ezdxfs_curve(seed: int) -> None:
+    from ezdxf.math import BSpline as EzBSpline
+
+    rng = random.Random(seed)
+    degree = rng.choice([2, 3, 4])
+    count = rng.randint(degree + 1, degree + 6)
+    controls = [[rng.uniform(-20, 20), rng.uniform(-20, 20)] for _ in range(count)]
+    weights = [rng.choice([1.0, rng.uniform(0.05, 20)]) for _ in range(count)]
+    weights[0] = 1.0
+    weights[rng.randrange(count)] = rng.uniform(2, 20)  # surely rational
+    interior = sorted(rng.uniform(0, 1) for _ in range(count - degree - 1))
+    knots = [0.0] * (degree + 1) + interior + [1.0] * (degree + 1)
+    d = rng.choice([0.001, 0.01, 0.1])
+    params = {"degree": degree, "controlPoints": controls, "weights": weights, "knots": knots}
+    out = carrier_linearize.linearize_record(_row("BSpline", params), hausdorff=d)
+    assert not isinstance(out, tuple), out
+    assert 0 <= out["hausdorff"] <= d
+    curve = EzBSpline([(x, y, 0) for x, y in controls], order=degree + 1, knots=knots, weights=weights)
+    dense = shapely.LineString([(v.x, v.y) for v in curve.points([k / 20000 for k in range(20001)])])
+    assert shapely.from_wkt(out["wkt"]).hausdorff_distance(dense) <= out["hausdorff"] + 1e-6 * 40
+
+
+def test_a_rational_dxf_spline_reaches_wkt() -> None:
+    doc = ezdxf.new("R2018")
+    spline = doc.modelspace().add_rational_spline(
+        [(0, 0), (1, 2), (3, 2), (4, 0)], weights=[1, 3, 0.5, 1], degree=3
+    )
+    (row,) = dxf_extract.extract_document(doc, file_id="nurbs", tolerance={"kind": "sagitta", "d": 0.01})
+    assert row["kind"] == "BSpline" and row["params"]["weights"] == [1, 3, 0.5, 1]
+    out = carrier_linearize.linearize_record(row)
+    reference = shapely.LineString([(v.x, v.y) for v in spline.construction_tool().points([k / 5000 for k in range(5001)])])
+    assert shapely.from_wkt(out["wkt"]).hausdorff_distance(reference) <= out["hausdorff"] + 1e-6
