@@ -1,0 +1,20 @@
+{
+  "source": "github.com/kadaster/klic-win@5e83c0e42bbd6ee50c401cc1ef5759446c8fe147/Uitleveren/Voorbeelden IMKL v2.0",
+  "grid": "1 mm (s = 1000 on metres)",
+  "totals": {
+    "deliveries": 24,
+    "dig_polygons": 24,
+    "lines": 43962,
+    "stock_versions": [
+      "Shapely 2.2.0 / GEOS 3.14.1"
+    ],
+    "stock_covers_false": 903,
+    "stock_intersects_relate_covers_disagree": 903,
+    "deliveries_with_covers_false": 24,
+    "verified_dig_vertex_hotpixel_passes": 0,
+    "verified_exact_nodes": 1879,
+    "verified_max_snap_disp_m": "193/386120",
+    "bound_m": "1/2000",
+    "verified_bound_holds": true
+  }
+}

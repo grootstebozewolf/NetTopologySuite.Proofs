@@ -1,0 +1,5 @@
+# tools/klic-demo pins.  Shapely 2.2.0 wheels bundle GEOS 3.14.1; the tests
+# pin both, so a GEOS change shows up as a failing test, not a silent pass.
+shapely==2.2.0
+matplotlib==3.11.2
+pytest==9.0.2

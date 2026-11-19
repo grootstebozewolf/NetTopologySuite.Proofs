@@ -408,6 +408,27 @@ jobs:
             }
           sudo chown -R "$(id -u):$(id -g)" .
 
+      - name: klic-demo extraction is fresh and its audit is axiom-clean
+        # tools/klic-demo runs OCaml extracted from HotPixel_Q_exec.v.  Re-extract
+        # against the .vo just built and fail if the committed hotpixel_q.ml(i)
+        # drifted; re-run the demo's Print Assumptions probe and fail on any
+        # axiom outside the three allowlisted ones plus Flocq's classic (an
+        # Admitted would appear as an extra axiom).
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace nts-proofs-flocq:ci \
+            bash -lc 'git config --global --add safe.directory /workspace &&
+                      bash tools/klic-demo/rocq/extract.sh &&
+                      bash tools/klic-demo/proof_audit/audit.sh'
+          sudo chown -R "$(id -u):$(id -g)" .
+          git diff --exit-code -- tools/klic-demo/ocaml/hotpixel_q.ml tools/klic-demo/ocaml/hotpixel_q.mli
+          bad=$(grep -vE '^( |$|#|== |Axioms:|Closed under the global context)' tools/klic-demo/proof_audit/print_assumptions.txt \
+                | grep -vE '^(ClassicalDedekindReals\.sig_forall_dec|ClassicalDedekindReals\.sig_not_dec|FunctionalExtensionality\.functional_extensionality_dep|Classical_Prop\.classic) :' || true)
+          if [ -n "$bad" ]; then echo "::error::unexpected assumptions:"; echo "$bad"; exit 1; fi
+          # one labelled block per `Print Assumptions` line in the probe
+          test "$(grep -c '^== ' tools/klic-demo/proof_audit/print_assumptions.txt)" \
+            -eq "$(grep -c '^Print Assumptions' tools/klic-demo/proof_audit/DemoAudit.v)"
+
       - name: Claim statements, elaborated (exact type, Print Assumptions, pinned elaborated statement)
         # Build-dependent half of scripts/check_claim_statements.py (the text
         # half runs in `make ci-guards`).  Per registered claim it compiles a
