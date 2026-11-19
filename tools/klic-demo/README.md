@@ -13,7 +13,8 @@ decides hot-pixel passing exactly.
 
 SUMMARY warn: all four stock tools (Shapely/GEOS 3.14.1, JTS 1.20.0, NTS
 2.6.0, PostGIS 3.5.2/GEOS 3.9.0) give self-contradictory answers on case B,
-and on case A (crossing points off the cable); GEOS also on A\* and C. The
+and on case A (crossing points off the cable). On A\* all four return
+covers=False on some pairs (GEOS 2235, JTS/NTS 559 of 3000); on C only GEOS. The
 errors are picometres and no bound is stated. Verified kernel: one answer per
 case, displacement ≤ ½ mm per coordinate (Qed).
 
@@ -28,7 +29,7 @@ picometres (7.8 pm and 11.0 pm in case A). The point is that it **contradicts it
 | | meaning | where |
 |---|---|---|
 | **Proved** | Qed in Rocq, no `Admitted` in the chain. `Print Assumptions` lists the repo's three allowlisted axioms (`docs/axiom-allowlist.txt`) plus `Classical_Prop.classic`, which arrives through Flocq's `round` in the specification (see below) | `theories-flocq/HotPixel_Q_exec.v`, `proof_audit/print_assumptions.txt` |
-| **Proved per answer** | an output of the extracted kernel; each answer means what its reflection theorem says | `ocaml/hotpixel_q.ml` (extracted), called by `verified_hotpixel.py` |
+| **Proved per answer** | an output of the extracted kernel; each answer means what its reflection theorem says, modulo the trusted base (extraction, OCaml compiler, the I/O shim, `Fraction(str)` parsing; see Limitations) | `ocaml/hotpixel_q.ml` (extracted), called by `verified_hotpixel.py` |
 | **Tested** | something observed by running a tool, with the tool version printed beside it | `demo.py` output, `results/*.json`, `tests/` |
 
 ### Scope
