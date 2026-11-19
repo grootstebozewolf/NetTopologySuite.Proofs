@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-11-19
+Provenance: 849bc1cca3eb07ae53a667faf6b14650ddf95bc3
+Theorems: `HotPixel_Q_exec.v : q_snap_disp_bound`, `HotPixel_Q_exec.v : q_passes_through_closed_reflect`, `HotPixel_Q_exec.v : q_touches_closed_reflect`, `HotPixel_Q_exec.v : q_snap_coord_correct`, `HotPixel_Q_exec.v : q_round_ne_correct`, `HotPixel_Q_exec.v : q_seg_intersection_sound`, `HotPixel_Q_exec.v : rd_mm_grid_representable_b64`, `HotPixel_Q_exec.v : b64_passes_through_implies_q`, `HotPixel_Q_exec.v : b64_snap_coord_Q_agree`
+-->
 # KLIC hot-pixel demo
 
 Stock geometry libraries answer "does this cable cross the dig area?" in ways
@@ -5,6 +10,12 @@ that contradict each other, near a dig-polygon corner, and they give no error
 bound. This demo sets that next to a small verified kernel. The kernel places
 nodes on a 1 mm grid with a **proved** bound of ½ mm per coordinate, and it
 decides hot-pixel passing exactly.
+
+SUMMARY warn: all four stock tools (Shapely/GEOS 3.14.1, JTS 1.20.0, NTS
+2.6.0, PostGIS 3.5.2/GEOS 3.9.0) give self-contradictory answers on case B,
+and on case A (crossing points off the cable); GEOS also on A\* and C. The
+errors are picometres and no bound is stated. Verified kernel: one answer per
+case, displacement ≤ ½ mm per coordinate (Qed).
 
 The point is not that GEOS is badly wrong. Its intersection points are off by
 picometres (7.8 pm and 11.0 pm in case A). The point is that it **contradicts itself** and

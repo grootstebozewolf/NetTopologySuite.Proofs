@@ -43,8 +43,8 @@ jobs:
           cache: pip
           cache-dependency-path: tools/klic-demo/requirements.txt
 
-      - name: Install OCaml (stock compiler only)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ocaml-nox
+      - name: Install OCaml (stock compiler only; Ubuntu 24.04 has no ocaml-nox)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ocaml
 
       - name: Install requirements
         run: pip install -r tools/klic-demo/requirements.txt
