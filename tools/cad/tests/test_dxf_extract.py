@@ -193,25 +193,43 @@ def test_arc_and_circle() -> None:
 
 
 def test_ellipse_modes() -> None:
-    for mode, ratio1_kind in (("strict", None), ("lenient", "Arc")):
+    """Every ELLIPSE is an Ellipse record with the numbers it states; lenient turns ratio 1 into an Arc."""
+    for mode in ("strict", "lenient"):
         rows = _rows(mode)
-        ell = [r for r in rows if r["record"] == "decline" and r["id"] == "ID_EllipseNotYet"]
-        arcs = [
-            r
-            for r in rows
-            if r["record"] == "entity"
-            and r["kind"] == "Arc"
-            and r["params"].get("angleUnit") == "radian"
-        ]
-        if ratio1_kind is None:
-            assert len(ell) == 2
-            assert arcs == []
-        else:
-            assert len(ell) == 1
-            assert len(arcs) == 1
+        for row in rows:
+            VALIDATOR.validate(row)
+        assert not [r for r in rows if r["record"] == "decline" and r["id"] == "ID_EllipseNotYet"]
+        ellipses = [r for r in rows if r["record"] == "entity" and r["kind"] == "Ellipse"]
+        arcs = [r for r in rows if r["record"] == "entity" and r["kind"] == "Arc" and r["params"].get("angleUnit") == "radian"]
+        assert (len(ellipses), len(arcs)) == ((2, 0) if mode == "strict" else (1, 1))
+        for ellipse in ellipses:
+            assert set(ellipse["params"]) == {"center", "majorAxis", "ratio", "startParam", "endParam", "angleUnit", "direction"}
+            assert ellipse["params"]["direction"] == "ccw-ocs"
+        if mode == "lenient":
             assert arcs[0]["params"]["radius"] == pytest.approx(4)
             assert arcs[0]["params"]["direction"] == "ccw-ocs"
             assert "frameAngle" in arcs[0]["params"]
+
+
+def test_an_elevated_ellipse_keeps_its_elevation() -> None:
+    """The major axis is a direction: its z is 0 while the centre's z is the elevation."""
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    msp.add_ellipse((1, 2, 5), (2, 0, 0), 1.0)
+    msp.add_ellipse((1, 2, 5), (2, 0, 0), 0.5)
+    msp.add_ellipse((1, 2, 5), (2, 0, 1), 0.5)  # a tilted major axis leaves the plane
+    rows = dxf_extract.extract_document(doc, mode="lenient", file_id="lifted")
+    assert [r.get("kind") or r["id"] for r in rows] == ["Arc", "Ellipse", "ID_ThreeDNotYet"]
+    assert rows[0]["dimension"] == rows[1]["dimension"] == {"space": "2d+elevation", "elevation": 5.0}
+
+
+def test_ellipse_declines_an_angle_step_or_segment_count() -> None:
+    """Only a sagitta bounds an ellipse here: its parameter steps are not angle steps."""
+    doc = ezdxf.new("R2018")
+    doc.modelspace().add_ellipse((0, 0), (2, 0), 0.5)
+    for tolerance in ({"kind": "angleStep", "alpha": 5.0, "angleUnit": "degree"}, {"kind": "segmentCount", "n": 16}):
+        (row,) = dxf_extract.extract_document(doc, tolerance=tolerance, file_id="tol")
+        assert row["id"] == "ID_ToleranceKindUnsupported"
 
 
 def test_insert_nonuniform_declines_and_mirror_sign() -> None:

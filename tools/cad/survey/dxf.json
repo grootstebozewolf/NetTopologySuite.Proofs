@@ -46,10 +46,10 @@
     {
       "entity": "ELLIPSE",
       "groupCodes": [10, 20, 30, 11, 21, 31, 40, 41, 42, 210, 220, 230],
-      "convention": "Start and end are parameters about the major axis, not degree angles.",
+      "convention": "Start and end are parameters about the major axis, not degree angles. The record keeps them as radians, counter-clockwise; ratio 1 is an Arc in lenient mode.",
       "versions": ["R13", "R2000+"],
       "traps": ["ELLIPSE params vs angles"],
-      "declineId": "ID_EllipseNotYet",
+      "kind": "Ellipse",
       "note": "Groups 41 and 42 are parametric angles about the major axis (Autodesk DXF Reference, ELLIPSE)."
     },
     {

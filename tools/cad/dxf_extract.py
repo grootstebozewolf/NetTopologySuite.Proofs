@@ -31,6 +31,10 @@ Elevation is world z: an INSERT maps its block's z through its own z,
 Both negative is a half-turn (``reflect`` stays false and 180 degrees are
 added to the source rotation) so two reflections are not stored as one.
 
+An ELLIPSE is an Ellipse record in both modes, with the numbers it
+states (params in radians about the major axis); its centre's z is the
+elevation and a major axis out of the plane is ``ID_ThreeDNotYet``.
+
 Modes (ADR-0005):
 
 * ``strict`` declines every named case below.
@@ -78,7 +82,7 @@ end is less than its start is copied raw; 360 is not added.
 
 Named declines: ID_NotSimilarityPlacement, ID_TiltedPlacement,
 ID_ThreeDNotYet, ID_HatchRegion, ID_TextEntity, ID_DimensionEntity,
-ID_EllipseNotYet, ID_FitPointSpline, ID_UnclampedKnots,
+ID_FitPointSpline, ID_UnclampedKnots,
 ID_PeriodicSpline, ID_UnknownUnit, ID_ToleranceNonPositive,
 ID_ToleranceKindUnsupported,
 ID_DegenerateEntity, ID_UnsupportedEntity (with the source name).
@@ -780,6 +784,54 @@ def _materialize(
     return {"members": members}
 
 
+def _map_ellipse(entity: Any, mode: str) -> dict[str, Any] | str:
+    """An ELLIPSE as an Ellipse record, with the numbers it states. Lenient turns ratio 1 into an Arc.
+
+    The centre's z is the elevation; the major axis is a direction, so its z must be 0
+    (otherwise the ellipse leaves the plane).
+    """
+    center = entity.dxf.center
+    major = entity.dxf.major_axis
+    numbers = [_num(v) for v in (*center, *major, entity.dxf.ratio, entity.dxf.start_param, entity.dxf.end_param)]
+    if not all(_finite(v) for v in numbers):
+        return "ID_DegenerateEntity"
+    cx, cy, cz, mx, my, mz, ratio, start, end = numbers
+    if abs(mz) > _EPS:
+        return "ID_ThreeDNotYet"
+    length = math.hypot(mx, my)
+    if length <= _EPS or ratio <= _EPS:
+        return "ID_DegenerateEntity"
+    if math.isclose(start, end, abs_tol=_EPS):
+        return "ID_DegenerateEntity"
+    if mode == "lenient" and math.isclose(ratio, 1.0, abs_tol=_EPS):
+        return {
+            "kind": "Arc",
+            "elevation": cz,
+            "params": {
+                "center": [cx, cy],
+                "radius": length,
+                "startAngle": start,
+                "endAngle": end,
+                "angleUnit": "radian",
+                "direction": "ccw-ocs",
+                "frameAngle": math.atan2(my, mx),
+            },
+        }
+    return {
+        "kind": "Ellipse",
+        "elevation": cz,
+        "params": {
+            "center": [cx, cy],
+            "majorAxis": [mx, my],
+            "ratio": ratio,
+            "startParam": start,
+            "endParam": end,
+            "angleUnit": "radian",
+            "direction": "ccw-ocs",
+        },
+    }
+
+
 def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, str]:
     """Return a mapping dict or a decline id.
 
@@ -867,42 +919,7 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str | tuple[str, s
             return "ID_DegenerateEntity"
         return {"kind": "Circle", "elevation": zs, "params": {"center": c, "radius": radius}}
     if dxftype == "ELLIPSE":
-        if mode != "lenient":
-            return "ID_EllipseNotYet"
-        ratio = _num(entity.dxf.ratio)
-        if not _finite(ratio):
-            return "ID_DegenerateEntity"
-        if not math.isclose(ratio, 1.0, abs_tol=_EPS):
-            return "ID_EllipseNotYet"
-        center = entity.dxf.center
-        major = entity.dxf.major_axis
-        zs = _const_zs((center[2], major[2]))
-        if isinstance(zs, str):
-            return zs
-        c = _xy(center[0], center[1])
-        radius = math.hypot(_num(major[0]), _num(major[1]))
-        start = _num(entity.dxf.start_param)
-        end = _num(entity.dxf.end_param)
-        if (
-            c is None
-            or not (_finite(radius) and _finite(start) and _finite(end) and _finite(_num(major[0])) and _finite(_num(major[1])))
-        ):
-            return "ID_DegenerateEntity"
-        if radius <= _EPS or math.isclose(start, end, abs_tol=_EPS):
-            return "ID_DegenerateEntity"
-        return {
-            "kind": "Arc",
-            "elevation": zs,
-            "params": {
-                "center": c,
-                "radius": radius,
-                "startAngle": start,
-                "endAngle": end,
-                "angleUnit": "radian",
-                "direction": "ccw-ocs",
-                "frameAngle": math.atan2(_num(major[1]), _num(major[0])),
-            },
-        }
+        return _map_ellipse(entity, mode)
     if dxftype == "SPLINE":
         return _map_spline(entity)
     return "ID_UnsupportedEntity"

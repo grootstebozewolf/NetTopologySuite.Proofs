@@ -14,6 +14,11 @@ carrier, so every record an extractor writes can reach GIS:
 * BulgePolyline: a LINESTRING, closed when the polyline is.
 * Compound of Chord and BulgePolyline members (a 2D POLYLINE): one
   LINESTRING through the members in order.
+* Ellipse: a LINESTRING (closed for a whole ellipse) at equal parameter
+  steps, counter-clockwise from ``startParam`` to ``endParam`` about the
+  major axis. The step count comes from the second-derivative bound in
+  ``ellipse_points``. Only a sagitta or a world bound applies: an angle
+  step or segment count declines.
 * Bezier: Wang's chord count, decided in rationals.
 * BSpline: clamped and polynomial, split into Bezier spans by knot
   insertion, then Wang's count per span. Weights that are all equal
@@ -38,8 +43,7 @@ sagitta used (for exact arithmetic, as in ``glyph_linearize``).
 
 Every row ends as WKT or a named decline. A malformed record (a missing
 key, an empty list) declines as ID_DegenerateEntity rather than stopping
-a run. Ellipse and Spiral records decline: their own Linearizes bounds
-are not here.
+a run. Spiral records decline: their own Linearizes bound is not here.
 
 A record's ``lenient`` notes (what lenient extraction left out of it,
 such as a polyline's width) are copied to the output: the bound is to the
@@ -111,6 +115,58 @@ def circle_points(center: Point, radius: float, start: float, sweep: float, d: f
         (center[0] + radius * math.cos(start + sweep * k / count), center[1] + radius * math.sin(start + sweep * k / count))
         for k in range(count + 1)
     ]
+
+
+def ellipse_points(
+    center: Point, major: Point, ratio: float, start: float, sweep: float, d: float
+) -> tuple[list[Point], float]:
+    """Points at equal parameter steps from ``start`` through ``sweep`` (counter-clockwise), and their bound.
+
+    The ellipse is ``p(t) = c + M cos t + N sin t`` with ``N = ratio * M`` turned a quarter
+    counter-clockwise. On a step of length ``h`` the chord ``L`` from ``p(t0)`` to ``p(t0 + h)``
+    satisfies ``|p(t) - L(t)| <= (t - t0)(t0 + h - t) / 2 * max |p''| <= h^2 / 8 * A`` (the
+    integral form of the interpolation remainder, which holds for vector values), where
+    ``A = max(|M|, |N|) >= |p''(t)| = |M cos t + N sin t|``. Matching each ``p(t)`` with ``L(t)``
+    bounds the Hausdorff distance both ways, so the step count is the least ``n`` with
+    ``A (sweep / n)^2 / 8 <= d``. A whole ellipse gets at least 3 segments.
+    """
+    mx, my = major
+    nx, ny = -ratio * my, ratio * mx
+    a = max(math.hypot(mx, my), math.hypot(nx, ny))
+    count = max(1, math.ceil(sweep * math.sqrt(a / (8.0 * d))))
+    if sweep >= 2 * math.pi - 1e-12:
+        count = max(count, 3)
+    while a * (sweep / count) ** 2 / 8.0 > d:  # guard the float ceiling
+        count += 1
+    points = []
+    for k in range(count + 1):
+        t = start + sweep * k / count
+        c, s = math.cos(t), math.sin(t)
+        points.append((center[0] + mx * c + nx * s, center[1] + my * c + ny * s))
+    return points, a * (sweep / count) ** 2 / 8.0
+
+
+def _ellipse_points(params: dict[str, Any], sagitta: Sagitta) -> tuple[list[Point], float]:
+    if params.get("angleUnit", "radian") != "radian":
+        raise _Declined("ID_UnsupportedEntity", f"ellipse params in {params.get('angleUnit')}")
+    center, major = tuple(params["center"]), tuple(params["majorAxis"])
+    ratio, start, end = float(params["ratio"]), float(params["startParam"]), float(params["endParam"])
+    numbers = (*center, *major, ratio, start, end)
+    if not all(math.isfinite(v) for v in numbers):
+        raise _Declined("ID_DegenerateEntity", "a non-finite ellipse number")
+    if not (ratio > 0 and math.hypot(*major) > 0):
+        raise _Declined("ID_DegenerateEntity", "an ellipse with no area")
+    raw = end - start
+    sweep = raw % (2 * math.pi)
+    if sweep <= 1e-12:
+        if abs(raw) <= 1e-12:
+            raise _Declined("ID_DegenerateEntity", "an ellipse arc of zero sweep")
+        sweep = 2 * math.pi  # a whole ellipse stated as 0 to 2 pi
+    d = sagitta(0.0)
+    points, bound = ellipse_points(center, major, ratio, start, sweep, d)
+    if sweep == 2 * math.pi:
+        points[-1] = points[0]
+    return points, bound
 
 
 def _bulge_radius(start: Point, end: Point, bulge: float) -> float:
@@ -266,9 +322,12 @@ def _linearize(row: dict[str, Any], hausdorff: float | None) -> dict[str, Any] |
         return _linestring(points, links, 0.0)
     if kind == "Compound" and params["members"] and any(m["kind"] == "Compound" for m in params["members"]):
         return glyph_linearize.linearize_row(row, hausdorff)
-    if kind in ("Ellipse", "Spiral", "Unsupported"):
+    if kind in ("Spiral", "Unsupported"):
         raise _Declined("ID_UnsupportedEntity", f"{kind} records are not linearized here")
-    sagitta = _sagitta(row, hausdorff, curved=kind in ("Bezier", "BSpline"))
+    sagitta = _sagitta(row, hausdorff, curved=kind in ("Bezier", "BSpline", "Ellipse"))
+    if kind == "Ellipse":
+        points, bound = _ellipse_points(params, sagitta)
+        return _linestring(points, links, bound)
 
     if kind in ("Arc", "Circle"):
         center, radius = tuple(params["center"]), float(params["radius"])

@@ -34,7 +34,7 @@
       ]
     },
     "declineId": {
-      "description": "Named refusals. ID_NonzeroOverlapNotYet is never written into a record by an extractor; glyph_linearize.py returns it when exact noding of overlapping contours fails. ID_AngleConventionUnknown stays for other formats. DXF never emits it, because $ANGDIR and $ANGBASE are provenance only and stored angles stay degrees CCW from the OCS x-axis. ID_SpiralFamilyUnsupported names an IFC alignment family other than clothoid (Bloss, sine, cosine); the DXF extractor does not emit it.",
+      "description": "Named refusals. ID_NonzeroOverlapNotYet is never written into a record by an extractor; glyph_linearize.py returns it when exact noding of overlapping contours fails. ID_EllipseNotYet stays for other formats; DXF no longer emits it. ID_AngleConventionUnknown stays for other formats. DXF never emits it, because $ANGDIR and $ANGBASE are provenance only and stored angles stay degrees CCW from the OCS x-axis. ID_SpiralFamilyUnsupported names an IFC alignment family other than clothoid (Bloss, sine, cosine); the DXF extractor does not emit it.",
       "enum": [
         "ID_NotSimilarityPlacement",
         "ID_TiltedPlacement",
@@ -388,7 +388,7 @@
               "params": {
                 "type": "object",
                 "additionalProperties": false,
-                "description": "Source ellipse parameters. The DXF extractor does not emit this kind: ratio 1 becomes an Arc in lenient mode, and every other ellipse is ID_EllipseNotYet.",
+                "description": "Source ellipse parameters: the point at parameter t is center + majorAxis cos t + minorAxis sin t, where minorAxis is ratio times majorAxis turned a quarter counter-clockwise. The parameter runs counter-clockwise from startParam to endParam; endParam below startParam wraps past 2 pi, and equal params mod 2 pi with a nonzero difference are a whole ellipse. The DXF extractor emits every ELLIPSE as this kind, except that lenient mode turns ratio 1 into an Arc. Only a sagitta tolerance bounds it: an angle step or segment count declines, since its parameter steps are not angle steps.",
                 "required": [
                   "center",
                   "majorAxis",
