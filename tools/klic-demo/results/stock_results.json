@@ -1,20 +1,40 @@
 {
-  "run_utc": "2026-11-19T03:08:43Z",
+  "run_utc": "2026-11-19T04:57:12Z",
   "inputs": {
-    "caseA": "cases/caseA_pairs.wkt",
-    "caseB": "cases/caseB.wkt"
+    "randomA": "caseA_pairs.wkt",
+    "caseA_caseB": "klic_handover_mm.wkt",
+    "caseC": "caseC.wkt"
   },
   "results": [
     {
       "tool": "Shapely",
       "version": "Shapely 2.2.0 / GEOS 3.14.1",
       "runtime": "Python 3.13.18",
-      "caseA": {
+      "randomA": {
         "pairs": 3000,
         "nonempty": 3000,
         "covers_false": 2235
       },
+      "caseA": {
+        "covers": false,
+        "within": false,
+        "points_on_cable": [
+          false,
+          false
+        ],
+        "points_on_boundary": [
+          false,
+          false
+        ],
+        "sr_covers": false
+      },
       "caseB": {
+        "intersects": false,
+        "intersection_empty": true,
+        "sr_intersection": "POINT (155014211 463008230)",
+        "reduced_intersects": false
+      },
+      "caseC": {
         "intersects": true,
         "relate": "1F20F1102",
         "covers": false,
@@ -26,12 +46,31 @@
       "tool": "JTS",
       "version": "jts-core 1.20.0",
       "runtime": "Java 21.0.13.0.3",
-      "caseA": {
+      "randomA": {
         "pairs": 3000,
         "nonempty": 3000,
         "covers_false": 559
       },
+      "caseA": {
+        "covers": true,
+        "within": true,
+        "points_on_cable": [
+          false,
+          false
+        ],
+        "points_on_boundary": [
+          false,
+          false
+        ],
+        "sr_covers": false
+      },
       "caseB": {
+        "intersects": false,
+        "intersection_empty": true,
+        "sr_intersection": "POINT (155014211 463008230)",
+        "reduced_intersects": false
+      },
+      "caseC": {
         "intersects": true,
         "relate": "1F20F1102",
         "covers": true,
@@ -43,12 +82,31 @@
       "tool": "NTS",
       "version": "NetTopologySuite 2.6.0 (compatible with JTS 1.20.0)",
       "runtime": ".NET 8.0.34",
-      "caseA": {
+      "randomA": {
         "pairs": 3000,
         "nonempty": 3000,
         "covers_false": 559
       },
+      "caseA": {
+        "covers": true,
+        "within": true,
+        "points_on_cable": [
+          false,
+          false
+        ],
+        "points_on_boundary": [
+          false,
+          false
+        ],
+        "sr_covers": false
+      },
       "caseB": {
+        "intersects": false,
+        "intersection_empty": true,
+        "sr_intersection": "POINT (155014211 463008230)",
+        "reduced_intersects": false
+      },
+      "caseC": {
         "intersects": true,
         "relate": "1F20F1102",
         "covers": true,
@@ -60,12 +118,31 @@
       "tool": "PostGIS",
       "version": "PostGIS 3.5.2 / GEOS 3.9.0-CAPI-1.16.2",
       "runtime": "PostgreSQL 17.5 (Debian 17.5-1.pgdg110+1) on x86_64-pc-linux-gnu",
-      "caseA": {
+      "randomA": {
         "pairs": 3000,
         "nonempty": 3000,
         "covers_false": 2235
       },
+      "caseA": {
+        "covers": false,
+        "within": false,
+        "points_on_cable": [
+          false,
+          false
+        ],
+        "points_on_boundary": [
+          false,
+          false
+        ],
+        "sr_covers": false
+      },
       "caseB": {
+        "intersects": false,
+        "intersection_empty": true,
+        "sr_intersection": "POINT(155014211 463008230)",
+        "reduced_intersects": false
+      },
+      "caseC": {
         "intersects": true,
         "relate": "1F20F1102",
         "covers": false,

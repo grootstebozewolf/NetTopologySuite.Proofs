@@ -7,7 +7,7 @@ nodes on a 1 mm grid with a **proved** bound of ½ mm per coordinate, and it
 decides hot-pixel passing exactly.
 
 The point is not that GEOS is badly wrong. Its intersection points are off by
-about 30 **picometres**. The point is that it **contradicts itself** and
+picometres (7.8 pm and 11.0 pm in case A). The point is that it **contradicts itself** and
 **states no bound**.
 
 ![demo figure](klic_hotpixel_demo.png)
@@ -71,8 +71,9 @@ first build are still there, and the new module is tied to them:
 - The scale `s` is an argument of every theorem above. A grid of 1 mm on
   metre input is `s = 1000`, and a grid of 1 mm on millimetre input is
   `s = 1`. The metre-to-millimetre step is therefore inside the proof. The
-  test `test_metres_at_scale_1000_match_millimetres` shows both give the same
-  nodes, exactly scaled by 1/1000.
+  tests `test_metres_at_scale_1000_match_millimetres` (case C) and
+  `test_case_b_metres_at_scale_1000` show both give the same answers,
+  exactly scaled by 1/1000.
 - The arithmetic is exact rational arithmetic, so it has **no range limit**.
   The rounded binary64 compute filter is proved exact only on `|n| ≤ 2^22`
   (`PassesThrough_b64_grid_exact.v`). RD millimetres (about 1.5e8 to 6.3e8)
@@ -90,54 +91,91 @@ first build are still there, and the new module is tied to them:
 
 ## Results
 
+### The cases
+
+All three cases are **synthetic**, KLIC-shaped data in RD millimetres.
+
+- **A** and **B** are the first build's handover scenario. `data/klic_handover_mm.wkt`
+  holds one graafpolygoon GP-0001, a low-voltage cable LS-0042 and a
+  medium-voltage cable MS-0007. `make_handover_data.py` regenerates the file
+  byte for byte.
+  - **A**: LS-0042 crosses the dig polygon.
+  - **A\***: the same `covers` check on 3000 random (dig polygon, cable) pairs
+    (`cases/caseA_pairs.wkt`, from `make_data.py`, integer millimetres).
+  - **B**: MS-0007 passes **0.30 mm outside** a dig-polygon vertex.
+- **C** was added in this round: a cable clips a dig corner **0.296 mm
+  inside** (`cases/caseC.wkt`, from `make_data.py`).
+
 ### Per-tool table (tested; every row is from a run with the version printed)
 
-Cases A and B use **synthetic** KLIC-shaped data: `make_data.py`, integer
-millimetres at RD magnitudes. Case A uses 3000 random (dig polygon, cable)
-pairs, and the check is `dig.covers(cable ∩ dig)`. In case B a cable clips a
-dig-polygon corner 0.296 mm deep, and the checks are `intersects`, `relate`
-and `covers(cable ∩ dig)`. The last column comes from the 24 public Kadaster
-example deliveries, described below.
+| tool (version as printed) | A: covers(∩) | A: crossing pts on cable | A\*: covers=False | B: intersects | B: ∩ at 1 mm grid | B: precision-reduced intersects | C: covers(∩) | Kadaster examples: covers=False |
+|---|---|---|---|---|---|---|---|---|
+| Shapely 2.2.0 / GEOS 3.14.1 | **False** | False, False | 2235 / 3000 | False | **POINT** | False | **False** | 903 / 43962 |
+| jts-core 1.20.0 (Java 21) | True | False, False | 559 / 3000 | False | **POINT** | False | True | 208 / 43962 |
+| NetTopologySuite 2.6.0 (.NET 8) | True | False, False | 559 / 3000 | False | **POINT** | False | True | 208 / 43962 |
+| PostGIS 3.5.2 / GEOS 3.9.0 (PostgreSQL 17.5) | **False** | False, False | 2235 / 3000 | False | **POINT** | False | **False** | 933 / 43962 |
+| verified kernel (this repo) | n/a (no overlay) | nodes ≤ ½ mm, on both lines' pixel | nodes ≤ ½ mm | passes vertex pixel | — | — | passes corner pixel | 0 dig-vertex pixel passes |
 
-| tool (version as printed) | A: covers=False | B: intersects | B: relate II | B: covers(∩) | Kadaster examples: covers=False |
-|---|---|---|---|---|---|
-| Shapely 2.2.0 / GEOS 3.14.1 | 2235 / 3000 | True | 1 | **False** | 903 / 43962 |
-| jts-core 1.20.0 (Java 21) | 559 / 3000 | True | 1 | True | 208 / 43962 |
-| NetTopologySuite 2.6.0 (.NET 8) | 559 / 3000 | True | 1 | True | 208 / 43962 |
-| PostGIS 3.5.2 / GEOS 3.9.0 (PostgreSQL 17.5) | 2235 / 3000 | True | 1 | **False** | 933 / 43962 |
-| verified kernel (this repo) | no overlay; nodes ≤ ½ mm | passes corner pixel | — | n/a (not an overlay) | 0 dig-vertex pixel passes |
-
-Recorded run: `results/stock_results.json` and
-`results/stock_results_kadaster_examples.json`. Re-run with
+The recorded runs are `results/stock_results.json` and
+`results/stock_results_kadaster_examples.json`. Re-run them with
 `python stock/run_all.py`.
 
-- **GEOS (3.14.1 via Shapely and 3.9.0 via PostGIS)** reproduces both cases.
-  In case B, `intersects` says True and `relate` says the cable runs through
-  the interior (`1F20F1102`). Yet `dig.covers(cable ∩ dig)` is False for the
-  0.741 mm piece GEOS itself returned. Those three answers cannot all be
-  right.
-- **JTS and NTS** are **consistent on case B**: `covers` is True. They still
-  reproduce case A on fewer pairs (559 of 3000) and on the real data (208 of
-  43962). Both tools return the same intersection coordinates as GEOS, so the
-  difference is in the `covers` predicate.
+- **Case B splits three ways in all four tools.** `intersects` is False, and
+  so is `intersects` after reducing both geometries to 1 mm precision. Yet
+  the snap-rounded intersection at 1 mm (`grid_size=1`, OverlayNG with
+  `PrecisionModel(1)`, `ST_Intersection(a, b, 1)`) returns
+  `POINT (155014211 463008230)`. The answer depends on which call you make,
+  and no call reports a bound.
+- **Case A.** In all four tools the computed crossing points lie neither on
+  the cable nor on the dig boundary. They are 7.8 pm and 11.0 pm away from
+  the exact crossing of the doubles GEOS was given. GEOS (3.14.1 and 3.9.0)
+  also answers `dig.covers(cable ∩ dig) = False`. JTS and NTS answer `True`.
+  In all four tools, the snap-rounded overlay at 1 mm is not covered by the
+  precision-reduced dig polygon.
+- **Case A\*** shows that case A is not a one-off. GEOS reports
+  `covers=False` on 2235 of 3000 random pairs, and JTS and NTS on 559.
+- **Case C.** GEOS's `intersects` is True and `relate` says the cable runs
+  through the interior (`1F20F1102`), but `dig.covers(cable ∩ dig)` is False
+  for the 0.741 mm piece GEOS itself returned. JTS and NTS are consistent
+  here.
 - PostGIS returned an empty `ST_Intersection` for 30 of the 43962 real pairs.
   Those pairs were chosen because GEOS 3.14 `intersects` was True. PostGIS's
   own `ST_Intersects` was not run on them, so this is a cross-tool
   observation, not a demonstrated self-contradiction.
-- GEOS's intersection points are within **29.8 pm** of the exact rational
-  node (case A, max over 6000 nodes). The error is tiny. What is missing is
-  any stated bound.
+- The errors are tiny: picometres (at most 29.8 pm over the 6000 nodes of
+  A\*). What is missing is a stated bound and a consistent answer.
 
 ### Verified side (proved per answer)
 
-- **Case A**: 6000 exact nodes. The max snap displacement is
-  57465962/114960375 mm (about 0.49988 mm), which is ≤ ½ mm. For every one of
-  the 6000 nodes, both the cable and the dig edge pass through the node's hot
-  pixel, so snap rounding gives both of them the same node.
-- **Case B**: the cable passes through the hot pixel of corner 1 at RD
-  (155523521, 463287349) mm. The two exact nodes snap to (…521, …349), which
-  is the corner, and to (…521, …350), the cell above it. The max displacement
-  is 4802713/12019882 mm (about 0.3996 mm), which is ≤ ½ mm.
+- **A**: LS-0042 gets two exact nodes. They snap to (155013698, 463004978)
+  and (155000618, 463005829), with displacements of (0.138, 0.437) mm and
+  (0.242, 0.296) mm, both ≤ ½ mm. At each node, both the cable and the dig
+  edge pass through the node's hot pixel. Tested on top of that: the noded
+  1 mm dig polygon is valid and covers the verified inside part
+  `LINESTRING (155000618 463005829, 155013698 463004978)`. That line is
+  identical to GEOS's own snap-rounded result: the nodes agree, and the
+  kernel adds a proved bound.
+- **A\***: 6000 exact nodes. The max displacement is 57465962/114960375 mm
+  (about 0.49988 mm). For all 6000 nodes, both the cable and the dig edge
+  pass through the node's pixel.
+- **B**: MS-0007 passes through the 1 mm hot pixel of vertex 2, centre
+  (155014211, 463008230). A snap-rounding noder must node it there, so the
+  verified answer is "touches at that vertex node, displacement ≤ ½ mm per
+  coordinate". The vertex-to-cable gap is 0.300000 mm (tested, exact
+  arithmetic). The same answer comes out in metres at `s = 1000`.
+- **C**: the cable passes through the hot pixel of corner 1. Its two exact
+  nodes snap to the corner and to the cell above it. The max displacement is
+  4802713/12019882 mm (about 0.3996 mm).
+
+### Provenance of the handover data
+
+The first build (Notion "KLIK demo", `klic-demo.zip`) printed the A and B
+numbers above with Shapely 2.2.0 / GEOS 3.14.1. This run reproduces them
+exactly, apart from the GEOS point error. The first build measured that as
+the offset from the cable line; here it is the per-coordinate distance to the
+exact node. That first build's 1910/3000 random-pair count came from a probe
+script that is not in the zip, so A\* uses a new, committed generator, which
+gives 2235/3000.
 
 ### Real-shaped data (gap 5): public Kadaster example deliveries
 
@@ -157,7 +195,7 @@ centrelines, each against its `imkl:Graafpolygoon` or
   passes through the 1 mm hot pixel of one, except segments that end on it.
 - 1879 exact line × dig-edge nodes. The max snap displacement is 0.4998 mm,
   which is ≤ ½ mm.
-- **The case-A contradiction does occur on real data**: GEOS 3.14.1 gives
+- **The case-A\* contradiction does occur on real data**: GEOS 3.14.1 gives
   `dig.covers(line ∩ dig) = False` for 903 lines, and every one of the 24
   deliveries has at least one. The other tools are in the table above.
 - Not analysed: hot pixels of *other utility lines'* vertices (cable-to-cable
@@ -208,8 +246,8 @@ bash tools/klic-demo/proof_audit/audit.sh  # rewrites proof_audit/print_assumpti
 
 ## Limitations
 
-- The data for cases A and B is synthetic. The real-data run found the
-  case-A contradiction but no case-B vertex pass.
+- The data for cases A, B and C is synthetic. The real-data run found the
+  A\* contradiction but no B- or C-type vertex pass.
 - The trusted base is Rocq's kernel, the extraction mechanism, the OCaml
   compiler, the 89-line text shim `ocaml/main.ml`, and Python's
   `Fraction(str)` decimal parsing. The bounding-box prefilter in

@@ -54,10 +54,30 @@ def test_report_prints_geos_version(res):
 
 INPUT_SHA256 = {
     "cases/caseA_pairs.wkt": "19e425f8fb1afec0b3fa7d6ecee21c613b909fca780cd7cc5d1bdc7f6c011c5f",
-    "cases/caseB.wkt": "b3ff5878b18b328c3864b8c36716544a1b2dec08335dd920bc100be0ee4936b4",
+    "cases/caseC.wkt": "b3ff5878b18b328c3864b8c36716544a1b2dec08335dd920bc100be0ee4936b4",
     "data/klic_synthetic_mm.wkt": "61e18693ebc137af8dcece86843ba76488b91607de29637ef50bfc49158093d5",
     "tests/fixtures/synthetic_imkl.xml": "4dea720bd914dda30730924cbd06df0873a9428164fe2aea45c02881dcd3bc3e",
 }
+
+
+HANDOVER_SHA256 = {
+    "data/klic_handover_mm.wkt": "4880e52ee9b269281f62fb3fda9bf99b4f043162a28dc72b8c148fe239c001b8",
+    "data/klic_handover.geojson": "2f80332c875b78dfa5316fe3b5dccd80111f6c1296adfaf58f91ab5cce151ac7",
+}
+
+
+@pytest.mark.parametrize("rel", sorted(HANDOVER_SHA256))
+def test_handover_inputs_unchanged(rel):
+    assert hashlib.sha256((ROOT / rel).read_bytes()).hexdigest() == HANDOVER_SHA256[rel]
+
+
+def test_make_handover_data_regenerates_identical_inputs(tmp_path):
+    import shutil
+    (tmp_path / "data").mkdir()
+    shutil.copy(ROOT / "make_handover_data.py", tmp_path / "make_handover_data.py")
+    subprocess.run([sys.executable, "make_handover_data.py"], cwd=tmp_path, check=True, capture_output=True)
+    for rel, h in HANDOVER_SHA256.items():
+        assert hashlib.sha256((tmp_path / rel).read_bytes()).hexdigest() == h, rel
 
 
 @pytest.mark.parametrize("rel", sorted(INPUT_SHA256))
@@ -82,23 +102,82 @@ def test_all_input_coordinates_are_integer_mm():
 
 
 # --------------------------------------------------------------------------
-# Case A
+# Cases A and B: the first-build handover scenario (GP-0001, LS-0042, MS-0007)
 # --------------------------------------------------------------------------
 
-def test_stock_case_a_covers_false(res):
+def test_stock_case_a_ls0042(res):
+    s = res["caseA"]["stock"]
+    assert s["intersects"] is True
+    assert s["covers"] is False and s["within"] is False
+    assert s["points_on_cable"] == [False, False]
+    assert s["points_on_boundary"] == [False, False]
+    assert s["sr_wkt"] == "LINESTRING (155000618 463005829, 155013698 463004978)"
+    assert s["sr_covers"] is False
+
+
+def test_stock_case_a_geos_points_are_picometres_off(res):
+    assert [round(e, 1) for e in res["caseA"]["geos_point_error_pm"]] == [7.8, 11.0]
+
+
+def test_verified_case_a_nodes(res):
     a = res["caseA"]
+    assert a["snapped_nodes"] == [["155013698", "463004978"], ["155000618", "463005829"]]
+    assert [[round(float(Fraction(v)), 6) for v in d] for d in a["snap_disp_mm"]] == \
+        [[0.137881, 0.436983], [0.242213, 0.295857]]
+    assert all(Fraction(v) <= Fraction(1, 2) for d in a["snap_disp_mm"] for v in d)
+    assert a["passes_cable_and_edge"] == [[True, True], [True, True]]
+
+
+def test_tested_case_a_noded_arrangement(res):
+    a = res["caseA"]
+    assert a["tested_inside_part_wkt"] == "LINESTRING (155000618 463005829, 155013698 463004978)"
+    assert a["tested_noded_dig_valid"] is True
+    assert a["tested_noded_dig_covers_inside"] is True
+    assert a["tested_inside_equals_geos_sr"] is True
+
+
+def test_stock_case_b_ms0007_three_calls(res):
+    s = res["caseB"]["stock"]
+    assert s["intersects"] is False
+    assert s["intersection_wkt"] == "LINESTRING EMPTY"
+    assert round(s["distance_mm"], 6) == 0.3
+    assert s["sr_intersection_wkt"] == "POINT (155014211 463008230)"
+    assert s["reduced_intersects"] is False
+
+
+def test_verified_case_b_vertex_pixel(res):
+    b = res["caseB"]
+    assert b["vertex_passes"] == [False, False, True, False, False]
+    assert b["hot_pixel_centre"] == [["155014211", "463008230"]]
+    assert all(Fraction(v) <= Fraction(1, 2) for d in b["vertex_snap_disp_mm"] for v in d)
+    assert [round(g, 6) for g in b["vertex_gap_mm_float"]] == [0.3]
+
+
+def test_case_b_metres_at_scale_1000(res):
+    mm, m = res["caseB"], res["caseB_metres_s1000"]
+    assert m["vertex_passes"] == mm["vertex_passes"]
+    assert [[Fraction(v) * 1000 for v in c] for c in m["hot_pixel_centre"]] == \
+        [[Fraction(v) for v in c] for c in mm["hot_pixel_centre"]]
+
+
+# --------------------------------------------------------------------------
+# Case A*: 3000 random pairs
+# --------------------------------------------------------------------------
+
+def test_stock_random_a_covers_false(res):
+    a = res["randomA"]
     assert a["pairs"] == 3000
     assert a["stock_covers_false"] == 2235
 
 
-def test_stock_case_a_geos_node_error_is_picometres(res):
-    pm = res["caseA"]["geos_max_node_error_pm"]
+def test_stock_random_a_geos_node_error_is_picometres(res):
+    pm = res["randomA"]["geos_max_node_error_pm"]
     assert 0 < pm < 100          # off by picometres, not millimetres
     assert round(pm, 1) == 29.8
 
 
-def test_verified_case_a_nodes_and_bound(res):
-    a = res["caseA"]
+def test_verified_random_a_nodes_and_bound(res):
+    a = res["randomA"]
     assert a["verified_nodes"] == 6000
     assert a["verified_max_disp_mm"] == "57465962/114960375"
     assert Fraction(a["verified_max_disp_mm"]) <= Fraction(1, 2)
@@ -106,16 +185,16 @@ def test_verified_case_a_nodes_and_bound(res):
     assert a["verified_bound_holds"] is True
 
 
-def test_verified_case_a_cable_and_edge_share_every_node_pixel(res):
-    assert res["caseA"]["verified_hotpixel_both"] == 6000
+def test_verified_random_a_cable_and_edge_share_every_node_pixel(res):
+    assert res["randomA"]["verified_hotpixel_both"] == 6000
 
 
 # --------------------------------------------------------------------------
-# Case B
+# Case C: corner clip
 # --------------------------------------------------------------------------
 
-def test_stock_case_b_three_calls_disagree(res):
-    s = res["caseB"]["stock"]
+def test_stock_case_c_three_calls_disagree(res):
+    s = res["caseC"]["stock"]
     assert s["intersects"] is True
     assert s["relate"] == "1F20F1102"
     assert s["relate_interior_interior"] == "1"
@@ -125,14 +204,14 @@ def test_stock_case_b_three_calls_disagree(res):
     assert round(s["intersection_length_mm"], 6) == 0.740702
 
 
-def test_verified_case_b_corner_pixel(res):
-    b = res["caseB"]
+def test_verified_case_c_corner_pixel(res):
+    b = res["caseC"]
     assert b["corner_passes"] == [False, True, False, False]
     assert b["corner_hit_xy"] == [["155523521", "463287349"]]
 
 
-def test_verified_case_b_nodes_snaps_and_displacements(res):
-    b = res["caseB"]
+def test_verified_case_c_nodes_snaps_and_displacements(res):
+    b = res["caseC"]
     assert b["exact_nodes"] == [["11217446999321266/72127013", "66831065267922857/144254026"],
                                 ["2804061550918826/18029823", "5568659274289987/12019882"]]
     assert b["snapped_nodes"] == [["155523521", "463287349"], ["155523521", "463287350"]]
@@ -143,9 +222,9 @@ def test_verified_case_b_nodes_snaps_and_displacements(res):
     assert Fraction(b["max_disp_mm"]) <= Fraction(1, 2)
 
 
-def test_case_b_clip_depth_is_0_3_mm():
+def test_case_c_clip_depth_is_0_3_mm():
     """The exact distance of the corner from the cable line (TESTED, Fraction)."""
-    d, c = (ROOT / "cases" / "caseB.wkt").read_text().strip().split(";")
+    d, c = (ROOT / "cases" / "caseC.wkt").read_text().strip().split(";")
     v = vk.coords_from_wkt_text(d)[1]
     (x0, y0), (x1, y1) = vk.coords_from_wkt_text(c)
     cross = (x1 - x0) * (v[1] - y0) - (y1 - y0) * (v[0] - x0)
@@ -158,7 +237,7 @@ def test_case_b_clip_depth_is_0_3_mm():
 # --------------------------------------------------------------------------
 
 def test_metres_at_scale_1000_match_millimetres(res):
-    mm, m = res["caseB"], res["caseB_metres_s1000"]
+    mm, m = res["caseC"], res["caseC_metres_s1000"]
     assert m["corner_passes"] == mm["corner_passes"]
     k = Fraction(1, 1000)
     for (a, b), (c, d) in zip(mm["snapped_nodes"], m["snapped_nodes"]):
@@ -187,10 +266,11 @@ def test_integer_mm_rd_coordinates_are_doubles():
 # --------------------------------------------------------------------------
 
 EXPECTED_STOCK = {
-    "Shapely": ("Shapely 2.2.0 / GEOS 3.14.1", 2235, (True, "1F20F1102", False)),
-    "JTS": ("jts-core 1.20.0", 559, (True, "1F20F1102", True)),
-    "NTS": ("NetTopologySuite 2.6.0 (compatible with JTS 1.20.0)", 559, (True, "1F20F1102", True)),
-    "PostGIS": ("PostGIS 3.5.2 / GEOS 3.9.0-CAPI-1.16.2", 2235, (True, "1F20F1102", False)),
+    # tool: (version, A* covers=False, A covers(∩), C covers(∩))
+    "Shapely": ("Shapely 2.2.0 / GEOS 3.14.1", 2235, False, False),
+    "JTS": ("jts-core 1.20.0", 559, True, True),
+    "NTS": ("NetTopologySuite 2.6.0 (compatible with JTS 1.20.0)", 559, True, True),
+    "PostGIS": ("PostGIS 3.5.2 / GEOS 3.9.0-CAPI-1.16.2", 2235, False, False),
 }
 
 
@@ -199,20 +279,28 @@ def test_recorded_stock_results(res):
     assert st is not None, "run python tools/klic-demo/stock/run_all.py"
     got = {r["tool"]: r for r in st["results"]}
     assert set(got) == set(EXPECTED_STOCK)
-    for tool, (ver, a_false, (b_int, b_rel, b_cov)) in EXPECTED_STOCK.items():
+    for tool, (ver, a_false, a_cov, c_cov) in EXPECTED_STOCK.items():
         r = got[tool]
         assert r["status"] == "ok"
         assert r["version"] == ver
-        assert r["caseA"] == {"pairs": 3000, "nonempty": 3000, "covers_false": a_false}
-        assert (r["caseB"]["intersects"], r["caseB"]["relate"], r["caseB"]["covers"]) == (b_int, b_rel, b_cov)
+        assert r["randomA"] == {"pairs": 3000, "nonempty": 3000, "covers_false": a_false}
+        assert r["caseA"] == {"covers": a_cov, "within": a_cov, "points_on_cable": [False, False],
+                              "points_on_boundary": [False, False], "sr_covers": False}
+        # case B: the three-way split reproduces in every tool
+        assert r["caseB"]["intersects"] is False and r["caseB"]["intersection_empty"] is True
+        assert r["caseB"]["sr_intersection"].replace("POINT(", "POINT (") == "POINT (155014211 463008230)"
+        assert r["caseB"]["reduced_intersects"] is False
+        assert (r["caseC"]["intersects"], r["caseC"]["relate"], r["caseC"]["covers"]) == (True, "1F20F1102", c_cov)
 
 
 def test_live_shapely_matches_recorded(res):
     sys.path.insert(0, str(ROOT / "stock"))
     import stock_shapely
-    live = stock_shapely.run(str(ROOT / "cases" / "caseA_pairs.wkt"), str(ROOT / "cases" / "caseB.wkt"))
+    live = stock_shapely.run(str(ROOT / "cases" / "caseA_pairs.wkt"), str(ROOT / "cases" / "caseC.wkt"),
+                             str(ROOT / "data" / "klic_handover_mm.wkt"))
     rec = {r["tool"]: r for r in res["stock_recorded"]["results"]}["Shapely"]
-    assert live["caseA"] == rec["caseA"] and live["caseB"] == rec["caseB"]
+    for k in ("randomA", "caseA", "caseB", "caseC"):
+        assert live[k] == rec[k], k
 
 
 # --------------------------------------------------------------------------
@@ -235,7 +323,7 @@ def test_real_data_recorded_summary(res):
 
 
 def test_real_data_recorded_stock_tools(res):
-    got = {r["tool"]: (r["version"], r["caseA"]) for r in res["stock_recorded_real"]["results"]}
+    got = {r["tool"]: (r["version"], r["randomA"]) for r in res["stock_recorded_real"]["results"]}
     assert got == {
         "Shapely": ("Shapely 2.2.0 / GEOS 3.14.1", {"pairs": 43962, "nonempty": 43962, "covers_false": 903}),
         "JTS": ("jts-core 1.20.0", {"pairs": 43962, "nonempty": 43962, "covers_false": 208}),

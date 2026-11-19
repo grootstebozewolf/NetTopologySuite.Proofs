@@ -10,7 +10,7 @@ cases come from where segments run, not from sub-mm input noise.
 Outputs (tool-neutral WKT, one record per line, fields separated by ';'):
 
   cases/caseA_pairs.wkt   3000 lines  "<dig polygon>;<cable linestring>"
-  cases/caseB.wkt         1 line      "<dig polygon>;<cable linestring>"
+  cases/caseC.wkt         1 line      "<dig polygon>;<cable linestring>"
                           the cable clips a dig-polygon corner ~0.3 mm deep
   data/klic_synthetic_mm.wkt  a small "delivery" for the figure:
                           line 1 the dig polygon, then one cable per line
@@ -77,7 +77,7 @@ def cross_and_len2(v, p0, p1):
     return cross, (x1 - x0) ** 2 + (y1 - y0) ** 2
 
 
-def case_b():
+def case_c():
     """A 20 m x 10 m dig polygon (integer-mm vertices) and a 40 m cable with
     integer-mm endpoints whose line clips corner 1 between 0.29 and 0.31 mm
     deep.  Deterministic search; the first hit is taken."""
@@ -103,7 +103,7 @@ def case_b():
         d2 = Fraction(c_v * c_v, len2)
         if c_v * c_c < 0 and Fraction(29, 100) ** 2 <= d2 <= Fraction(31, 100) ** 2:
             return dig, [p0, p1], d2
-    raise SystemExit("case B search failed")
+    raise SystemExit("case C search failed")
 
 
 def delivery(dig_b, cable_b):
@@ -173,8 +173,8 @@ def main():
     with open(HERE / "cases" / "caseA_pairs.wkt", "w", newline="\n") as f:
         for dig, cable in case_a_pairs():
             f.write(f"{poly_wkt(dig)};{line_wkt(cable)}\n")
-    dig_b, cable_b, depth = case_b()
-    with open(HERE / "cases" / "caseB.wkt", "w", newline="\n") as f:
+    dig_b, cable_b, depth = case_c()
+    with open(HERE / "cases" / "caseC.wkt", "w", newline="\n") as f:
         f.write(f"{poly_wkt(dig_b)};{line_wkt(cable_b)}\n")
     with open(HERE / "data" / "klic_synthetic_mm.wkt", "w", newline="\n") as f:
         f.write(poly_wkt(dig_b) + "\n")
@@ -183,7 +183,7 @@ def main():
     (HERE / "tests" / "fixtures").mkdir(parents=True, exist_ok=True)
     with open(HERE / "tests" / "fixtures" / "synthetic_imkl.xml", "w", newline="\n") as f:
         f.write(imkl_fixture(dig_b, delivery(dig_b, cable_b)))
-    print(f"case B corner clip depth^2 (exact) = {depth} mm^2 (depth ~ {math.sqrt(depth):.6f} mm)")
+    print(f"case C corner clip depth^2 (exact) = {depth} mm^2 (depth ~ {math.sqrt(depth):.6f} mm)")
 
 
 if __name__ == "__main__":

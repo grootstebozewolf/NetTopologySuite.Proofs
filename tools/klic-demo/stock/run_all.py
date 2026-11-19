@@ -25,7 +25,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 A = ROOT / "cases" / "caseA_pairs.wkt"
-B = ROOT / "cases" / "caseB.wkt"
+B = ROOT / "cases" / "caseC.wkt"
+H = ROOT / "data" / "klic_handover_mm.wkt"
 OUT = ROOT / "results" / "stock_results.json"
 JTS_VERSION = "1.20.0"
 
@@ -39,7 +40,7 @@ def _json_tail(stdout: str) -> dict:
 
 
 def run_shapely() -> dict:
-    p = subprocess.run([sys.executable, str(HERE / "stock_shapely.py"), str(A), str(B)],
+    p = subprocess.run([sys.executable, str(HERE / "stock_shapely.py"), str(A), str(B), str(H)],
                        capture_output=True, text=True, check=True)
     return _json_tail(p.stdout)
 
@@ -53,7 +54,7 @@ def run_jts() -> dict:
             return {"tool": "JTS", "status": "not run", "reason": "mvn not found to fetch jts-core"}
         subprocess.run(["mvn", "-q", "dependency:copy-dependencies", "-DoutputDirectory=lib"],
                        cwd=HERE / "jts", check=True, capture_output=True)
-    p = subprocess.run(["java", "-cp", str(jar), str(HERE / "jts" / "KlicStock.java"), str(A), str(B)],
+    p = subprocess.run(["java", "-cp", str(jar), str(HERE / "jts" / "KlicStock.java"), str(A), str(B), str(H)],
                        capture_output=True, text=True, check=True)
     return _json_tail(p.stdout)
 
@@ -61,7 +62,7 @@ def run_jts() -> dict:
 def run_nts() -> dict:
     if not shutil.which("dotnet"):
         return {"tool": "NTS", "status": "not run", "reason": "dotnet not found"}
-    p = subprocess.run(["dotnet", "run", "-c", "Release", "--project", str(HERE / "nts"), "--", str(A), str(B)],
+    p = subprocess.run(["dotnet", "run", "-c", "Release", "--project", str(HERE / "nts"), "--", str(A), str(B), str(H)],
                        capture_output=True, text=True, check=True)
     return _json_tail(p.stdout)
 
@@ -69,7 +70,7 @@ def run_nts() -> dict:
 def run_postgis() -> dict:
     if not shutil.which("docker"):
         return {"tool": "PostGIS", "status": "not run", "reason": "docker not found"}
-    p = subprocess.run(["bash", str(HERE / "postgis" / "run.sh"), str(A), str(B)],
+    p = subprocess.run(["bash", str(HERE / "postgis" / "run.sh"), str(A), str(B), str(H)],
                        capture_output=True, text=True)
     if p.returncode != 0:
         return {"tool": "PostGIS", "status": "not run", "reason": "docker run failed: " + p.stderr.strip()[-300:]}
@@ -96,7 +97,7 @@ def main(argv=None) -> int:
         results.append(r)
         print(json.dumps(r), flush=True)
     doc = {"run_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-           "inputs": {"caseA": A.name, "caseB": B.name},
+           "inputs": {"randomA": A.name, "caseA_caseB": H.name, "caseC": B.name},
            "results": results}
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(doc, indent=2) + "\n")

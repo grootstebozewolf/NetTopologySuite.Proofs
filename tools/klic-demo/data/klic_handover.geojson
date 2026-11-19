@@ -1,0 +1,96 @@
+{
+ "type": "FeatureCollection",
+ "name": "klic_synthetic",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "urn:ogc:def:crs:EPSG::28992"
+  }
+ },
+ "provenance": "SYNTHETIC, KLIC-shaped (IMKL structure, RD New EPSG:28992). Display copy in metres; canonical input is data/klic_handover_mm.wkt.",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "imklType": "Graafpolygoon",
+    "identificatie": "GP-0001",
+    "synthetic": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       155001.20369383277,
+       463000.51296084916
+      ],
+      [
+       155012.95127093449,
+       463000.2402424363
+      ],
+      [
+       155014.210975882,
+       463008.2304556889
+      ],
+      [
+       155006.12060799895,
+       463010.4812374358
+      ],
+      [
+       155000.41095749565,
+       463007.7107936457
+      ],
+      [
+       155001.20369383277,
+       463000.51296084916
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "imklType": "Elektriciteitskabel",
+    "identificatie": "LS-0042",
+    "synthetic": true,
+    "thema": "laagspanning"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      154997.13521167784,
+      463006.05535354494
+     ],
+     [
+      155018.0004954351,
+      463004.69759798166
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "imklType": "Elektriciteitskabel",
+    "identificatie": "MS-0007",
+    "synthetic": true,
+    "thema": "middenspanning"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      155018.02432012235,
+      463000.07825317705
+     ],
+     [
+      155011.6691992956,
+      463013.6654692009
+     ]
+    ]
+   }
+  }
+ ]
+}

@@ -24,9 +24,14 @@ def _same(live, tool):
     rec = RECORDED[tool]
     assert live.get("status", "ok") == "ok", live
     assert live["version"] == rec["version"]
+    assert live["randomA"] == rec["randomA"]
     assert live["caseA"] == rec["caseA"]
-    for k in ("intersects", "relate", "covers"):
+    for k in ("intersects", "intersection_empty", "reduced_intersects"):
         assert live["caseB"][k] == rec["caseB"][k]
+    assert live["caseB"]["sr_intersection"].replace("POINT(", "POINT (") == \
+        rec["caseB"]["sr_intersection"].replace("POINT(", "POINT (")
+    for k in ("intersects", "relate", "covers"):
+        assert live["caseC"][k] == rec["caseC"][k]
 
 
 @pytest.mark.skipif(not LIVE or not shutil.which("java"), reason="java not available")
