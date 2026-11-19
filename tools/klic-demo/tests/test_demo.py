@@ -332,3 +332,13 @@ def test_real_data_recorded_stock_tools(res):
         "PostGIS": ("PostGIS 3.5.2 / GEOS 3.9.0-CAPI-1.16.2",
                     {"pairs": 43962, "nonempty": 43932, "covers_false": 933}),
     }
+
+
+def test_real_data_json_has_totals_only():
+    """The Kadaster source states no licence: keep aggregate totals only."""
+    import re
+    text = (ROOT / "results" / "kadaster_examples.json").read_text()
+    d = json.loads(text)
+    assert set(d) == {"source", "grid", "totals"}
+    assert not re.search(r"\b2[0-9][CGO]\d{6}", text)   # no delivery IDs
+    assert "hotpixel_cases" not in text and "vertex_rd_m" not in text

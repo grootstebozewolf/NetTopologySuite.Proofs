@@ -217,7 +217,7 @@ commit `5e83c0e4`.
 
 The run covered 24 deliveries and 43962 `us-net-common:UtilityLink`
 centrelines, each against its `imkl:Graafpolygoon` or
-`imkl:Orientatiepolygoon` (`results/kadaster_examples.json`):
+`imkl:Orientatiepolygoon`. `results/kadaster_examples.json` keeps aggregate totals only: no per-delivery rows, delivery IDs or coordinates:
 
 - **Hot-pixel cases at dig-polygon vertices: 0** in all 24 deliveries. These
   dig polygons have vertices in whole metres, and no utility-line segment

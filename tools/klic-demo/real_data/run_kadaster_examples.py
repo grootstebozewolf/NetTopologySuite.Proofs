@@ -8,7 +8,10 @@ Pinned commit: KLIC_WIN_COMMIT below; folder "Uitleveren/Voorbeelden IMKL v2.0"
 
   python tools/klic-demo/real_data/run_kadaster_examples.py [--src <dir of Levering_*.zip>]
 
-Writes tools/klic-demo/results/kadaster_examples.json.  Graafmelding (G/C)
+Writes tools/klic-demo/results/kadaster_examples.json with AGGREGATE totals
+only (no per-delivery rows, no delivery IDs, no coordinates: the source
+states no licence).  Per-delivery lines are printed to the console only.
+Graafmelding (G/C)
 deliveries carry a imkl:Graafpolygoon; orientation requests (O) an
 imkl:Orientatiepolygoon -- both are analysed as the dig polygon.
 """
@@ -45,6 +48,25 @@ def fetch(name: str) -> bytes:
         return r.read()
 
 
+def aggregate(rows):
+    """Totals over all deliveries; nothing per delivery."""
+    per = [r for dl in rows for r in dl["per_dig"]]
+    return {
+        "deliveries": len(rows),
+        "dig_polygons": sum(dl["dig_polygons"] for dl in rows),
+        "lines": sum(dl["lines"] for dl in rows),
+        "stock_versions": sorted({f"Shapely {dl['shapely']} / GEOS {dl['geos']}" for dl in rows}),
+        "stock_covers_false": sum(r["stock_covers_false"] for r in per),
+        "stock_intersects_relate_covers_disagree": sum(r["stock_intersects_relate_covers_disagree"] for r in per),
+        "deliveries_with_covers_false": sum(1 for dl in rows if any(r["stock_covers_false"] for r in dl["per_dig"])),
+        "verified_dig_vertex_hotpixel_passes": sum(r["hotpixel_vertex_passes"] for r in per),
+        "verified_exact_nodes": sum(r["exact_nodes"] for r in per),
+        "verified_max_snap_disp_m": str(max(Fraction(r["max_snap_disp_m"]) for r in per)),
+        "bound_m": "1/2000",
+        "verified_bound_holds": all(r["bound_holds"] for r in per),
+    }
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", default=None, help="local folder holding Levering_*.zip")
@@ -59,7 +81,7 @@ def main(argv=None):
                     if m.endswith(".xml") and "GI_gebiedsinformatielevering" in m:
                         z.extract(m, td)
             d = imkl_loader.load_imkl(td, dig_regex="graafpolygoon|orientatiepolygoon")
-            res = imkl_loader.analyse(d, Fraction(1, 1000), show_locations=True)
+            res = imkl_loader.analyse(d, Fraction(1, 1000), show_locations=False)
         res["delivery"] = name
         rows.append(res)
         tot = sum(r["hotpixel_vertex_passes"] for r in res["per_dig"])
@@ -67,7 +89,7 @@ def main(argv=None):
         print(f"{name}: digs={res['dig_polygons']} lines={res['lines']} "
               f"hotpixel_vertex_passes={tot} stock_covers_false={cf}", flush=True)
     doc = {"source": f"github.com/kadaster/klic-win@{KLIC_WIN_COMMIT}/{FOLDER}",
-           "grid": "1 mm (s = 1000 on metres)", "deliveries": rows}
+           "grid": "1 mm (s = 1000 on metres)", "totals": aggregate(rows)}
     Path(a.out).write_text(json.dumps(doc, indent=2) + "\n")
     return 0
 

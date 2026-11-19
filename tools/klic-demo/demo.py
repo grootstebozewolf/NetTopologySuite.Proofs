@@ -338,22 +338,23 @@ def load_stock(path=STOCK):
 
 
 def real_summary():
-    """Kadaster public example deliveries (recorded run, see real_data/)."""
+    """Kadaster public example deliveries: recorded aggregate totals only
+    (see real_data/run_kadaster_examples.py; no per-delivery rows)."""
     if not REAL.exists():
         return None
     d = json.loads(REAL.read_text())
-    per = [r for dl in d["deliveries"] for r in dl["per_dig"]]
+    t = d["totals"]
     return {
         "source": d["source"],
-        "deliveries": len(d["deliveries"]),
-        "lines": sum(dl["lines"] for dl in d["deliveries"]),
-        "geos": sorted({f"Shapely {dl['shapely']} / GEOS {dl['geos']}" for dl in d["deliveries"]}),
-        "stock_covers_false": sum(r["stock_covers_false"] for r in per),
-        "deliveries_with_covers_false": sum(1 for r in per if r["stock_covers_false"]),
-        "verified_dig_vertex_hotpixel_passes": sum(r["hotpixel_vertex_passes"] for r in per),
-        "verified_exact_nodes": sum(r["exact_nodes"] for r in per),
-        "verified_max_disp_m": str(max(Fraction(r["max_snap_disp_m"]) for r in per)),
-        "verified_bound_holds": all(r["bound_holds"] for r in per),
+        "deliveries": t["deliveries"],
+        "lines": t["lines"],
+        "geos": t["stock_versions"],
+        "stock_covers_false": t["stock_covers_false"],
+        "deliveries_with_covers_false": t["deliveries_with_covers_false"],
+        "verified_dig_vertex_hotpixel_passes": t["verified_dig_vertex_hotpixel_passes"],
+        "verified_exact_nodes": t["verified_exact_nodes"],
+        "verified_max_disp_m": t["verified_max_snap_disp_m"],
+        "verified_bound_holds": t["verified_bound_holds"],
     }
 
 
