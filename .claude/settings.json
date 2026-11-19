@@ -21,5 +21,10 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__Notion__notion-fetch"
+    ]
   }
 }
