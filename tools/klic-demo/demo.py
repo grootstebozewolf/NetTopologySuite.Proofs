@@ -474,7 +474,7 @@ def report(res) -> str:
                 L.append(f"  {r['tool']:<8} {r['version']:<52} covers=False {a['covers_false']:>4}/{a['pairs']}"
                          f"  (empty ∩ {a['pairs'] - a['nonempty']})   [TESTED]")
     L.append("")
-    L.append("Proved = Qed in theories-flocq/HotPixel_Q_exec.v, standard classical axioms only")
+    L.append("Proved = Qed in theories-flocq/HotPixel_Q_exec.v, no Admitted; allowlisted axioms + classic via Flocq round")
     L.append("(proof_audit/print_assumptions.txt).  Scope: node placement + hot-pixel passing,")
     L.append("not a verified overlay.")
     return "\n".join(L)

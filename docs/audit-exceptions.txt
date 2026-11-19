@@ -23,7 +23,7 @@
 #       debt            axiom avoidable; to be removed
 #       qex             axiom kept because the axiom-free claim is false
 #
-# LIVE: 132 files (124 theories-flocq/ + 2 theories/ + 6 hunt probes).
+# LIVE: 133 files (125 theories-flocq/ + 2 theories/ + 6 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -80,6 +80,14 @@ theories-flocq/Validate_binary64_bridge.v
 theories-flocq/IeeeRBridge.v
 theories-flocq/Orientation_b64.v
 theories-flocq/HotPixel_b64.v
+# Flocq C1 — executable Q twin of the hot-pixel spec (tools/klic-demo).
+# Its own proofs use no classic step: classic reaches the PA blocks only
+# through the definition of the R-side spec it reflects (snap_round_coord
+# is Flocq `round`, whose cexp/mag carries classic) and through the
+# binary64 bridge lemmas (generic_format, b64_passes_through_sound).
+# q_round_ne_correct, q_touches_closed_reflect and q_seg_intersection_sound
+# are within the allowlist.  Leaves with HotPixel_b64.v (category-c-policy).
+theories-flocq/HotPixel_Q_exec.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 

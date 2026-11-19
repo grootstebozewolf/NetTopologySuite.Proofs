@@ -412,7 +412,8 @@ jobs:
         # tools/klic-demo runs OCaml extracted from HotPixel_Q_exec.v.  Re-extract
         # against the .vo just built and fail if the committed hotpixel_q.ml(i)
         # drifted; re-run the demo's Print Assumptions probe and fail on any
-        # axiom outside the standard classical four (an Admitted would appear).
+        # axiom outside the three allowlisted ones plus Flocq's classic (an
+        # Admitted would appear as an extra axiom).
         run: |
           chmod -R a+rwX .
           docker run --rm -v "$PWD:/workspace" -w /workspace nts-proofs-flocq:ci \

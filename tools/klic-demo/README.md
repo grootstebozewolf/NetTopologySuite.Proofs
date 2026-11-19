@@ -27,7 +27,7 @@ picometres (7.8 pm and 11.0 pm in case A). The point is that it **contradicts it
 
 | | meaning | where |
 |---|---|---|
-| **Proved** | Qed in Rocq, no `Admitted` in the chain, `Print Assumptions` lists only the four standard classical axioms | `theories-flocq/HotPixel_Q_exec.v`, `proof_audit/print_assumptions.txt` |
+| **Proved** | Qed in Rocq, no `Admitted` in the chain. `Print Assumptions` lists the repo's three allowlisted axioms (`docs/axiom-allowlist.txt`) plus `Classical_Prop.classic`, which arrives through Flocq's `round` in the specification (see below) | `theories-flocq/HotPixel_Q_exec.v`, `proof_audit/print_assumptions.txt` |
 | **Proved per answer** | an output of the extracted kernel; each answer means what its reflection theorem says | `ocaml/hotpixel_q.ml` (extracted), called by `verified_hotpixel.py` |
 | **Tested** | something observed by running a tool, with the tool version printed beside it | `demo.py` output, `results/*.json`, `tests/` |
 
@@ -76,6 +76,23 @@ first build are still there, and the new module is tied to them:
   It uses `b64_snap_coord_B2R`.
 - `snap_round_coord_tolerance_scale` is the any-scale form of
   `snap_round_x_tol` and `snap_round_y_tol` in `NodingSeparation_b64.v`.
+
+### Axioms
+
+`proof_audit/print_assumptions.txt` lists, for every theorem above, the
+three axioms in `docs/axiom-allowlist.txt`: the Stdlib reals'
+`sig_forall_dec` and `sig_not_dec`, and `functional_extensionality_dep`.
+Some theorems also list `Classical_Prop.classic`. No proof step in
+`HotPixel_Q_exec.v` uses it. It comes in through the definition of the
+specification being reflected: `snap_round_coord` is Flocq's `round`, whose
+exponent function carries `classic`. It also comes in through the binary64
+bridge lemmas. Every theorem that mentions the snap specification therefore
+lists it.
+
+`q_round_ne_correct`, `q_touches_closed_reflect` and
+`q_seg_intersection_sound` stay inside the allowlist. The module is
+registered in `docs/audit-exceptions.txt` as class `implementation` (Flocq
+C1), for the same reason as `HotPixel_b64.v`.
 
 ### Unit scale and RD magnitudes (gap 3)
 
@@ -252,8 +269,8 @@ bash tools/klic-demo/proof_audit/audit.sh  # rewrites proof_audit/print_assumpti
   its reason, if its tool is missing.
 - In `ci.yml`, the `rocq-flocq` job re-extracts against the freshly built
   corpus and fails if `hotpixel_q.ml` drifted. It also re-runs the audit
-  probe and fails on any assumption beyond the four standard classical
-  axioms.
+  probe and fails on any assumption beyond the three allowlisted axioms
+  and `Classical_Prop.classic`.
 
 ## Limitations
 
