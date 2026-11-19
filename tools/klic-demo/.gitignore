@@ -1,0 +1,6 @@
+/ocaml/hotpixel_q
+/stock/jts/lib/
+/stock/nts/bin/
+/stock/nts/obj/
+__pycache__/
+.pytest_cache/

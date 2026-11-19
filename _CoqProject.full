@@ -4279,6 +4279,10 @@ theories-flocq/DivRoundPow2_b64.v
 # Composes DivRoundPow2's mult/div pow2 exactness around the unit-grid integer
 # rounding.  Depends on HotPixel_b64 + DivRoundPow2_b64.
 theories-flocq/SnapRoundingScale_b64.v
+# Executable rational (Q) twin of snap_round / passes_through_hot_pixel_closed
+# at any positive rational scale, with Qed reflection lemmas; extracted to
+# OCaml for tools/klic-demo (tools/klic-demo/rocq/Extract_HotPixel_Q.v).
+theories-flocq/HotPixel_Q_exec.v
 # Phase 2 milestone 4 (Slice 13): topological correctness of snap-rounding.
 # Shared-hot-pixel preservation (the provable local kernel of the audit doc's
 # share_point => shared-vertex conjunct) on the R-side and binary64, plus a

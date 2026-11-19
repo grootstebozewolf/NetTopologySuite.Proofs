@@ -1,0 +1,77 @@
+{
+  "run_utc": "2026-11-19T03:19:09Z",
+  "inputs": {
+    "caseA": "real_pairs.wkt",
+    "caseB": "caseB.wkt"
+  },
+  "results": [
+    {
+      "tool": "Shapely",
+      "version": "Shapely 2.2.0 / GEOS 3.14.1",
+      "runtime": "Python 3.13.18",
+      "caseA": {
+        "pairs": 43962,
+        "nonempty": 43962,
+        "covers_false": 903
+      },
+      "caseB": {
+        "intersects": true,
+        "relate": "1F20F1102",
+        "covers": false,
+        "intersection": "LINESTRING (155523520.69981417 463287348.8600093, 155523520.7200218 463287349.6004359)"
+      },
+      "status": "ok"
+    },
+    {
+      "tool": "JTS",
+      "version": "jts-core 1.20.0",
+      "runtime": "Java 21.0.13.0.3",
+      "caseA": {
+        "pairs": 43962,
+        "nonempty": 43962,
+        "covers_false": 208
+      },
+      "caseB": {
+        "intersects": true,
+        "relate": "1F20F1102",
+        "covers": true,
+        "intersection": "LINESTRING (155523520.69981417 463287348.8600093, 155523520.7200218 463287349.6004359)"
+      },
+      "status": "ok"
+    },
+    {
+      "tool": "NTS",
+      "version": "NetTopologySuite 2.6.0 (compatible with JTS 1.20.0)",
+      "runtime": ".NET 8.0.34",
+      "caseA": {
+        "pairs": 43962,
+        "nonempty": 43962,
+        "covers_false": 208
+      },
+      "caseB": {
+        "intersects": true,
+        "relate": "1F20F1102",
+        "covers": true,
+        "intersection": "LINESTRING (155523520.69981417 463287348.8600093, 155523520.7200218 463287349.6004359)"
+      },
+      "status": "ok"
+    },
+    {
+      "tool": "PostGIS",
+      "version": "PostGIS 3.5.2 / GEOS 3.9.0-CAPI-1.16.2",
+      "runtime": "PostgreSQL 17.5 (Debian 17.5-1.pgdg110+1) on x86_64-pc-linux-gnu",
+      "caseA": {
+        "pairs": 43962,
+        "nonempty": 43932,
+        "covers_false": 933
+      },
+      "caseB": {
+        "intersects": true,
+        "relate": "1F20F1102",
+        "covers": false,
+        "intersection": "LINESTRING(155523520.69981417 463287348.8600093,155523520.7200218 463287349.6004359)"
+      },
+      "status": "ok"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pins jts-core for the klic-demo stock run.  Used only to fetch the jar:
+     mvn -q dependency:copy-dependencies -DoutputDirectory=lib -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.nts.proofs</groupId>
+  <artifactId>klic-demo-jts</artifactId>
+  <version>0</version>
+  <packaging>pom</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>org.locationtech.jts</groupId>
+      <artifactId>jts-core</artifactId>
+      <version>1.20.0</version>
+    </dependency>
+  </dependencies>
+</project>
