@@ -56,6 +56,15 @@ an endpoint or lies strictly on a₁'s side of chord a₀a₂.
 covers an arc whose endpoint is a √ transversal hen, and overlapping
 co-circular arcs. ℚ(√d) is not in the statement.
 
+**Coincident circles Decline first.** If d² = 0 and r₁² = r₂², the
+supporting circles coincide. 𝓘 returns Decline before it evaluates the
+tangency-point formula, which divides by d². The `discq = 0` test alone
+accepts this case, and ℚ's x/0 = 0 would then emit the common centre as
+a Touch point. For two arcs on a coincident circle this is the
+co-circular rule; for full circles or discs it applies all the same.
+Concentric circles with r₁² ≠ r₂² have no contact and give Empty.
+A zero-length segment (dx = dy = 0) is not a line and also Declines.
+
 Ruled out:
 - *identity by construction*: it never finds a tangency between
   independently drawn eggs;
@@ -111,7 +120,7 @@ never hens, even when the WKT spells the coordinate.
 | tangency, point in both input spans | **Touch**: one hen, σ attached; a kiss iff σ = Ext |
 | tangency outside a span, or the curves miss | **Empty** |
 | curves cross ((d² − r₁² − r₂²)² < 4·r₁²·r₂², or h² > 0) | **Hit** (`IZTouch_neq_IZHit`, `ICircGTouch_neq_ICircGHit`) |
-| cooked / derived / irrational input, co-circular overlap | **Decline** (named QEX) |
+| cooked / derived / irrational input, co-circular overlap, coincident circles (d² = 0, r₁² = r₂²), zero-length segment | **Decline** (named QEX) |
 
 ## Acceptance clause
 
@@ -130,6 +139,7 @@ witnesses. The prototype already passes them by `vm_compute`:
 | A6 | arc 1 · chord (−10,−5)→(10,−5) | Empty (tangency off span) |
 | A7 | discs (0,0) r 1 · (1,0) r 1 | Hit |
 | A8 | any cooked input | Decline |
+| A9 | discs (0,0) r 1 · (0,0) r 1 (coincident) | Decline, checked before the tangency point is computed; never Touch |
 
 Additionally, and beyond the prototype:
 - **ℝ bridge**: a σ = Ext tangency of two discs implies `disks_touch`,
@@ -138,6 +148,9 @@ Additionally, and beyond the prototype:
   The prototype skips this.
 - **Co-circular overlap** is detected and Declines. The prototype
   skips this.
+- **Coincident circles** (A9) Decline before any division by d². The
+  prototype gets this wrong: it returns `Touch (0,0) Int` for two equal
+  discs, because `cc_point` divides by d² = 0.
 
 Out of scope for acceptance: the ADR-0006 cook-mode keyword for a
 tangency hen (a later ticket, now unblocked by the prototype), arc cook
