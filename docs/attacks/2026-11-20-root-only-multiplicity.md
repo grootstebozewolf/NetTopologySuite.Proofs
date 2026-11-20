@@ -131,3 +131,62 @@ higher-rank L-functions, which is a bigger canopy, not a smaller one. That is
 weak evidence that "root-only" may be the wrong goal, and that "smallest
 sufficient canopy" (for example, a single cyclotomic layer without Behrend) is
 the better-posed simplification target.
+
+## Slice 3: is Behrend load-bearing? (smallest-sufficient-canopy probe, 2026-11-20)
+
+**Import closure** (script: Python over `import` lines; Mathlib, Lean and Std
+excluded). `Main.lean` transitively imports **all 175,187** `.lean` files
+(17,374,215 lines); none is unreachable. Import reachability is not
+proof-term dependency. Measuring which declarations the proof terms actually
+use needs a build (audit steps 7–8), so "how much of the 17 M lines is
+really used" stays open.
+
+**Behrend on the main line (read from source).**
+
+- `linkCore` receives `WinF` from
+  `size_windows_of_thick_density Fm cT2`, which needs
+  `ThickSetDensityEventually`.
+  (`…/GlobalSchurBounds/LossesSmallShares.lean:315`,
+  `…/WeightVectorSmallSharesSeven.lean:41`)
+- That density comes from `thickFrame2`-type statements, which call
+  `Formalism.FrobeniusOrbits.hostThickExists`. That is a Behrend-type
+  existence proof: a set `T ⊂ [0, n/(4L))` with `NoRel T L`, meaning no
+  `j(s₂−s₁) = i(s₃−s₁)` with `0 < |i|,|j| ≤ L` and `i ≠ j`, and
+  `|T| ≥ n·exp(−C√(log n·log L))/L`.
+  (`Development/AutomorphicArithmetic/ThickFrames/ThickFrame2Large.lean:37`;
+  `Formalism/FrobeniusOrbits/HostThickExists.lean`;
+  `…/FrobeniusOrbitsProofs/ThickExists.lean:181`)
+- What is actually demanded downstream: with `Lw ≤ CL·log x`, a `NoRel`
+  set `T2` with **`|T2| ≥ x^(−ε)·ord`**. This is `RestSize`'s
+  `x^(−ε) ≤ nT2/n`. Behrend's loss `exp(−C√(log n·log log x))` is
+  `x^(o(1))`, which is far better than the `x^(−ε)` needed.
+- `Formalism/BehrendSets/` itself is imported only by
+  `Formalism/GL3MeanSquares/HookFormulaTorsion/DifferenceStableUnderAction.lean`.
+  The main-line use is the `FrobeniusOrbits` copy.
+
+**Can something simpler than Behrend do it? (argument, not code)**
+
+- *Random set with deletion:* **fails.** It has about `n²L²` relation
+  triples, so density `δ` leaves `≈ n²L²δ³` bad triples against `nδ`
+  points. That forces `δ ≲ 1/(√n·L)`, a density of `n^(−1/2)`, far below
+  `x^(−ε)`.
+- *Powers / lacunary sets* (for example `{(3L)^i}`): `NoRel` holds, but
+  the size is only `O(log n)`. **Fails** badly.
+- *Naive digit restriction:* it prevents carries but not relations within a
+  digit. It is **not sufficient by itself**.
+- So a *structured* set with no linear relations is genuinely needed:
+  density `x^(−ε)` against relations with coefficients up to `log x`.
+  Behrend's sphere trick is the standard route. The exponent `√` loss is
+  overkill, but **some** Behrend-/Salem–Spencer-type construction appears
+  necessary.
+
+| id | claim | OUTCOME |
+|---|---|---|
+| S1 | Behrend-type `NoRel` sets are on the main line (feeding `WinF` → `linkCore` → `ChainTied`) | **QED (by reading)** |
+| S2 | The requirement is only density `x^(−ε)` at coefficient size `O(log x)`. Behrend's `exp(−C√…)` quality is not needed. | **QED (by reading `RestSize`, `thickFrame2`)** |
+| S3 | Unstructured constructions (random deletion, lacunary) cannot meet S2 | **QED-leaning (counting argument above; not formalized)** |
+| S4 | A construction simpler than Behrend meets S2 | **OPEN.** This is a small, self-contained, formalizable target: a pure additive-combinatorics lemma with no RH content. It is the first concrete "smallest canopy" simplification candidate. |
+
+**OUTCOME** OPEN. The Behrend step is load-bearing in kind, but over-powered
+in quality. S4 is a cheap, well-posed probe. A positive answer would simplify
+the formalization, but it would **not** shrink the canopy (the ℤ₂-tower stays).
