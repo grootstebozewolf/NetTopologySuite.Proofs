@@ -4,7 +4,7 @@ Provenance: a0411a057fc5fdc8e0c76bcf55324e423b1cb7fe
 Theorems: `QedRootsRefute.v : lag_box_cert_of_quadratic_neg_disc`, `QedRoots.v : cert_roots_in_gaps`, `QedRootsExamples.v : x2_plus_one_not_hyperbolic`
 Supersedes: docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md
 -->
-# Follow-up: degree-2 checker completeness and isolating gaps
+# Follow-up: degree-2 checker completeness on point boxes, and isolating gaps
 
 Records the review corrections on the qedroots certificate at
 `a0411a057fc5fdc8e0c76bcf55324e423b1cb7fe`. The parent ticket stays the

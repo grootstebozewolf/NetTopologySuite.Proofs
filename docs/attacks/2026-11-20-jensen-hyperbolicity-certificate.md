@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-20
 Provenance: 7cebee2124d37d0ff60fa17b8d09ff6ca0ddbab0
-Theorems: `QedRoots.v : cert_sound`, `QedRoots.v : cert_hyperbolic`, `QedRoots.v : factor_cert_sound`, `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted`, `QedRootsExamples.v : double_root_box_uncertifiable`, `QedRootsExamples.v : no_real_roots_box_uncertifiable`, `QedRootsRefute.v : laguerre_hyperbolic`, `QedRootsRefute.v : lag_box_cert_sound`, `QedRootsExamples.v : P5up_neighbourhood_not_hyperbolic`
+Theorems: `QedRoots.v : cert_sound`, `QedRoots.v : cert_hyperbolic`, `QedRoots.v : factor_cert_sound`, `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted`, `QedRootsExamples.v : double_root_box_uncertifiable`, `QedRootsExamples.v : no_real_roots_box_uncertifiable`, `QedRootsRefute.v : laguerre_hyperbolic`, `QedRootsRefute.v : lag_box_cert_sound`, `QedRootsExamples.v : P5up_neighbourhood_not_hyperbolic`, `QedRootsExamples.v : beta_box_lag_never`, `QedRoots.v : box_cert_inhabited`
 -->
 # Hunt: an orientation-like certificate for RH (finite Jensen hyperbolicity)
 
@@ -73,7 +73,7 @@ right first rung.
 | 0 | real-coefficient polynomial, strict sign alternation at d+1 increasing points ⇒ exactly d distinct real roots and full factorisation | QED | `alternating_simple_real_rooted` (IVT via `IVT_cor`, synthetic division `quot_spec`, `factor_from_roots`) |
 | 1 | rational box `[lo_j,hi_j]` + rational points; boolean checker `box_cert` (Q, `vm_compute`) | definition | `box_cert`, `ieval`, `isign` |
 | 2 | bridge: `box_cert b xs = true` ⇒ **every real** p in the box is simple-real-rooted ⇒ hyperbolic | QED | `cert_sound`, `cert_hyperbolic` |
-| 3 | probe P = (X+1)(2X+1)(X+2)(3X+1)(X+3) = 6+41X+97X²+97X³+41X⁴+6X⁵ (self-reciprocal, positive coeffs, negative roots — ξ-Jensen shape); points −4, −5/2, −3/2, −3/4, −2/5, −1/4; signs `[-1;1;-1;1;-1;1]` | QED | `P5_cert`, `P5_signs`, `P5_simple_real_rooted` (proof uses only the 6 signs, never the factored form) |
+| 3 | probe P = (X+1)(2X+1)(X+2)(3X+1)(X+3) = 6+41X+97X²+97X³+41X⁴+6X⁵ (positive coeffs, negative roots, as for ξ Jensen polynomials; also self-reciprocal, which Jensen polynomials are not in general); points −4, −5/2, −3/2, −3/4, −2/5, −1/4; signs `[-1;1;-1;1;-1;1]` | QED | `P5_cert`, `P5_signs`, `P5_simple_real_rooted` (proof uses only the 6 signs, never the factored form) |
 | 4 | enclosure width: absolute ±1/20 on every coefficient preserves the certificate (min normalised margin \|P(x)\|/Σ\|x\|^j = 8/133 ≈ 0.060 at x = −5/2, −2/5) | QED | `P5_cert_width`, `P5_neighbourhood_simple_real_rooted` |
 | 5 | ±1/10 rejected **at these points** (statement about the checker, not a non-hyperbolic witness) | QED (checker = false) | `P5_reject_width` |
 | 6 | multiplicity semantics: `hyperbolic` (multiset of roots) and `simple_real_rooted` (NoDup) are separate definitions; (X+1)²(X+2) is hyperbolic yet no box/points ever certify it; X²+1 never certifies | QED | `D3_hyperbolic`, `double_root_box_uncertifiable`, `no_real_roots_box_uncertifiable` |
@@ -90,7 +90,7 @@ packaged as `packaging/rocq-qed-roots`. See "Programme" below.
 
 | 7 | multiplicities expressible: `factor_cert` (p ≡ c·Π fₖ over Q, each fₖ box-certified, factors may repeat) ⇒ hyperbolic; (X+1)²(X+2) and (2X²+5X+2)²(X+3) certified | QED | `factor_cert_sound`, `D3_hyperbolic`, `Q5_hyperbolic` |
 
-| 8 | refutation: hyperbolic ⇒ Laguerre form p′² − p·p″ ≥ 0 everywhere; `lag_box_cert` (interval upper bound < 0 at one rational x) ⇒ no p in the box is hyperbolic; complete in degree 2 (vertex value = discriminant/2, i.e. Turán) | QED | `laguerre_hyperbolic`, `lag_box_cert_sound`, `quadratic_negative_discriminant_not_hyperbolic` |
+| 8 | refutation: hyperbolic ⇒ Laguerre form p′² − p·p″ ≥ 0 everywhere; `lag_box_cert` (interval upper bound < 0 at one rational x) ⇒ no p in the box is hyperbolic; for **point boxes** with rational coefficients, complete in degree 2 (vertex value = discriminant/2, i.e. Turán) | QED | `laguerre_hyperbolic`, `lag_box_cert_sound`, `quadratic_negative_discriminant_not_hyperbolic`, `lag_box_cert_of_quadratic_neg_disc` |
 | 9 | instances: X²+1 at 0, (X+1)(X²+1) at 1/2; P5 lifted by +3 refuted on a ±1/2 box at −1/4, against P5 itself certified on ±1/20 | QED | `x2_plus_one_not_hyperbolic`, `cubic_not_hyperbolic`, `P5up_neighbourhood_not_hyperbolic` |
 
 Why step 8 matters for the control: QEX-2B ("DH fails while ξ passes")
@@ -99,6 +99,9 @@ has a frozen pair of instruments: `box_cert` (accept) and `lag_box_cert`
 (refute), provably never both true on overlapping boxes
 (`box_cert_lag_exclusive`). A DH instance that neither accepts nor refutes
 is recorded as undecided at that (d,n), not as a separation.
+
+| 10 | review QEX against our own claim "Laguerre refutation complete in degree 2": false for proper boxes. `beta_box` = 1 + [−3/2, 3/2]X + X² is inhabited and wholly non-hyperbolic, yet `lag_box_cert` fails at every rational x (independent enclosures of p, p′, p″ lose the correlation; upper bound ≥ 1/4). Claim narrowed to point boxes | QEX (recorded as warn) | `beta_box_not_hyperbolic`, `beta_box_lag_never` |
+| 11 | non-vacuity: an inverted interval made `in_box _ b` empty and the soundness theorems vacuous. Both checkers now require `box_wf` (lo ≤ hi), which provably yields an inhabitant; the neighbourhood boxes contain their centres | QED | `box_cert_inhabited`, `lag_box_cert_inhabited`, `box_wf_inhabited`, `P5_width_box_inhabited`, `P5up_width_box_inhabited` |
 
 ## Programme (reframed 2026-11-20)
 
@@ -114,7 +117,7 @@ qedinterval → qedpoly → qedroots → qedanalytic → qedjensen → RH experi
 |---|---|---|
 | qedinterval | `QedInterval.v` (in `rocq-qed-roots` for now) | QED: exact rational enclosure + strict sign; `in_box` is the interface qedanalytic must produce |
 | qedpoly | `QedPoly.v` (in `rocq-qed-roots` for now) | QED: eval, synthetic division, factor theorem, Q multiplication |
-| qedroots | `QedRoots.v`, `QedRootsRefute.v` → package `rocq-qed-roots` | QED: sign-alternation + factor certificates (accept), Laguerre certificate (refute, complete in degree 2); **OPEN**: Sturm / Cauchy index, squarefree decomposition, refutation complete beyond degree 2 |
+| qedroots | `QedRoots.v`, `QedRootsRefute.v` → package `rocq-qed-roots` | QED: sign-alternation + factor certificates (accept), Laguerre certificate (refute; complete in degree 2 for point boxes only, not for proper boxes); **OPEN**: Sturm / Cauchy index, squarefree decomposition, refutation complete beyond degree 2 |
 | qedanalytic | — | OPEN: certified enclosures of γ(n) (Flocq / interval), producing `in_box` |
 | qedjensen | — | OPEN: define J^{d,n}_Ξ, prove the certified coefficients are the intended ones, run `box_cert` |
 | DH control | — | OPEN: same `box_cert`, frozen |
@@ -157,7 +160,7 @@ second consumer needs them without roots. "Mint" in the CONTEXT.md sense
   `box_cert` (accept) and `lag_box_cert` (refute) exactly as committed;
   both are now frozen.
 
-SUMMARY ok=9 warn=0 bug=0
+SUMMARY ok=10 warn=1 bug=0
 
 OUTCOME: QED (qedroots rung, packaged as rocq-qed-roots) — rational sign certificate: interval-enclosed real coefficients → exact rational sign list → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.
 

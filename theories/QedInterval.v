@@ -5,9 +5,10 @@
        qedinterval -> qedpoly -> qedroots -> qedanalytic -> qedjensen.
 
    A `box` is a list of rational intervals [lo_j, hi_j], one per coefficient
-   (low degree first).  `ieval b x` is the exact range of c |-> sum c_j x^j
-   over the box at a rational point x (Horner with an exact scalar is exact
-   because the map is linear in c).  `isign` reads off a strict sign
+   (low degree first).  `ieval b x` encloses the range of c |-> sum c_j x^j
+   over the box at a rational point x.  Proved: it is an ENCLOSURE
+   (`ieval_sound`).  It is also tight (Horner with an exact scalar, the map
+   being linear in c), but tightness is not proved here.  `isign` reads off a strict sign
    (+1 / -1) or 0 when the enclosure straddles zero.
 
    The interface towards qedanalytic is `in_box`: a REAL coefficient list
@@ -173,6 +174,39 @@ Proof.
   - apply IH.
 Qed.
 
+(* ------------------------------------------------------------------ *)
+(* Non-vacuity: a well-formed box is inhabited.                         *)
+(* An inverted interval (lo > hi) makes `in_box` empty, so every        *)
+(* theorem quantified over `in_box p b` would hold vacuously.  The      *)
+(* certificates in QedRoots / QedRootsRefute check `box_wf`.            *)
+(* ------------------------------------------------------------------ *)
+
+Definition box_wf (b : box) : bool :=
+  forallb (fun lh => Qle_bool (fst lh) (snd lh)) b.
+
+Theorem box_wf_inhabited b : box_wf b = true -> in_box (map (fun lh => Q2R (fst lh)) b) b.
+Proof.
+  induction b as [|[lo hi] t IH]; simpl; intros H; constructor.
+  - apply andb_prop in H as [H _]. apply Qle_bool_iff, Qle_Rle in H. simpl. lra.
+  - apply IH. now apply andb_prop in H as [_ H].
+Qed.
+
+Lemma in_box_width (d : Q) (p : list Q) :
+  (0 <= d)%Q -> in_box (pQ2R p) (width_box d p).
+Proof.
+  intros Hd. apply Qle_Rle in Hd. rewrite Q2R_0 in Hd.
+  induction p as [|q t IH]; simpl; constructor; [|exact IH].
+  simpl. unfold Qminus. rewrite Q2R_plus, Q2R_plus, Q2R_opp. lra.
+Qed.
+
+Lemma box_wf_point p : box_wf (point_box p) = true.
+Proof.
+  induction p as [|q t IH]; simpl; [reflexivity|].
+  rewrite IH, andb_true_r. apply Qle_bool_iff, Qle_refl.
+Qed.
+
 Print Assumptions ieval_sound.
+Print Assumptions box_wf_inhabited.
+Print Assumptions in_box_width.
 Print Assumptions isign_mul_neg.
 Print Assumptions in_box_pderiv.

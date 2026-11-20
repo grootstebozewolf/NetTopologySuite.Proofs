@@ -19,8 +19,9 @@ NetTopologySuite.Proofs corpus.
   - `QedRootsRefute`: the Laguerre inequality p'^2 - p p'' >= 0 for
     hyperbolic p, and a robust refutation certificate
     (`lag_box_cert_sound`: NO real coefficient vector in the box is
-    hyperbolic); complete in degree 2 (discriminant / Turan).
-  - `QedRootsExamples`: a self-reciprocal quintic certified with a +-1/20
+    hyperbolic); on point boxes complete in degree 2 (discriminant / Turan),
+    not on proper boxes.
+  - `QedRootsExamples`: a quintic certified with a +-1/20
     coefficient box, repeated-root instances, negative controls and refuted instances.
 
 Certificates are booleans over Q decided by `vm_compute`; floating point

@@ -24,9 +24,13 @@
    Robust: an open condition, so it survives small coefficient boxes.
 
    Strength: over R, at x = -b/(2c) the Laguerre form is (b^2 - 4ac)/2
-   (laguerre_quadratic_vertex).  For rational a, b, c with c not Qeq 0 and
-   negative discriminant, the boolean checker accepts that vertex
-   (lag_box_cert_of_quadratic_neg_disc).  Not complete in higher degree.
+   (laguerre_quadratic_vertex).  For POINT boxes with rational a, b, c,
+   c not Qeq 0 and negative discriminant, the boolean checker accepts that
+   vertex (lag_box_cert_of_quadratic_neg_disc).  NOT complete for proper
+   boxes, even in degree 2: P, D, E are enclosed independently, so the
+   correlation is lost (QedRootsExamples: beta_box_lag_never, a box of
+   non-hyperbolic quadratics the checker never refutes).  Not complete in
+   higher degree.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -170,7 +174,9 @@ Definition lag_upper (b : box) (x : Q) : Q :=
   qmax (dl * dl) (dh * dh) -
   qmin (qmin (pl * el) (pl * eh)) (qmin (ph * el) (ph * eh)).
 
-Definition lag_box_cert (b : box) (x : Q) : bool := Qltb (lag_upper b x) 0.
+(* `box_wf` guards against vacuity (see QedInterval.box_wf_inhabited). *)
+Definition lag_box_cert (b : box) (x : Q) : bool :=
+  box_wf b && Qltb (lag_upper b x) 0.
 
 Local Open Scope R_scope.
 
@@ -220,10 +226,17 @@ Qed.
 Theorem lag_box_cert_sound p b x :
   in_box p b -> lag_box_cert b x = true -> ~ hyperbolic p.
 Proof.
-  intros Hb Hc Hh.
+  intros Hb Hc Hh. unfold lag_box_cert in Hc.
+  apply andb_prop in Hc as [_ Hc].
   pose proof (laguerre_hyperbolic p Hh (Q2R x)) as H0.
   pose proof (lag_upper_sound p b x Hb) as H1.
   apply Qltb_spec in Hc. rewrite Q2R_0 in Hc. lra.
+Qed.
+
+Lemma lag_box_cert_inhabited b x : lag_box_cert b x = true -> exists p, in_box p b.
+Proof.
+  unfold lag_box_cert. intros H. apply andb_prop in H as [H _].
+  eexists. now apply box_wf_inhabited.
 Qed.
 
 Corollary lag_point_cert_sound (p : list Q) x :
@@ -333,7 +346,8 @@ Proof.
   assert (Hxv : Q2R xv = - Q2R b / (2 * Q2R c)).
   { unfold xv. rewrite Q2R_div by exact Hden.
     rewrite Q2R_opp, Q2R_mult, H2. reflexivity. }
-  unfold lag_box_cert. apply qltb_intro. apply Rlt_Qlt.
+  unfold lag_box_cert. rewrite box_wf_point, andb_true_l.
+  apply qltb_intro. apply Rlt_Qlt.
   rewrite Q2R_0, point_lag_upper_R, Hxv. unfold pQ2R. simpl.
   rewrite (laguerre_quadratic_vertex (Q2R a) (Q2R b) (Q2R c) HcR).
   assert (HdR : Q2R b * Q2R b - 4 * Q2R a * Q2R c < 0).
@@ -360,5 +374,6 @@ Print Assumptions laguerre_quadratic_vertex.
 Print Assumptions quadratic_negative_discriminant_not_hyperbolic.
 Print Assumptions lag_upper_sound.
 Print Assumptions lag_box_cert_sound.
+Print Assumptions lag_box_cert_inhabited.
 Print Assumptions lag_box_cert_of_quadratic_neg_disc.
 Print Assumptions box_cert_lag_exclusive.

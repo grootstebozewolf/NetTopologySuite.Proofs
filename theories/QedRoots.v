@@ -84,28 +84,6 @@ Fixpoint alternating (p : list R) (xs : list R) : Prop :=
       x0 < x1 /\ peval p x0 * peval p x1 < 0 /\ alternating p rest
   end.
 
-Lemma alternating_roots p : forall xs x0,
-  alternating p (x0 :: xs) ->
-  exists rs, length rs = length xs /\ NoDup rs /\
-             Forall (fun r => x0 < r) rs /\
-             forall r, In r rs -> peval p r = 0.
-Proof.
-  induction xs as [|x1 xs IH]; intros x0 Halt.
-  - exists []. repeat split; try constructor. simpl; tauto.
-  - destruct Halt as (Hlt & Hsg & Hrest).
-    destruct (IH x1 Hrest) as (rs & Hl & Hnd & Hgt & Hz).
-    destruct (IVT_cor (peval p) x0 x1 (peval_continuous p) (Rlt_le _ _ Hlt)
-                      (Rlt_le _ _ Hsg)) as (z & [Hz0 Hz1] & Hpz).
-    assert (z <> x0) by (intro; subst; rewrite Hpz in Hsg; lra).
-    assert (z <> x1) by (intro; subst; rewrite Hpz in Hsg; lra).
-    exists (z :: rs). split; [simpl; lia|]. split; [|split].
-    + constructor; [|exact Hnd].
-      intro Hin. rewrite Forall_forall in Hgt. specialize (Hgt z Hin). lra.
-    + constructor; [lra|].
-      rewrite Forall_forall in *. intros r Hr. specialize (Hgt r Hr). lra.
-    + intros r [<-|Hr]; auto.
-Qed.
-
 (* One open gap per consecutive sample pair. The head of [xs] is not a gap. *)
 Fixpoint consecutive_gaps (xs : list R) : list (R * R) :=
   match xs with
@@ -171,9 +149,9 @@ Theorem alternating_simple_real_rooted p xs :
   simple_real_rooted p.
 Proof.
   intros Hlen Hlead Halt.
-  destruct xs as [|x0 xs]; [contradiction|].
-  destruct (alternating_roots p xs x0 Halt) as (rs & Hl & Hnd & _ & Hz).
-  assert (Hlen' : S (length rs) = length p) by (simpl in Hlen; lia).
+  destruct (alternating_roots_in_gaps p xs Halt) as (rs & Hl & Hnd & _ & Hz).
+  assert (Hlen' : S (length rs) = length p).
+  { destruct xs as [|x0 xs]; [contradiction|]. simpl in Hl, Hlen. lia. }
   pose proof (factor_from_roots rs p Hlen' Hnd Hz) as Hfac.
   exists rs. split; [exact Hlead|]. split; [exact Hlen'|].
   split; [exact Hnd|]. split; [|exact Hfac].
@@ -188,13 +166,18 @@ Fixpoint alt_check (b : box) (xs : list Q) : bool :=
   match xs with
   | [] => false
   | [x] => negb (Z.eqb (isign (ieval b x)) 0)
+      (* For d >= 1 the last point's sign is already forced nonzero by the
+         previous product being -1; this case only matters for d = 0. *)
   | x0 :: ((x1 :: _) as rest) =>
       Qltb x0 x1 &&
       Z.eqb (isign (ieval b x0) * isign (ieval b x1)) (-1) &&
       alt_check b rest
   end.
 
+(* `box_wf` first: an inverted interval would make `in_box _ b` empty and
+   every soundness theorem below vacuous (box_cert_inhabited). *)
 Definition box_cert (b : box) (xs : list Q) : bool :=
+  box_wf b &&
   Nat.eqb (length xs) (length b) &&
   negb (Z.eqb (isign (last b (0%Q, 0%Q))) 0) &&
   alt_check b xs.
@@ -216,12 +199,21 @@ Theorem cert_sound (p : list R) (b : box) (xs : list Q) :
   in_box p b -> box_cert b xs = true -> simple_real_rooted p.
 Proof.
   intros Hb H. unfold box_cert in H.
-  apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
+  apply andb_prop in H as [H H3]. apply andb_prop in H as [H H2].
+  apply andb_prop in H as [_ H1].
   apply Nat.eqb_eq in H1.
   apply (alternating_simple_real_rooted p (map Q2R xs)).
   - rewrite length_map, H1. symmetry. now apply in_box_length.
   - now apply (in_box_lead p b).
   - now apply (alt_check_sound p b).
+Qed.
+
+(* Non-vacuity: a passed certificate's box contains a real polynomial. *)
+Lemma box_cert_inhabited b xs : box_cert b xs = true -> exists p, in_box p b.
+Proof.
+  unfold box_cert. intros H.
+  repeat (apply andb_prop in H as [H _]).
+  eexists. now apply box_wf_inhabited.
 Qed.
 
 Corollary cert_hyperbolic p b xs :
@@ -246,7 +238,8 @@ Proof.
   intros Hb Hcert.
   unfold box_cert in Hcert.
   apply andb_prop in Hcert as [H Halt].
-  apply andb_prop in H as [Hlen Hlead].
+  apply andb_prop in H as [H Hlead].
+  apply andb_prop in H as [_ Hlen].
   apply Nat.eqb_eq in Hlen.
   pose proof (alt_check_sound p b xs Hb Halt) as HaltR.
   destruct (alternating_roots_in_gaps p (map Q2R xs) HaltR)
@@ -329,3 +322,4 @@ Print Assumptions cert_hyperbolic.
 Print Assumptions factor_cert_sound.
 Print Assumptions point_cert_sound.
 Print Assumptions cert_roots_in_gaps.
+Print Assumptions box_cert_inhabited.

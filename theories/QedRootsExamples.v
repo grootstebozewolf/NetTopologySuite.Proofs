@@ -4,8 +4,9 @@
    (docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md).
 
      P5 = (X+1)(2X+1)(X+2)(3X+1)(X+3) = 6 + 41X + 97X^2 + 97X^3 + 41X^4 + 6X^5
-   self-reciprocal, positive coefficients, negative roots: the shape of a
-   xi Jensen polynomial.  Proofs use only the six signs at rational points,
+   positive coefficients and negative roots, like a xi Jensen polynomial
+   (it is also self-reciprocal; Jensen polynomials are not in general).
+   Proofs use only the six signs at rational points,
    never the factored form.
 
    Author: NetTopologySuite.Proofs contributors
@@ -13,7 +14,7 @@
    AI assistance disclosure: AI-drafted; not yet human-reviewed.
      Assisted-by: Claude
 *)
-From Stdlib Require Import Reals QArith Qreals Lra List.
+From Stdlib Require Import Reals QArith Qreals Lra Psatz List.
 From NTS.Proofs Require Import QedPoly QedInterval QedRoots QedRootsRefute.
 Import ListNotations.
 
@@ -153,6 +154,80 @@ Theorem P5up_neighbourhood_not_hyperbolic (p : list R) :
   in_box p (width_box (1#2) P5up) -> ~ hyperbolic p.
 Proof. intros H. exact (lag_box_cert_sound _ _ _ H P5up_lag_width). Qed.
 
+(* ------------------------------------------------------------------ *)
+(* Non-vacuity of the neighbourhood theorems: each box contains its     *)
+(* centre polynomial.                                                   *)
+(* ------------------------------------------------------------------ *)
+
+Lemma P5_width_box_inhabited : in_box (pQ2R P5) (width_box (1#20) P5).
+Proof. apply in_box_width. vm_compute. discriminate. Qed.
+
+Lemma P5up_width_box_inhabited : in_box (pQ2R P5up) (width_box (1#2) P5up).
+Proof. apply in_box_width. vm_compute. discriminate. Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Negative control: lag_box_cert is NOT complete on proper boxes, even *)
+(* in degree 2.   beta_box = 1 + [-3/2, 3/2] X + X^2.                   *)
+(* Every member has discriminant <= 9/4 - 4 < 0, so none is hyperbolic  *)
+(* (beta_box_not_hyperbolic); the box is inhabited (beta_box_inhabited);*)
+(* yet the checker fails at EVERY rational x (beta_box_lag_never):      *)
+(* P, D, E are enclosed independently, and                              *)
+(*   lag_upper >= 2x^2 + 6B|x| + B^2 - 2 >= 1/4   (B = 3/2).            *)
+(* ------------------------------------------------------------------ *)
+Local Open Scope Q_scope.
+
+Definition beta_box : box := [(1, 1); (-3#2, 3#2); (1, 1)].
+
+Local Open Scope R_scope.
+
+Lemma beta_box_inhabited : in_box (pQ2R [1; 0; 1]%Q) beta_box.
+Proof. repeat constructor; unfold Q2R; simpl; lra. Qed.
+
+Theorem beta_box_not_hyperbolic (p : list R) :
+  in_box p beta_box -> ~ hyperbolic p.
+Proof.
+  intros H.
+  inversion H as [|a lh0 p1 b1 Ha H1]; subst.
+  inversion H1 as [|b lh1 p2 b2 Hb H2]; subst.
+  inversion H2 as [|c lh2 p3 b3 Hc H3]; subst.
+  inversion H3; subst.
+  unfold Q2R in Ha, Hb, Hc; simpl in Ha, Hb, Hc.
+  apply quadratic_negative_discriminant_not_hyperbolic; nra.
+Qed.
+
+Lemma beta_lag_upper_ge x : Q2R (lag_upper beta_box x) >= 1/4.
+Proof.
+  unfold lag_upper, beta_box. cbn [ieval pderivB pderivB_aux tl].
+  assert (Hx : (0 <= Q2R x) \/ Q2R x < 0) by lra.
+  destruct (Qle_bool 0 x); cbv beta iota; rewrite Q2R_minus;
+  match goal with |- Q2R (qmax ?a ?b) - Q2R (qmin (qmin ?c ?d) (qmin ?e ?f)) >= _ =>
+    pose proof (qmax_ge a b) as [Ma Mb];
+    pose proof (qmin_le (qmin c d) (qmin e f)) as [M1 M2];
+    pose proof (qmin_le c d) as [Mc _];
+    pose proof (qmin_le e f) as [Me _] end;
+  repeat (rewrite Q2R_plus in Ma || rewrite Q2R_mult in Ma || rewrite Q2R_inject_nat in Ma);
+  repeat (rewrite Q2R_plus in Mb || rewrite Q2R_mult in Mb || rewrite Q2R_inject_nat in Mb);
+  repeat (rewrite Q2R_plus in Mc || rewrite Q2R_mult in Mc || rewrite Q2R_inject_nat in Mc);
+  repeat (rewrite Q2R_plus in Me || rewrite Q2R_mult in Me || rewrite Q2R_inject_nat in Me);
+  remember (Q2R x) as X eqn:HX in *;
+  replace (Q2R (-3 # 2)) with (-3/2) in * by (unfold Q2R; simpl; field);
+  replace (Q2R (3 # 2)) with (3/2) in * by (unfold Q2R; simpl; field);
+  replace (Q2R 1) with 1 in * by (unfold Q2R; simpl; field);
+  replace (Q2R 0) with 0 in * by (unfold Q2R; simpl; field);
+  replace (INR 1) with 1 in * by (simpl; ring);
+  replace (INR 2) with 2 in * by (simpl; ring);
+  destruct Hx; nra.
+Qed.
+
+
+Theorem beta_box_lag_never (x : Q) : lag_box_cert beta_box x = false.
+Proof.
+  unfold lag_box_cert.
+  destruct (Qltb (lag_upper beta_box x) 0) eqn:E; [|apply andb_false_r].
+  exfalso. apply Qltb_spec in E. rewrite Q2R_0 in E.
+  pose proof (beta_lag_upper_ge x). lra.
+Qed.
+
 Print Assumptions P5_cert.
 Print Assumptions P5_cert_width.
 Print Assumptions P5_reject_width.
@@ -166,3 +241,7 @@ Print Assumptions x2_plus_one_lag_cert.
 Print Assumptions x2_plus_one_not_hyperbolic.
 Print Assumptions cubic_not_hyperbolic.
 Print Assumptions P5up_neighbourhood_not_hyperbolic.
+Print Assumptions P5_width_box_inhabited.
+Print Assumptions P5up_width_box_inhabited.
+Print Assumptions beta_box_not_hyperbolic.
+Print Assumptions beta_box_lag_never.

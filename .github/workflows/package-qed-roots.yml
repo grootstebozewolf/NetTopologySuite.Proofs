@@ -24,12 +24,14 @@ on:
     branches: [main]
     paths:
       - 'packaging/rocq-qed-roots/**'
+      - 'packaging/rocq-spatial-algebra/**'
       - 'Dockerfile'
       - '.github/workflows/package-qed-roots.yml'
   push:
     branches: [main]
     paths:
       - 'packaging/rocq-qed-roots/**'
+      - 'packaging/rocq-spatial-algebra/**'
       - 'Dockerfile'
       - '.github/workflows/package-qed-roots.yml'
   workflow_dispatch:
@@ -112,6 +114,32 @@ jobs:
               make -j"$(nproc)"
               make install
               echo "OK: built $(ls theories/*.vo | wc -l)/5 .vo, linted, installed."
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+
+      # Both rocq-qed-roots and rocq-spatial-algebra install under the
+      # NTS.Proofs logpath.  Check before any mint that their MANIFESTs are
+      # disjoint and that both install into one switch and load together.
+      - name: Co-install with rocq-spatial-algebra (shared NTS.Proofs logpath)
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              dup=$(cat packaging/rocq-qed-roots/MANIFEST packaging/rocq-spatial-algebra/MANIFEST \
+                    | grep -v "^#" | grep -v "^$" | sort | uniq -d)
+              test -z "$dup" || { echo "MANIFEST overlap: $dup"; exit 1; }
+              # fresh container: reinstall rocq-qed-roots (its .vo persist in the mount)
+              make -C packaging/rocq-qed-roots install
+              cd packaging/rocq-spatial-algebra
+              ./assemble.sh /workspace
+              make -j"$(nproc)"
+              make install
+              cd /workspace
+              printf "From NTS.Proofs Require Import DE9IM RelateIntDetBound QedRoots QedRootsRefute.\nCheck cert_sound.\nCheck idet_fits_int64_for_int32_coords.\n" > /tmp/Both.v
+              rocq c /tmp/Both.v
+              echo "OK: rocq-spatial-algebra and rocq-qed-roots co-installed and load together."
             '
           sudo chown -R "$(id -u):$(id -g)" .
 
