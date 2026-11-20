@@ -92,3 +92,23 @@ not a check of the mathematics.
   and `VVle` are not satisfiable for trivial reasons.
 
 **SUMMARY (slice 2) ok 4 / warn 0 / bug 0 / open 1**
+
+### Slice 2b: what `remark.pdf` says, and where it slots in
+
+Provenance: a summary of `https://alpo.ge/remark.pdf` supplied by the user in
+chat on 2026-11-20. The agent could not fetch it (DNS blocked) and has not
+read it. Points relevant here:
+
+- The argument descends from Stepanov's function-field method.
+- Multiplicity is supplied by chains of theta lifts, of length on the order
+  of the von Mangoldt sum being considered.
+
+**Where it slots in (interpretation).** Stepanov's method yields **only an
+upper bound**: an auxiliary function that vanishes to high order caps a
+point count. R2 needs exactly that. `ChebyshevGrowthImpliesZeroFree`
+assumes only the one-sided bound `Gm(y) ≤ y^θ`. Landau positivity does the
+rest, because non-negative coefficients make a one-sided bound enough. In
+Bombieri–Stepanov, the lower bound has to come from a separate
+twist/averaging trick. Here the conjugation-closed weighted family in
+`landau_family` plays that role. Expected location of the Stepanov /
+theta-lift step: R3–R4 (`TopG`, `VWin`). Not yet confirmed in source.
