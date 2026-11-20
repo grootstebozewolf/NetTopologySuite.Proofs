@@ -190,3 +190,45 @@ really used" stays open.
 **OUTCOME** OPEN. The Behrend step is load-bearing in kind, but over-powered
 in quality. S4 is a cheap, well-posed probe. A positive answer would simplify
 the formalization, but it would **not** shrink the canopy (the ℤ₂-tower stays).
+
+## Slice 4: S4 answered. Behrend's sphere *is* the simple construction (2026-11-20)
+
+**Observation.** Write `s = Σ_k a_k b^k` with digit vector `a ∈ [0,d)^K`.
+If `2(|i|+|j|)·d < b`, the relation `j(s₂−s₁) = i(s₃−s₁)` has no carries. It
+holds **iff** it holds coordinate-wise: `j(a₂−a₁) = i(a₃−a₁)`. With
+`i ≠ j` and `i, j ≠ 0`, that says the three digit vectors are **collinear**.
+`NoRel` is therefore a "no three collinear points" condition, an
+orientation-zero predicate in this repo's own vocabulary. Behrend's choice
+(all digit vectors on one sphere `|a|² = r`) works because a sphere is
+strictly convex.
+
+**Probe (QED, machine-checked):** `docs/h1-vacuity/SphereNoRelQED.v`,
+Stdlib only, `Print Assumptions` → *Closed under the global context*.
+
+- `sphere_no_collinear`: distinct points of one integer sphere satisfy no
+  `j(a₂−a₁) = i(a₃−a₁)` with `i, j ≠ 0`, `i ≠ j`. This is pure algebra:
+  expand `|a₁+u|² = |a₁|²`, then `j(j−i)·|u|² = 0`.
+- `eval_zero_digits`: balanced base-b digits with `2B < b` that evaluate to 0
+  are all 0.
+- `sphere_digits_norel`: the two combined. Numbers whose digit vectors lie on
+  one sphere satisfy `NoRel` whenever `2(|i|+|j|)·d < b`.
+
+**Density with crude parameters (argument, not formalized).** Take
+`L ≈ log x`, base `b ≈ (8L)^(1/ε')`, digits `[0, d)` with `d ≈ b/(8L)`, and
+`K = log N / log b` digits. Pigeonhole over the `≤ K·d²` sphere radii gives
+a sphere slice of size `≥ d^K/(K·d²)`. Relative to `N = b^K`, the density is
+`(8L)^(−K)/(K d²) = N^(−ε')·N^(−o(1))`. That meets the `x^(−ε)` demand of S2
+**without** Behrend's √-optimisation.
+
+| id | claim | OUTCOME |
+|---|---|---|
+| S4 | A construction simpler than optimised Behrend meets S2 | **Answered.** The construction is the same (the sphere), but parameter choice and analysis are much simpler: a fixed large base `(8L)^(1/ε')` instead of the √ trade-off. Correctness is **QED** in Rocq; the density count is an argument. |
+| S5 | Something *structurally* different from strict convexity avoids `NoRel` relations at density `x^(−ε)` | OPEN (and probably not worth pursuing: S3 rules out unstructured sets, and strict convexity is the minimal structure that kills collinearity) |
+
+**Takeaway.** The "Behrend!!" step that Alpöge expects to be unnecessary is,
+at its core, **orientation**: a no-three-collinear condition guaranteed by
+strict convexity. The optimised Behrend bound is unnecessary. The geometric
+idea is not.
+
+**OUTCOME** OPEN overall (R3c stands). S4 answered with a machine-checked
+core.

@@ -173,3 +173,16 @@ CI compiles it after the flocq corpus via `scripts/hunt_probe_smoke.sh`.
 rocq c -Q theories NTS.Proofs -Q theories-flocq NTS.Proofs.Flocq \
   docs/h1-vacuity/HobbyHlemma43Check.v
 ```
+
+[`SphereNoRelQED.v`](SphereNoRelQED.v) is a host-lane probe (Stdlib only) for
+ticket [`2026-11-20-root-only-multiplicity.md`](../attacks/2026-11-20-root-only-multiplicity.md)
+(S4). Read on base-b digit vectors, the external Lean development's `NoRel`
+condition is a collinearity predicate. Distinct points of one integer sphere
+are never collinear (`sphere_no_collinear`). Balanced digits that evaluate
+to 0 are all 0 (`eval_zero_digits`). Together they give
+`sphere_digits_norel`. `Print Assumptions` reports *Closed under the global
+context*. It is not in `scripts/hunt_probe_smoke.sh`, which is the flocq lane.
+
+```sh
+rocq c docs/h1-vacuity/SphereNoRelQED.v
+```
