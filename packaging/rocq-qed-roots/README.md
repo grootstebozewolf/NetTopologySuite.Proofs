@@ -7,6 +7,7 @@
 | Chain | `qedinterval → qedpoly → qedroots → qedanalytic → qedjensen → RH experiments`; this package is the `qedroots` layer and ships `qedpoly` / `qedinterval` inside it until a second consumer needs them alone. |
 | Programme | Not "formalize RH": the minimal verified substrate on which finite RH-adjacent statements are stated, computed and kernel-checked; each rung ends in QED or QEX. Hunt: `docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md`. |
 | Deps / axioms / license | Stdlib only; BSD-3-Clause. `sig_not_dec`, `sig_forall_dec`, `functional_extensionality_dep` (stdlib classical reals). No `Admitted`. |
+| Logpath | `NTS.Proofs` (decided 2026-11-20): kept for continuity with the corpus and the sibling packages, so vendored files build unmodified. |
 | Build | `./assemble.sh` (vendor from MANIFEST), then `make && make install`, `opam install .`, `dune build` or `nix-build`; `make package` writes the opam tarball. |
 
 | Module | Contents | Headline |
