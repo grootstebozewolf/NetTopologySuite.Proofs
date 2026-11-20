@@ -248,3 +248,19 @@ The only remaining unformalized step is the final arithmetic: with
 | id | claim | OUTCOME |
 |---|---|---|
 | S4 | correctness and density of the crude sphere construction | **QED** (Rocq) except the final exponent arithmetic, which is routine |
+
+### Slice 4c: packaged `thick_set_exists` (2026-11-20)
+
+`SphereNoRelQED.v : thick_set_exists` is an integer analogue of the external
+`Formalism/FrobeniusOrbits/HostThickExists.lean : HostThickExists`. Given
+`1 ≤ L` and `4Ld < b`, there is a duplicate-free `T ⊂ [0, b^K)` with
+`NoRel T L` and `d^K ≤ (K(d−1)²+1)·|T|`. With `b = c·d`, that is
+`|T| ≥ b^K / (c^K·(Kd²+1))`, a **polynomial** loss in place of
+`exp(−C√(log n·log L))`. *Closed under the global context.*
+
+The only prose step left is reading `c^K = N^(log c / log b)`, i.e. choosing
+`b ≈ (8L)^(1/ε')`.
+
+| id | claim | OUTCOME |
+|---|---|---|
+| S4 | a crude sphere construction meets the downstream demand (density `x^(−ε)`, `L = O(log x)`) | **QED** (Rocq, `thick_set_exists`) modulo the exponent reading above |

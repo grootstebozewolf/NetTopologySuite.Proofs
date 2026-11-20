@@ -181,7 +181,9 @@ condition is a collinearity predicate. Distinct points of one integer sphere
 are never collinear (`sphere_no_collinear`). Balanced digits that evaluate
 to 0 are all 0 (`eval_zero_digits`). Together they give
 `sphere_digits_norel`. A generic pigeonhole gives the density bound
-`sphere_slice_large`: some slice has `(K(d−1)²+1)·|S_r| ≥ d^K`. `Print Assumptions` reports *Closed under the global
+`sphere_slice_large`: some slice has `(K(d−1)²+1)·|S_r| ≥ d^K`.
+`thick_set_exists` packages both into an integer analogue of the external
+`HostThickExists`, with polynomial instead of `exp(−C√…)` loss. `Print Assumptions` reports *Closed under the global
 context*. It is not in `scripts/hunt_probe_smoke.sh`, which is the flocq lane.
 
 ```sh

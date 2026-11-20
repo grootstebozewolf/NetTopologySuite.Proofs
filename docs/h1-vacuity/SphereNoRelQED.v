@@ -23,9 +23,16 @@
                            (K(d-1)^2 + 1) * |S_r| >= d^K  (generic pigeonhole
                            `pigeon` over the <= K(d-1)^2 + 1 radii).
 
-   Outcome: QED (host lane, Stdlib only), both theorems closed under the
-   global context.  Not formalized: the final arithmetic that, with base
-   b ~ (8L)^(1/eps'), the slice has density N^(-eps'-o(1)) in [0, b^K).  This is
+     thick_set_exists    : packaged integer analogue of the external
+                           HostThickExists: for 1 <= L, 4*L*d < b there is a
+                           duplicate-free T in [0, b^K) satisfying NoRel T L
+                           with d^K <= (K(d-1)^2 + 1) * |T|.  POLYNOMIAL loss
+                           (with b = c*d: |T| >= b^K / (c^K (K d^2 + 1)))
+                           instead of exp(-C sqrt(log n log L)).
+
+   Outcome: QED (host lane, Stdlib only); all three main theorems closed
+   under the global context.  Left as prose: reading c^K as N^(log c/log b),
+   i.e. choosing b ~ (8L)^(1/eps') to make the loss N^(-eps').  This is
    EVIDENCE for ticket docs/attacks/2026-11-20-root-only-multiplicity.md,
    slice 4 (S4), and NOT a product module.
 
@@ -296,10 +303,51 @@ Proof.
   inversion F; subst. specialize (IH d H2). rewrite Nat2Z.inj_succ. nia.
 Qed.
 
+Lemma my_NoDup_app : forall (A : Type) (l l' : list A), NoDup l -> NoDup l' ->
+  (forall a, In a l -> ~ In a l') -> NoDup (l ++ l').
+Proof.
+  intros A l. induction l as [|x l IH]; intros l' H1 H2 H3; cbn; auto.
+  inversion H1; subst. constructor.
+  - intros Hin. apply in_app_or in Hin as [Hin|Hin]; [contradiction|].
+    exact (H3 x (or_introl eq_refl) Hin).
+  - apply IH; auto. intros a Ha. apply H3. now right.
+Qed.
+
+Lemma NoDup_map_on : forall (A B : Type) (g : A -> B) (l : list A),
+  (forall x y, In x l -> In y l -> g x = g y -> x = y) -> NoDup l -> NoDup (map g l).
+Proof.
+  intros A B g l. induction l as [|x l IH]; intros Hi Hn; cbn; [constructor|].
+  inversion Hn; subst. constructor.
+  - intros Hin. apply in_map_iff in Hin as [y [E Hy]].
+    assert (y = x) by (apply Hi; [now right | now left | exact E]). subst. contradiction.
+  - apply IH; auto. intros; apply Hi; auto; now right.
+Qed.
+
+Lemma NoDup_fm : forall (l : list Z) (V : list (list Z)), NoDup l -> NoDup V ->
+  NoDup (flat_map (fun x => map (cons x) V) l).
+Proof.
+  induction l as [|x l IH]; intros V Hl HV; cbn [flat_map]; [constructor|].
+  inversion Hl; subst. apply my_NoDup_app.
+  - apply NoDup_map_on; auto. intros u v _ _ E. now injection E.
+  - apply IH; auto.
+  - intros a Ha Hb. apply in_map_iff in Ha as [u [<- _]].
+    apply in_flat_map in Hb as [y [Hy Hb]]. apply in_map_iff in Hb as [v [E _]].
+    injection E as -> _. contradiction.
+Qed.
+
+Lemma allvec_NoDup : forall K d, NoDup (allvec K d).
+Proof.
+  induction K as [|K IH]; intros d; cbn [allvec].
+  - repeat constructor; auto.
+  - apply NoDup_fm; auto. apply NoDup_map_on; [|apply seq_NoDup].
+    intros u v _ _ E. lia.
+Qed.
+
 (* Density: some sphere slice S_r of [0,d)^K has (K(d-1)^2 + 1) * |S_r| >= d^K,
    and (sphere_digits_norel) every such slice satisfies NoRel once 4Ld < b. *)
 Theorem sphere_slice_large : forall K d, (1 <= d)%nat ->
   exists r : Z, exists Sl : list (list Z),
+    NoDup Sl /\
     (forall a, In a Sl -> length a = K /\ Forall (fun x => 0 <= x < Z.of_nat d) a /\ dot a a = r) /\
     (Nat.pow d K <= S (K * (d - 1) * (d - 1)) * length Sl)%nat.
 Proof.
@@ -313,6 +361,7 @@ Proof.
             = Z.of_nat (K * (d - 1) * (d - 1))) by (rewrite !Nat2Z.inj_mul, Nat2Z.inj_sub by lia; lia).
     lia. }
   exists (Z.of_nat r), (filter (fun a => Nat.eqb (Z.to_nat (dot a a)) r) (allvec K d)).
+  split; [apply NoDup_filter, allvec_NoDup|].
   split.
   - intros a Ha. apply filter_In in Ha as [Ha He]. apply Nat.eqb_eq in He.
     destruct (allvec_in K d a Ha) as [L F]. pose proof (dot_self_nonneg a).
@@ -321,3 +370,82 @@ Proof.
 Qed.
 
 Print Assumptions sphere_slice_large.
+
+(* ---------- packaging: an integer analogue of HostThickExists ---------- *)
+
+
+
+
+Lemma eval_vsub : forall b a a', length a = length a' ->
+  eval b a - eval b a' = eval b (vsub a a').
+Proof.
+  intros b. induction a as [|x a IH]; intros [|y a'] Hl; cbn [eval vsub length] in *;
+    try lia. rewrite <- IH by lia. ring.
+Qed.
+
+Lemma vsub_bound : forall d a a', length a = length a' ->
+  Forall (fun x => 0 <= x < d) a -> Forall (fun x => 0 <= x < d) a' ->
+  Forall (fun x => Z.abs x <= d) (vsub a a').
+Proof.
+  induction a as [|x a IH]; intros [|y a'] Hl F F'; cbn [vsub length] in *;
+    try lia; try solve [constructor].
+  inversion F; inversion F'; subst. constructor; [lia|]. apply IH; auto; lia.
+Qed.
+
+Lemma eval_inj : forall b d a a', 0 <= d -> 2 * d < b -> length a = length a' ->
+  Forall (fun x => 0 <= x < d) a -> Forall (fun x => 0 <= x < d) a' ->
+  eval b a = eval b a' -> a = a'.
+Proof.
+  intros b d a a' Hd Hb Hl F F' E.
+  apply vsub_zero_vec; auto.
+  apply (eval_zero_digits b d); auto.
+  - now apply vsub_bound.
+  - rewrite <- eval_vsub by auto. lia.
+Qed.
+
+Lemma eval_range : forall b a, 0 < b -> Forall (fun x => 0 <= x < b) a ->
+  0 <= eval b a < b ^ Z.of_nat (length a).
+Proof.
+  intros b. induction a as [|x a IH]; intros Hb F; cbn [eval length]; [cbn; lia|].
+  inversion F; subst. specialize (IH Hb H2). rewrite Nat2Z.inj_succ, Z.pow_succ_r by lia.
+  nia.
+Qed.
+
+
+(* Integer analogue of the external development's
+     HostThickExists : exists T, (s in T -> 4Ls < n) /\ NoRel T L /\ n*exp(-C sqrt(..))/L <= |T|
+   with a POLYNOMIAL loss instead of exp(-C sqrt(log n log L)):
+     T subset [0, b^K), NoRel T L, distinct, and d^K <= (K(d-1)^2 + 1) * |T|,
+   whenever 4*L*d < b.  With b = c*d this is |T| >= b^K / (c^K (K d^2 + 1)). *)
+Theorem thick_set_exists : forall (L : Z) (K d : nat) (b : Z),
+  (1 <= d)%nat -> 1 <= L -> 4 * L * Z.of_nat d < b ->
+  exists T : list Z,
+    NoDup T /\
+    (forall s, In s T -> 0 <= s < b ^ Z.of_nat K) /\
+    (forall s1 s2 s3 i j, In s1 T -> In s2 T -> In s3 T ->
+       s1 <> s2 -> s1 <> s3 -> s2 <> s3 ->
+       0 < Z.abs i -> Z.abs i <= L -> 0 < Z.abs j -> Z.abs j <= L -> i <> j ->
+       j * (s2 - s1) <> i * (s3 - s1)) /\
+    (Nat.pow d K <= S (K * (d - 1) * (d - 1)) * length T)%nat.
+Proof.
+  intros L K d b Hd HL Hb.
+  assert (Hb2 : 2 * Z.of_nat d < b) by nia.
+  destruct (sphere_slice_large K d Hd) as [r [Sl [HN [HS Hc]]]].
+  exists (map (eval b) Sl). split; [|split; [|split]].
+  - apply NoDup_map_on; auto.
+    intros a a' Ha Ha' E. destruct (HS a Ha) as [La [Fa _]]. destruct (HS a' Ha') as [La' [Fa' _]].
+    apply (eval_inj b (Z.of_nat d)); auto; lia.
+  - intros s0 Hs. apply in_map_iff in Hs as [a [<- Ha]]. destruct (HS a Ha) as [La [Fa _]].
+    rewrite <- La. apply eval_range; [lia|].
+    eapply Forall_impl; [|exact Fa]. intros x Hx; cbn in Hx. lia.
+  - intros s1 s2 s3 i j H1 H2 H3 N12 N13 N23 Hi1 Hi2 Hj1 Hj2 Hij Hrel.
+    apply in_map_iff in H1 as [a1 [<- A1]]. apply in_map_iff in H2 as [a2 [<- A2]].
+    apply in_map_iff in H3 as [a3 [<- A3]].
+    destruct (HS a1 A1) as [L1 [F1 R1]]. destruct (HS a2 A2) as [L2 [F2 R2]].
+    destruct (HS a3 A3) as [L3 [F3 R3]].
+    apply N12. symmetry.
+    apply (sphere_digits_norel b (Z.of_nat d) r a1 a2 a3 i j); auto; try lia; nia.
+  - rewrite length_map. exact Hc.
+Qed.
+
+Print Assumptions thick_set_exists.
