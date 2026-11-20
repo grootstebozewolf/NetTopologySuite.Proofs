@@ -52,3 +52,43 @@ environment, so nothing below is a kernel check.
    in a way that makes the chain trivial. If the kernel accepts the proof,
    this cannot make RH false. It would, however, show where the real content
    sits, which is useful for human review.
+
+## Slice 2: where off-line zeros are excluded (read from source, 2026-11-20)
+
+`remark.pdf` (alpo.ge) and YouTube are both blocked by this session's
+network policy. The chain below was therefore traced in the Lean source of
+the mirror @ `7cbf7a0`. It is a reading of statements and proof skeletons,
+not a check of the mathematics.
+
+| rung | statement (paraphrase) | where |
+|---|---|---|
+| R0 | `RiemannHypothesis` ⇐ `EveryCharacter` (no `L(χ,s)` zero for `Re s > ½`) via the reflection `s ↔ 1−s` | `Formalism/GammaFactorNonvanishing/CritLine.lean : Formalism.VW.rh_of_every` |
+| R1 | `EveryCharacter` ⇐ `ZeroFreeAll` (same, per primitive character `PChar`) plus imprimitive reduction | `Development/AutomorphicArithmetic/CharacterBoxes/EveryCharacter.lean` |
+| R2 | **Positivity / Landau step.** `Gm(y) := Gz(y) + Σ_ψ wt ψ · Re gChi(ψ,y)` is a weighted Riesz-mean von Mangoldt sum `Σ Λ(n)(y/n−1)` twisted by a conjugation-closed character family (involution `τ`, `c (τ i) = (c i).inv`, multiplicities `k`). If `Gm(y) ≤ y^θ` eventually, then no zero has `Re s > θ`. | `Formalism/SharpRestriction/RamificationFrobenius/TotientGaloisClasses/Landau.lean : landau_family, zero_free_of_Chebyshev_growth`; defs in `…/ExplicitFormulaErrorOfHostConditions.lean`, `…/Analytic.lean`, `Formalism/StatementOC.lean` |
+| R3 | The growth bound is supplied by `TopG` + `HostExW` (`la = 3/2`), i.e. family-connectedness of host classes | `Development/AutomorphicArithmetic/CharacterBoxes/ZeroFreeAllOfTopG.lean` |
+| R4 | `VWin := ∀ ψ, VWinAt ψ 401`: for fields `E` cut out by `ψ` and auxiliary primes `q ≡ 3 (8)`, `d ≡ 7 (16)` (`WinPair`), the weighted lengths of Galois-cohomology (Sha-type) groups satisfy `Σ_{l∈S} log l · Σ_e shaLen ≤ √(exp(x^ε))` | `Development/AutomorphicArithmetic/CharacterBoxes/ExistsPageN.lean` |
+
+**Mapping to the attack vector (this repo's ladder, chat 2026-11-20).**
+
+- *Step 3, the invariant `I ≥ 0`:* **match.** `I` is the non-negativity of
+  the Dirichlet coefficients of a conjugation-symmetric combination of
+  `−L'/L`. Landau's lemma turns that into the statement that a real
+  singularity governs growth. An off-line zero with `Re ρ > θ` would force
+  `Gm` to grow like `y^{Re ρ}`, contradicting R2's upper bound.
+- *QEX (Davenport–Heilbronn):* **consistent.** The coefficients are
+  `Λ(n)χ(n)`, which exist only because of the Euler product. A function with
+  only a functional equation has no such expansion, so R2 cannot apply to
+  it.
+- *Symmetric pairs:* **match.** `landau_family` is stated over a
+  family closed under `χ ↦ χ̄`, the conjugation half of the quartet.
+- *Where ½ enters:* the reflection R0, and the `√` in R4's bound.
+- *Step 4 (compact region, certified numerics):* **no match.** The argument
+  is symbolic throughout. Its finite or arithmetic input is cohomological
+  (R4), not interval arithmetic.
+- *Open:* R3–R4 carry the real weight (about 17 M lines below them). Whether
+  `TopG` / `VWin` are where the "Stepanov multiplicity via theta lifts"
+  lives cannot be told from names. That is the next slice, and the natural
+  `docs/h1-vacuity/`-style target. Check that `HostExW`, `FamilyClassConnected`
+  and `VVle` are not satisfiable for trivial reasons.
+
+**SUMMARY (slice 2) ok 4 / warn 0 / bug 0 / open 1**
