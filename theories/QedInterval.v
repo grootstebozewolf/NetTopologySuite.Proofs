@@ -145,3 +145,30 @@ Lemma in_point_box p : in_box (pQ2R p) (point_box p).
 Proof.
   induction p as [|q t IH]; simpl; constructor; [simpl; lra|exact IH].
 Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Derivative of a box (added with QedRootsRefute).                     *)
+(* ------------------------------------------------------------------ *)
+Local Open Scope Q_scope.
+
+Fixpoint pderivB_aux (k : nat) (b : box) : box :=
+  match b with
+  | [] => []
+  | (lo, hi) :: t =>
+      (inject_Z (Z.of_nat k) * lo, inject_Z (Z.of_nat k) * hi)
+        :: pderivB_aux (S k) t
+  end.
+
+Definition pderivB (b : box) : box := pderivB_aux 1 (tl b).
+
+Local Open Scope R_scope.
+
+Lemma in_box_pderiv p b : in_box p b -> in_box (pderiv p) (pderivB b).
+Proof.
+  unfold pderiv, pderivB. intros H. destruct H as [|c lh p' b' _ H]; [constructor|].
+  simpl. generalize 1%nat.
+  induction H as [|c' [lo hi] p'' b'' Hc Hrest IH]; intros k; simpl; constructor.
+  - simpl in *. rewrite !Q2R_mult, !Q2R_inject_nat.
+    pose proof (pos_INR k). split; apply Rmult_le_compat_l; lra.
+  - apply IH.
+Qed.

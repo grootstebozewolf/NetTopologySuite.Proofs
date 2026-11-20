@@ -14,7 +14,7 @@
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals QArith Qreals Lra List.
-From NTS.Proofs Require Import QedPoly QedInterval QedRoots.
+From NTS.Proofs Require Import QedPoly QedInterval QedRoots QedRootsRefute.
 Import ListNotations.
 
 Local Open Scope Q_scope.
@@ -118,3 +118,37 @@ Proof.
   apply Hiff in Hy. unfold Q2R in Hy; simpl in Hy.
   pose proof (Rle_0_sqr y). unfold Rsqr in *. lra.
 Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Refutation side (QedRootsRefute): exact "not hyperbolic" witnesses.  *)
+(* ------------------------------------------------------------------ *)
+Local Open Scope Q_scope.
+
+(* X^2 + 1 at x = 0:  L = 0^2 - 1 * 2 = -2. *)
+Lemma X2p1_lag : lag_box_cert (point_box [1; 0; 1]) 0 = true.
+Proof. vm_compute. reflexivity. Qed.
+
+(* (X+1)(X^2+1) = 1 + X + X^2 + X^3 at x = 1/2:  L = -29/16. *)
+Lemma cubic_lag : lag_box_cert (point_box [1; 1; 1; 1]) (1#2) = true.
+Proof. vm_compute. reflexivity. Qed.
+
+(* P5 lifted by 3 in the constant term: the local minimum near -3/2
+   (P5(-3/2) = -21/8) is pushed above zero, two real roots leave the axis.
+   Refuted robustly: every real quintic within +-1/2 of it, coefficientwise,
+   is non-hyperbolic (Laguerre at x = -1/4). *)
+Definition P5up : list Q := [9; 41; 97; 97; 41; 6].
+
+Lemma P5up_lag_width : lag_box_cert (width_box (1#2) P5up) (-1#4) = true.
+Proof. vm_compute. reflexivity. Qed.
+
+Local Open Scope R_scope.
+
+Theorem X2p1_not_hyperbolic : ~ hyperbolic (pQ2R [1; 0; 1]%Q).
+Proof. exact (lag_point_cert_sound _ _ X2p1_lag). Qed.
+
+Theorem cubic_not_hyperbolic : ~ hyperbolic (pQ2R [1; 1; 1; 1]%Q).
+Proof. exact (lag_point_cert_sound _ _ cubic_lag). Qed.
+
+Theorem P5up_neighbourhood_not_hyperbolic (p : list R) :
+  in_box p (width_box (1#2) P5up) -> ~ hyperbolic p.
+Proof. intros H. exact (lag_box_cert_sound _ _ _ H P5up_lag_width). Qed.

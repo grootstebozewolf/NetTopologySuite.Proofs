@@ -15,4 +15,5 @@
 theories/QedPoly.v
 theories/QedInterval.v
 theories/QedRoots.v
+theories/QedRootsRefute.v
 theories/QedRootsExamples.v

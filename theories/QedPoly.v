@@ -203,3 +203,74 @@ Proof.
     try discriminate; [reflexivity|].
   intros H. apply andb_prop in H as [_ H]. now rewrite (IH q H).
 Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Formal derivative (added with QedRootsRefute).                       *)
+(*   pderiv [c0; c1; c2; ...] = [1*c1; 2*c2; ...]                        *)
+(* ------------------------------------------------------------------ *)
+
+Fixpoint pderiv_aux (k : nat) (p : list R) : list R :=
+  match p with
+  | [] => []
+  | a :: l => INR k * a :: pderiv_aux (S k) l
+  end.
+
+Definition pderiv (p : list R) : list R := pderiv_aux 1 (tl p).
+
+Lemma pderiv_aux_shift k l x :
+  peval (pderiv_aux (S k) l) x = peval (pderiv_aux k l) x + peval l x.
+Proof.
+  revert k; induction l as [|a l IH]; intros k; cbn -[INR]; [ring|].
+  rewrite (IH (S k)), S_INR. ring.
+Qed.
+
+Lemma pderiv_cons a l x :
+  peval (pderiv (a :: l)) x = peval l x + x * peval (pderiv l) x.
+Proof.
+  unfold pderiv; simpl. destruct l as [|b m]; simpl; [ring|].
+  rewrite pderiv_aux_shift. unfold pderiv. simpl. ring.
+Qed.
+
+Theorem peval_derivable p x :
+  derivable_pt_lim (peval p) x (peval (pderiv p) x).
+Proof.
+  revert x; induction p as [|a l IH]; intros x.
+  - unfold pderiv; simpl. apply derivable_pt_lim_const.
+  - rewrite pderiv_cons.
+    replace (peval l x + x * peval (pderiv l) x)
+      with (0 + (1 * peval l x + x * peval (pderiv l) x)) by ring.
+    apply (derivable_pt_lim_plus (fun _ => a) (fun y => y * peval l y)).
+    + apply derivable_pt_lim_const.
+    + apply (derivable_pt_lim_mult (fun y => y) (peval l));
+        [apply derivable_pt_lim_id|apply IH].
+Qed.
+
+(* Derivatives only depend on the function. *)
+Lemma derivable_pt_lim_ext f g x l :
+  (forall y, f y = g y) -> derivable_pt_lim f x l -> derivable_pt_lim g x l.
+Proof.
+  intros Hfg Hd eps He. destruct (Hd eps He) as [d Hd'].
+  exists d. intros h Hh Hhd. rewrite <- !Hfg. now apply Hd'.
+Qed.
+
+Local Open Scope Q_scope.
+
+Fixpoint pderivQ_aux (k : nat) (p : list Q) : list Q :=
+  match p with
+  | [] => []
+  | a :: l => (inject_Z (Z.of_nat k) * a) :: pderivQ_aux (S k) l
+  end.
+
+Definition pderivQ (p : list Q) : list Q := pderivQ_aux 1 (tl p).
+
+Local Open Scope R_scope.
+
+Lemma Q2R_inject_nat k : Q2R (inject_Z (Z.of_nat k)) = INR k.
+Proof. unfold Q2R; simpl. rewrite INR_IZR_INZ. field. Qed.
+
+Lemma pQ2R_pderivQ p : pQ2R (pderivQ p) = pderiv (pQ2R p).
+Proof.
+  unfold pderivQ, pderiv. destruct p as [|a l]; [reflexivity|]. simpl.
+  generalize 1%nat. induction l as [|b m IH]; intros k; simpl; [reflexivity|].
+  rewrite Q2R_mult, Q2R_inject_nat, IH. reflexivity.
+Qed.

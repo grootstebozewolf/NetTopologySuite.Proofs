@@ -16,8 +16,12 @@ NetTopologySuite.Proofs corpus.
     certificate (`cert_sound`: every REAL coefficient vector inside a
     rational box is simple-real-rooted) and a factor certificate with
     explicit multiplicities (`factor_cert_sound`).
+  - `QedRootsRefute`: the Laguerre inequality p'^2 - p p'' >= 0 for
+    hyperbolic p, and a robust refutation certificate
+    (`lag_box_cert_sound`: NO real coefficient vector in the box is
+    hyperbolic); complete in degree 2 (discriminant / Turan).
   - `QedRootsExamples`: a self-reciprocal quintic certified with a +-1/20
-    coefficient box, repeated-root instances, negative controls.
+    coefficient box, repeated-root instances, negative controls and refuted instances.
 
 Certificates are booleans over Q decided by `vm_compute`; floating point
 never enters.  Sound, deliberately not complete.  Stdlib only; uses the

@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-20
 Provenance: 7cebee2124d37d0ff60fa17b8d09ff6ca0ddbab0 (base); toolchain Rocq 9.2.0 + rocq-stdlib 9.2.0 (no MathComp, no Coquelicot)
-Theorems: `QedRoots.v : cert_sound`, `QedRoots.v : cert_hyperbolic`, `QedRoots.v : factor_cert_sound`, `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted`, `QedRootsExamples.v : double_root_box_uncertifiable`, `QedRootsExamples.v : no_real_roots_box_uncertifiable`
+Theorems: `QedRoots.v : cert_sound`, `QedRoots.v : cert_hyperbolic`, `QedRoots.v : factor_cert_sound`, `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted`, `QedRootsExamples.v : double_root_box_uncertifiable`, `QedRootsExamples.v : no_real_roots_box_uncertifiable`, `QedRootsRefute.v : laguerre_hyperbolic`, `QedRootsRefute.v : lag_box_cert_sound`, `QedRootsExamples.v : P5up_neighbourhood_not_hyperbolic`
 -->
 # Hunt: an orientation-like certificate for RH (finite Jensen hyperbolicity)
 
@@ -88,6 +88,16 @@ packaged as `packaging/rocq-qed-roots`. See "Programme" below.
 
 | 7 | multiplicities expressible: `factor_cert` (p ≡ c·Π fₖ over Q, each fₖ box-certified, factors may repeat) ⇒ hyperbolic; (X+1)²(X+2) and (2X²+5X+2)²(X+3) certified | QED | `factor_cert_sound`, `D3_hyperbolic`, `Q5_hyperbolic` |
 
+| 8 | refutation: hyperbolic ⇒ Laguerre form p′² − p·p″ ≥ 0 everywhere; `lag_box_cert` (interval upper bound < 0 at one rational x) ⇒ no p in the box is hyperbolic; complete in degree 2 (vertex value = discriminant/2, i.e. Turán) | QED | `laguerre_hyperbolic`, `lag_box_cert_sound`, `quadratic_negative_discriminant_not_hyperbolic` |
+| 9 | instances: X²+1 at 0, (X+1)(X²+1) at 1/2; P5 lifted by +3 refuted on a ±1/2 box at −1/4, against P5 itself certified on ±1/20 | QED | `X2p1_not_hyperbolic`, `cubic_not_hyperbolic`, `P5up_neighbourhood_not_hyperbolic` |
+
+Why step 8 matters for the control: QEX-2B ("DH fails while ξ passes")
+needs DH's failure to be a *theorem*, not a failed check. The DH run now
+has a frozen pair of instruments: `box_cert` (accept) and `lag_box_cert`
+(refute), provably never both true on overlapping boxes
+(`box_cert_lag_exclusive`). A DH instance that neither accepts nor refutes
+is recorded as undecided at that (d,n), not as a separation.
+
 ## Programme (reframed 2026-11-20)
 
 Not "formalize RH" but: **the minimal verified computational substrate in
@@ -102,7 +112,7 @@ qedinterval → qedpoly → qedroots → qedanalytic → qedjensen → RH experi
 |---|---|---|
 | qedinterval | `QedInterval.v` (in `rocq-qed-roots` for now) | QED: exact rational enclosure + strict sign; `in_box` is the interface qedanalytic must produce |
 | qedpoly | `QedPoly.v` (in `rocq-qed-roots` for now) | QED: eval, synthetic division, factor theorem, Q multiplication |
-| qedroots | `QedRoots.v` → package `rocq-qed-roots` | QED for sign-alternation + factor certificates; **OPEN**: Sturm / Cauchy index (root counting for non-real-rooted p), squarefree decomposition, non-hyperbolicity certificates |
+| qedroots | `QedRoots.v`, `QedRootsRefute.v` → package `rocq-qed-roots` | QED: sign-alternation + factor certificates (accept), Laguerre certificate (refute, complete in degree 2); **OPEN**: Sturm / Cauchy index, squarefree decomposition, refutation complete beyond degree 2 |
 | qedanalytic | — | OPEN: certified enclosures of γ(n) (Flocq / interval), producing `in_box` |
 | qedjensen | — | OPEN: define J^{d,n}_Ξ, prove the certified coefficients are the intended ones, run `box_cert` |
 | DH control | — | OPEN: same `box_cert`, frozen |
@@ -141,9 +151,10 @@ second consumer needs them without roots. "Mint" in the CONTEXT.md sense
   rational enclosures of γ(n) (needs a certified evaluation of the
   ξ Taylor coefficients — the analytic-number-theory half), then one
   (d,n) through `box_cert` unchanged.
-- Davenport–Heilbronn control not run. The acceptance rule to be applied to
-  it is `box_cert` exactly as committed here; it is now frozen.
+- Davenport–Heilbronn control not run. The rules applied to it are
+  `box_cert` (accept) and `lag_box_cert` (refute) exactly as committed;
+  both are now frozen.
 
-SUMMARY ok=7 warn=0 bug=0
+SUMMARY ok=9 warn=0 bug=0
 
 OUTCOME: QED (qedroots rung, packaged as rocq-qed-roots) — rational sign certificate: interval-enclosed real coefficients → exact rational sign list → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.

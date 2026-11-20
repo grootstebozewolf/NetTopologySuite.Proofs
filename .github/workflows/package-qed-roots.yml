@@ -5,7 +5,7 @@ name: Package rocq-qed-roots
 # MANIFEST + assemble.sh.  Mirrors package-robust-predicates.yml.
 #
 # NOTE: the package itself needs NO Flocq -- its only deps are rocq-core +
-# rocq-stdlib, and its four source files use only the three stdlib classical-reals axioms (no
+# rocq-stdlib, and its five source files use only the three stdlib classical-reals axioms (no
 # Flocq).  CI nonetheless reuses the pinned `toolchain` container (which
 # already has rocq + opam) purely for reliability and parity with the other
 # package/oracle workflows; Flocq present in the image is simply unused.
@@ -111,7 +111,7 @@ jobs:
               opam lint "$OPAM_FILE"
               make -j"$(nproc)"
               make install
-              echo "OK: built $(ls theories/*.vo | wc -l)/4 .vo, linted, installed."
+              echo "OK: built $(ls theories/*.vo | wc -l)/5 .vo, linted, installed."
             '
           sudo chown -R "$(id -u):$(id -g)" .
 

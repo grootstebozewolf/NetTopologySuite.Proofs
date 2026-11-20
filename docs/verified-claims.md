@@ -2289,7 +2289,7 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 ## qed chain — `qedroots`: real-root certificates from rational enclosures (`QedPoly.v`, `QedInterval.v`, `QedRoots.v`) <!-- feat:foundations geom: -->
 
-Packaged as `rocq-qed-roots` (`packaging/rocq-qed-roots/`). First rung of qedinterval → qedpoly → qedroots → qedanalytic → qedjensen; hunt `docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md`. Sound, not complete; no Sturm sequence yet.
+Packaged as `rocq-qed-roots` (`packaging/rocq-qed-roots/`). First rung of qedinterval → qedpoly → qedroots → qedanalytic → qedjensen; hunt `docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md`. Sound, not complete; no Sturm sequence yet. Refutation side (Laguerre) in `QedRootsRefute.v`.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -2297,5 +2297,8 @@ Packaged as `rocq-qed-roots` (`packaging/rocq-qed-roots/`). First rung of qedint
 | `QedInterval.v : ieval_sound` | The rational range `ieval b x` encloses P(x) for every real coefficient vector in the box `b`, at rational x. `[exact]` | 3 |
 | `QedRoots.v : cert_sound` | `box_cert b xs = true` (d+1 increasing rational points, strictly signed alternating enclosures, leading interval excludes 0) ⇒ every real p in `b` has exactly d distinct real roots and factors over them. `[exact]` | 3 |
 | `QedRoots.v : factor_cert_sound` | `p ≡ c · Π fₖ` over Q with each fₖ box-certified (factors may repeat) ⇒ p is hyperbolic with multiplicities. `[exact]` | 3 |
+| `QedRootsRefute.v : laguerre_hyperbolic` | Laguerre inequality: a hyperbolic p has p′(x)² − p(x)p″(x) ≥ 0 at every real x. `[exact]` | 3 |
+| `QedRootsRefute.v : lag_box_cert_sound` | `lag_box_cert b x = true` (interval upper bound of the Laguerre form at rational x is negative) ⇒ no real p in `b` is hyperbolic. Complete in degree 2: `QedRootsRefute.v : quadratic_negative_discriminant_not_hyperbolic`. `[exact]` | 3 |
+| `QedRootsExamples.v : P5up_neighbourhood_not_hyperbolic` | Every real quintic within ±1/2 of 9+41X+97X²+97X³+41X⁴+6X⁵ is not hyperbolic. `[exact]` | 3 |
 | `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted` | Every real quintic within ±1/20 of 6+41X+97X²+97X³+41X⁴+6X⁵ (coefficientwise) has 5 distinct real roots. `[exact]` | 3 |
 | `QedRootsExamples.v : double_root_box_uncertifiable` | No box and no points ever certify (X+1)²(X+2) with `box_cert`, though `QedRootsExamples.v : D3_hyperbolic` proves it hyperbolic: the robust certificate is incomplete on repeated roots by design. `[exact]` | 3 |
