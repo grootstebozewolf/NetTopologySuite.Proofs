@@ -149,3 +149,31 @@ the genuine chain, or by something degenerate (for example `m = 0`, empty
 `SizesA` / `RestSize` must exclude it.
 
 **SUMMARY (slice 3) ok 4 / warn 1 (degenerate-`m` question open) / bug 0**
+
+## Slice 4: the gap bound, the degenerate-`m` question, and an internal QEX (2026-11-20)
+
+Read from the mirror source @ `7cbf7a0`, statements only.
+
+| item | finding | where |
+|---|---|---|
+| warn (slice 3): `m = 0` | **Resolved.** `RestSize` requires `x^(1/2 − ε) ≤ m`. Combined with `ch_core`'s `m ≤ x^(1/2 + ε/2)`, the chain length is pinned at `m ≈ √x`. It also requires `k ≤ n²·x^(1/2−ε)`, which with `x·m ≤ k` forces `n = |H| ≳ x^(1/2)`. No empty or degenerate chain passes these hypotheses. | `Formalism/SizeWindowBrackets/SChain.lean : RestSize` |
+| gap bound | `ch_top` gives `gapA = ASK − Main ≤ x^(CErr·ε)·errorBracket` from `each_unit_bound_statement`, a proof of `PointwiseBoundVariant`. Its hypotheses: `HidaSetting`, `DIV` (divisor degree bound), `Slopes` / `SlopesN` (upper and lower slope bounds of lattice `M` and quotient `N`), `QuotientSlopeBoundsWith`, `LossBounds`, **`SlopeIneq`**, `HHBound`, `FParams`. | `Development/AutomorphicArithmetic/DedekindLFunctions/LandauTheorems/ChTop.lean`; `Formalism/SizeWindowBrackets/ChainSlopeWindows/LevelOfCongruence.lean:175`; `Formalism/SizeWindowBrackets/QuotientSlopeBoundsWith.lean:72` |
+| **slope inequality** | `SlopeIneq` (paraphrase): `s − log|W| − (1−δ)⁻¹·(4·uF·log(1 + HH/uF) + (η + 4√e)·HH) ≤ μ_CC`. That is: a section count `s`, minus an entropy term `log|W|`, minus a height loss, bounds the slope of the dual lattice. This is the shape of a Bost-type slope inequality (Arakelov slope vs. evaluation height). A general Harder–Narasimhan `SlopeIneq` is also stated separately. | `Formalism/RankGapBounds/MeanBoundSecondForm.lean:151`; `Formalism/HarderNarasimhan/Statement.lean:91` |
+| **internal QEX** | The author proves `error_sizes_weak_false : ¬ ErrorFormsWeakWindowsFalse`. The error-form bound **fails** under the weaker window hypothesis (`etaBar ≤ 1`, `eBar ≤ 1`). It needs the strong form, which carries `(etaBar + 4√eBar)·x^cHH·b ≤ K·x^ε·nT·a`. The `4√e` there is the same term as in `SlopeIneq`. The development records its own QEX for the weakening, in the same QED/QEX style as this repo. | `Formalism/SizeWindowBrackets/ErrorFormsWeakWindowsFalse.lean`; `Formalism/SizeWindowBrackets/ChainSlopeWindows/SubThreeMulLogTwoLe.lean:471` |
+
+**The proof's main line as now traced (statements only):**
+
+```
+SlopeIneq (Bost-type) + slope/divisor bounds
+  → ASK − Main ≤ x^{O(ε)}·err   per chain element      (each_unit_bound_statement, ch_top)
+  → Gm(x) ≤ x^{1/2+O(ε)}         chain length m ≈ √x    (ch_core, core_gm)
+  → zero-free Re s > ½           Landau positivity      (zero_free_of_Chebyshev_growth, level_of_tiedWin)
+  → RH / GRH                     reflection s ↔ 1−s     (rh_of_every)
+```
+
+**Next target.** Where `SlopeIneq` and the `Slopes` hypotheses are
+*discharged* for the actual chain, via `ChainTied` → `TieLocal` (ranks and
+slopes of `div.Nu`, `fm.lat`). This is where the theta-lift lattices must
+appear, and where the arithmetic content (about 17 M lines) actually lives.
+
+**SUMMARY (slice 4) ok 4 / warn 0 (m=0 resolved) / bug 0**
