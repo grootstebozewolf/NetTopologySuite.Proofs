@@ -21,10 +21,7 @@ self-contained opam source tarball.
 ## Releasing
 
 Each package publishes via its own GitHub Actions workflow
-(`.github/workflows/package-*.yml`): a release tagged `rocq-robust-geometric-predicates-v*`
+(`.github/workflows/package-*.yml`): a release tagged `rocq-robust-geometric-predicates-v*`,
 `rocq-spatial-algebra-v*` or `rocq-qed-roots-v*` builds the source tarball, attaches it (+ sha256) to
 the release, and — when an `OPAM_PUBLISH_TOKEN` secret is configured — opens
 the opam-repository PR via `opam publish`.
-
-See each package's own `README.md` for build/install details and the headline
-theorems it exposes.

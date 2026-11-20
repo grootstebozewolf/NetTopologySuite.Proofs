@@ -309,7 +309,8 @@ Proof.
   apply Q2R_inject_nat.
 Qed.
 
-(* c may be any Qeq-class of a nonzero rational; / uses that class. *)
+(* c is any rational representation of a nonzero value; Qdiv is only
+   applied to (2#1)*c, which the hypothesis keeps away from 0. *)
 Theorem lag_box_cert_of_quadratic_neg_disc (a b c : Q) :
   ~ (c == 0)%Q ->
   (b * b - (4 # 1) * a * c < 0)%Q ->

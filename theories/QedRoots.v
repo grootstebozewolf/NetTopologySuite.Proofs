@@ -252,7 +252,7 @@ Proof.
   destruct (alternating_roots_in_gaps p (map Q2R xs) HaltR)
     as (rs & Hl & Hnd & Hgap & Hz).
   assert (Hlenp : S (length rs) = length p).
-  {     rewrite Hl, length_map.
+  { rewrite Hl, length_map.
     rewrite (in_box_length p b Hb), <- Hlen.
     destruct xs as [|x xs']; [simpl in HaltR; contradiction|].
     simpl. lia. }

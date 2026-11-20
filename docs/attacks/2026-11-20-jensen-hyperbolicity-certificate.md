@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-20
-Provenance: 7cebee2124d37d0ff60fa17b8d09ff6ca0ddbab0 (base); toolchain Rocq 9.2.0 + rocq-stdlib 9.2.0 (no MathComp, no Coquelicot)
+Provenance: 7cebee2124d37d0ff60fa17b8d09ff6ca0ddbab0
 Theorems: `QedRoots.v : cert_sound`, `QedRoots.v : cert_hyperbolic`, `QedRoots.v : factor_cert_sound`, `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted`, `QedRootsExamples.v : double_root_box_uncertifiable`, `QedRootsExamples.v : no_real_roots_box_uncertifiable`, `QedRootsRefute.v : laguerre_hyperbolic`, `QedRootsRefute.v : lag_box_cert_sound`, `QedRootsExamples.v : P5up_neighbourhood_not_hyperbolic`
 -->
 # Hunt: an orientation-like certificate for RH (finite Jensen hyperbolicity)
@@ -43,6 +43,8 @@ Non-goals: RH; unbounded zero search; reading finite passes as evidence;
 hiding uncertainty behind precision; changing the invariant after the DH run.
 
 ## Design decision: sign alternation instead of a Sturm sequence
+
+Toolchain: Rocq 9.2.0 + rocq-stdlib 9.2.0 (no MathComp, no Coquelicot).
 
 The stack has **stdlib Reals only** (no MathComp `real_closed`, no
 Coquelicot), so a general Sturm theorem would have to be built from scratch.
@@ -89,7 +91,7 @@ packaged as `packaging/rocq-qed-roots`. See "Programme" below.
 | 7 | multiplicities expressible: `factor_cert` (p ≡ c·Π fₖ over Q, each fₖ box-certified, factors may repeat) ⇒ hyperbolic; (X+1)²(X+2) and (2X²+5X+2)²(X+3) certified | QED | `factor_cert_sound`, `D3_hyperbolic`, `Q5_hyperbolic` |
 
 | 8 | refutation: hyperbolic ⇒ Laguerre form p′² − p·p″ ≥ 0 everywhere; `lag_box_cert` (interval upper bound < 0 at one rational x) ⇒ no p in the box is hyperbolic; complete in degree 2 (vertex value = discriminant/2, i.e. Turán) | QED | `laguerre_hyperbolic`, `lag_box_cert_sound`, `quadratic_negative_discriminant_not_hyperbolic` |
-| 9 | instances: X²+1 at 0, (X+1)(X²+1) at 1/2; P5 lifted by +3 refuted on a ±1/2 box at −1/4, against P5 itself certified on ±1/20 | QED | `X2p1_not_hyperbolic`, `cubic_not_hyperbolic`, `P5up_neighbourhood_not_hyperbolic` |
+| 9 | instances: X²+1 at 0, (X+1)(X²+1) at 1/2; P5 lifted by +3 refuted on a ±1/2 box at −1/4, against P5 itself certified on ±1/20 | QED | `x2_plus_one_not_hyperbolic`, `cubic_not_hyperbolic`, `P5up_neighbourhood_not_hyperbolic` |
 
 Why step 8 matters for the control: QEX-2B ("DH fails while ξ passes")
 needs DH's failure to be a *theorem*, not a failed check. The DH run now
