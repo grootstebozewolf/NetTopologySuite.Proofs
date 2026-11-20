@@ -172,3 +172,7 @@ Proof.
     pose proof (pos_INR k). split; apply Rmult_le_compat_l; lra.
   - apply IH.
 Qed.
+
+Print Assumptions ieval_sound.
+Print Assumptions isign_mul_neg.
+Print Assumptions in_box_pderiv.

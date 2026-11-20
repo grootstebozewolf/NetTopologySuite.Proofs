@@ -16,7 +16,7 @@ self-contained opam source tarball.
 |---|---|---|---|---|
 | [`rocq-robust-geometric-predicates`](./rocq-robust-geometric-predicates/) | 15 | Flocq | classical-reals only | Machine-checked robust binary64 geometric predicates (orientation, segment intersection, error-free expansions), sound vs. exact arithmetic. Fills a real ecosystem gap — no verified Rocq package for Shewchuk-style predicates existed before. |
 | [`rocq-spatial-algebra`](./rocq-spatial-algebra/) | 2 | Stdlib only | **none** (axiom-free) | DE-9IM intersection-matrix algebra + integer orientation-determinant overflow bounds. A tiny, dependency-free entry point for formal GIS / spatial-relation reasoning. |
-| [`rocq-qed-roots`](./rocq-qed-roots/) | 4 | Stdlib only | classical-reals only | Kernel-checked real-root certificates for polynomials from rational coefficient enclosures: sign-alternation (robust, interval) and factor (exact multiplicities) certificates to accept, Laguerre certificate to refute. `qedroots` layer of the qed chain (qedinterval → qedpoly → qedroots → qedanalytic → qedjensen). |
+| [`rocq-qed-roots`](./rocq-qed-roots/) | 5 | Stdlib only | classical-reals only | Kernel-checked real-root certificates for polynomials from rational coefficient enclosures: sign-alternation (robust, interval) and factor (exact multiplicities) certificates to accept, Laguerre certificate to refute. `qedroots` layer of the qed chain (qedinterval → qedpoly → qedroots → qedanalytic → qedjensen). |
 
 ## Releasing
 

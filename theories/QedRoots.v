@@ -29,11 +29,14 @@
    squarefree decomposition to be supplied.  A failed check proves nothing.
    No Sturm sequence yet: root counting for non-real-rooted polynomials
    (Sturm / Cauchy index) is the OPEN next rung of this layer.
+   cert_roots_in_gaps exports the open sample gaps already built for
+   cert_sound. It does not add roots.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted; not yet human-reviewed.
      Assisted-by: Claude
+     Follow-up (gap export): Cursor Grok 4.7
 *)
 From Stdlib Require Import Reals QArith Qreals Lra Lia List.
 From NTS.Proofs Require Import QedPoly QedInterval.
@@ -103,6 +106,66 @@ Proof.
     + intros r [<-|Hr]; auto.
 Qed.
 
+(* One open gap per consecutive sample pair. The head of [xs] is not a gap. *)
+Fixpoint consecutive_gaps (xs : list R) : list (R * R) :=
+  match xs with
+  | x0 :: ((x1 :: _) as rest) => (x0, x1) :: consecutive_gaps rest
+  | _ => []
+  end.
+
+Definition roots_in_gaps (rs : list R) (iv : list (R * R)) : Prop :=
+  Forall2 (fun r lh => fst lh < r < snd lh) rs iv.
+
+Lemma consecutive_gaps_cons x0 x1 xs :
+  consecutive_gaps (x0 :: x1 :: xs) = (x0, x1) :: consecutive_gaps (x1 :: xs).
+Proof. reflexivity. Qed.
+
+Lemma roots_in_gaps_above x0 xs rs :
+  roots_in_gaps rs (consecutive_gaps (x0 :: xs)) ->
+  Forall (fun r => x0 < r) rs.
+Proof.
+  revert x0 rs. induction xs as [|x1 xs IH]; intros x0 rs H.
+  - simpl in H. inversion H; subst. constructor.
+  - rewrite consecutive_gaps_cons in H.
+    inversion H as [|r lh rs' iv Hr Htl]; subst. simpl in Hr.
+    constructor; [lra|].
+    eapply Forall_impl; [|apply (IH x1 rs' Htl)].
+    intros r' Hr'. lra.
+Qed.
+
+(* The roots built by one IVT step per strict sign change sit in those gaps. *)
+Lemma alternating_roots_in_gaps p xs :
+  alternating p xs ->
+  exists rs,
+    length rs = pred (length xs) /\
+    NoDup rs /\
+    roots_in_gaps rs (consecutive_gaps xs) /\
+    (forall r, In r rs -> peval p r = 0).
+Proof.
+  intros Halt. destruct xs as [|x0 xs]; [contradiction|].
+  revert x0 Halt. induction xs as [|x1 xs IH]; intros x0 Halt.
+  - exists []. simpl. repeat split; try constructor. intros r [].
+  - destruct Halt as (Hlt & Hsg & Hrest).
+    destruct (IH x1 Hrest) as (rs & Hl & Hnd & Hgap & Hz).
+    destruct (IVT_cor (peval p) x0 x1 (peval_continuous p) (Rlt_le _ _ Hlt)
+                      (Rlt_le _ _ Hsg)) as (z & [Hz0 Hz1] & Hpz).
+    assert (Hz0' : z <> x0) by (intro; subst; rewrite Hpz in Hsg; lra).
+    assert (Hz1' : z <> x1) by (intro; subst; rewrite Hpz in Hsg; lra).
+    exists (z :: rs).
+    split; [simpl; rewrite Hl; simpl; lia|].
+    split; [|split].
+    + constructor; [|exact Hnd].
+      intro Hin.
+      assert (x1 < z) by
+        (apply (proj1 (Forall_forall (fun r => x1 < r) rs)
+                  (roots_in_gaps_above x1 xs rs Hgap)); exact Hin).
+      lra.
+    + cbn. constructor.
+      * cbn. split; lra.
+      * exact Hgap.
+    + intros r [<-|Hr]; auto.
+Qed.
+
 Theorem alternating_simple_real_rooted p xs :
   length xs = length p -> lead p <> 0 -> alternating p xs ->
   simple_real_rooted p.
@@ -169,6 +232,38 @@ Corollary point_cert_sound (p : list Q) xs :
   box_cert (point_box p) xs = true -> simple_real_rooted (pQ2R p).
 Proof. intros H. exact (cert_sound _ _ _ (in_point_box p) H). Qed.
 
+(* The same [rs] that [cert_sound] factors through, one root in each open gap.
+   Sample points are not roots: each sign is strict. *)
+Theorem cert_roots_in_gaps (p : list R) (b : box) (xs : list Q) :
+  in_box p b -> box_cert b xs = true ->
+  exists rs,
+    NoDup rs /\
+    S (length rs) = length p /\
+    roots_in_gaps rs (consecutive_gaps (map Q2R xs)) /\
+    (forall y, peval p y = 0 <-> In y rs) /\
+    (forall x, peval p x = lead p * prodlin rs x).
+Proof.
+  intros Hb Hcert.
+  unfold box_cert in Hcert.
+  apply andb_prop in Hcert as [H Halt].
+  apply andb_prop in H as [Hlen Hlead].
+  apply Nat.eqb_eq in Hlen.
+  pose proof (alt_check_sound p b xs Hb Halt) as HaltR.
+  destruct (alternating_roots_in_gaps p (map Q2R xs) HaltR)
+    as (rs & Hl & Hnd & Hgap & Hz).
+  assert (Hlenp : S (length rs) = length p).
+  {     rewrite Hl, length_map.
+    rewrite (in_box_length p b Hb), <- Hlen.
+    destruct xs as [|x xs']; [simpl in HaltR; contradiction|].
+    simpl. lia. }
+  assert (Hnz : lead p <> 0) by (eapply in_box_lead; eauto).
+  pose proof (factor_from_roots rs p Hlenp Hnd Hz) as Hfac.
+  exists rs. split; [exact Hnd|]. split; [exact Hlenp|].
+  split; [exact Hgap|]. split.
+  - exact (hyperbolic_zeros p (lead p) rs Hnz Hfac).
+  - exact Hfac.
+Qed.
+
 (* ------------------------------------------------------------------ *)
 (* Factor certificate: exact multiplicities over Q.                     *)
 (* ------------------------------------------------------------------ *)
@@ -227,3 +322,10 @@ Proof.
   - apply Nat.eqb_eq in H3. unfold pQ2R. rewrite length_map, H3, Hl. reflexivity.
   - intros x. rewrite (peqQ_sound _ _ H4). apply He.
 Qed.
+
+Print Assumptions alternating_simple_real_rooted.
+Print Assumptions cert_sound.
+Print Assumptions cert_hyperbolic.
+Print Assumptions factor_cert_sound.
+Print Assumptions point_cert_sound.
+Print Assumptions cert_roots_in_gaps.

@@ -274,3 +274,8 @@ Proof.
   generalize 1%nat. induction l as [|b m IH]; intros k; simpl; [reflexivity|].
   rewrite Q2R_mult, Q2R_inject_nat, IH. reflexivity.
 Qed.
+
+Print Assumptions factor_from_roots.
+Print Assumptions peval_Q2R_pmulQ.
+Print Assumptions peval_derivable.
+Print Assumptions peqQ_sound.

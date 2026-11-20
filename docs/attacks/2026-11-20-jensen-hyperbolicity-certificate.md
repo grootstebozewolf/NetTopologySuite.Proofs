@@ -158,3 +158,5 @@ second consumer needs them without roots. "Mint" in the CONTEXT.md sense
 SUMMARY ok=9 warn=0 bug=0
 
 OUTCOME: QED (qedroots rung, packaged as rocq-qed-roots) — rational sign certificate: interval-enclosed real coefficients → exact rational sign list → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.
+
+> Superseded-by: docs/attacks/2026-11-20-qedroots-vertex-cert.md

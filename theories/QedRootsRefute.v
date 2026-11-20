@@ -23,14 +23,16 @@
                                -> ~ hyperbolic p          (lag_box_cert_sound)
    Robust: an open condition, so it survives small coefficient boxes.
 
-   Strength: complete in degree 2 -- at x = -b/(2c) the Laguerre form is
-   (b^2 - 4ac)/2 (laguerre_quadratic_vertex), i.e. the Turan inequality for
-   degree-2 Jensen polynomials.  Not claimed complete in higher degree.
+   Strength: over R, at x = -b/(2c) the Laguerre form is (b^2 - 4ac)/2
+   (laguerre_quadratic_vertex).  For rational a, b, c with c not Qeq 0 and
+   negative discriminant, the boolean checker accepts that vertex
+   (lag_box_cert_of_quadratic_neg_disc).  Not complete in higher degree.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted; not yet human-reviewed.
      Assisted-by: Claude
+     Follow-up (vertex certificate, gap export): Cursor Grok 4.7
 *)
 From Stdlib Require Import Reals QArith Qreals Lra Psatz List.
 From NTS.Proofs Require Import QedPoly QedInterval QedRoots.
@@ -228,6 +230,120 @@ Corollary lag_point_cert_sound (p : list Q) x :
   lag_box_cert (point_box p) x = true -> ~ hyperbolic (pQ2R p).
 Proof. intros H. exact (lag_box_cert_sound _ _ _ (in_point_box p) H). Qed.
 
+(* ------------------------------------------------------------------ *)
+(* Degree 2: the boolean checker accepts the rational vertex.          *)
+(* Point boxes make ieval degenerate, so lag_upper is the Q Horner     *)
+(* value of p'² - p p'', and Q2R sends it to laguerre_quadratic_vertex.*)
+(* ------------------------------------------------------------------ *)
+
+Local Open Scope Q_scope.
+
+Fixpoint hornerQ (p : list Q) (x : Q) : Q :=
+  match p with
+  | [] => 0
+  | a :: l => a + x * hornerQ l x
+  end.
+
+Lemma Qle_bool_refl (z : Q) : Qle_bool z z = true.
+Proof. apply Qle_bool_iff, Qle_refl. Qed.
+
+Lemma point_box_ieval (p : list Q) (x : Q) :
+  ieval (point_box p) x = (hornerQ p x, hornerQ p x).
+Proof.
+  induction p as [|a p IH]; simpl; [reflexivity|].
+  rewrite IH. destruct (Qle_bool 0 x); reflexivity.
+Qed.
+
+Lemma pderivB_aux_point (k : nat) (p : list Q) :
+  pderivB_aux k (point_box p) = point_box (pderivQ_aux k p).
+Proof.
+  revert k. induction p as [|a p IH]; intros k; simpl; [reflexivity|].
+  rewrite IH. reflexivity.
+Qed.
+
+Lemma pderivB_point (p : list Q) :
+  pderivB (point_box p) = point_box (pderivQ p).
+Proof.
+  unfold pderivB, pderivQ. destruct p as [|a p]; simpl; [reflexivity|].
+  apply pderivB_aux_point.
+Qed.
+
+Lemma point_lag_upper (p : list Q) (x : Q) :
+  lag_upper (point_box p) x =
+  hornerQ (pderivQ p) x * hornerQ (pderivQ p) x -
+  hornerQ p x * hornerQ (pderivQ (pderivQ p)) x.
+Proof.
+  unfold lag_upper.
+  rewrite pderivB_point, (pderivB_point (pderivQ p)), !point_box_ieval.
+  unfold qmax, qmin. rewrite !Qle_bool_refl. reflexivity.
+Qed.
+
+Lemma qltb_intro (u v : Q) : u < v -> Qltb u v = true.
+Proof.
+  intros H. unfold Qltb. destruct (Qle_bool v u) eqn:E.
+  - apply Qle_bool_iff in E. exfalso. exact (Qlt_not_le _ _ H E).
+  - reflexivity.
+Qed.
+
+Local Open Scope R_scope.
+
+Lemma hornerQ_Q2R (p : list Q) (x : Q) :
+  Q2R (hornerQ p x) = peval (pQ2R p) (Q2R x).
+Proof.
+  induction p as [|a p IH]; simpl.
+  - apply Q2R_0.
+  - rewrite Q2R_plus, Q2R_mult, IH. reflexivity.
+Qed.
+
+Lemma point_lag_upper_R (p : list Q) (x : Q) :
+  Q2R (lag_upper (point_box p) x) = laguerre (pQ2R p) (Q2R x).
+Proof.
+  rewrite point_lag_upper. cbn beta.
+  rewrite Q2R_minus, !Q2R_mult. unfold laguerre.
+  rewrite !hornerQ_Q2R, !pQ2R_pderivQ. reflexivity.
+Qed.
+
+Lemma q2r_nat_qmake (n : nat) : Q2R (Z.of_nat n # 1) = INR n.
+Proof.
+  replace (Z.of_nat n # 1)%Q with (inject_Z (Z.of_nat n)) by reflexivity.
+  apply Q2R_inject_nat.
+Qed.
+
+(* c may be any Qeq-class of a nonzero rational; / uses that class. *)
+Theorem lag_box_cert_of_quadratic_neg_disc (a b c : Q) :
+  ~ (c == 0)%Q ->
+  (b * b - (4 # 1) * a * c < 0)%Q ->
+  lag_box_cert (point_box [a; b; c]) ((- b) / ((2 # 1) * c))%Q = true.
+Proof.
+  intros Hc Hd.
+  assert (H2 : Q2R (2 # 1) = 2).
+  { replace (2 # 1)%Q with (Z.of_nat 2 # 1)%Q by reflexivity.
+    rewrite q2r_nat_qmake. simpl. ring. }
+  assert (H4 : Q2R (4 # 1) = 4).
+  { replace (4 # 1)%Q with (Z.of_nat 4 # 1)%Q by reflexivity.
+    rewrite q2r_nat_qmake. simpl. ring. }
+  assert (Hden : ~ ((2 # 1) * c == 0)%Q).
+  { intros Hz. apply Qmult_integral in Hz as [Htwo|Hc0].
+    - apply Qeq_eqR in Htwo. rewrite H2, Q2R_0 in Htwo. lra.
+    - exact (Hc Hc0). }
+  assert (HcR : Q2R c <> 0).
+  { intros E. apply Hc. apply eqR_Qeq. rewrite Q2R_0. exact E. }
+  set (xv := ((- b) / ((2 # 1) * c))%Q).
+  assert (Hxv : Q2R xv = - Q2R b / (2 * Q2R c)).
+  { unfold xv. rewrite Q2R_div by exact Hden.
+    rewrite Q2R_opp, Q2R_mult, H2. reflexivity. }
+  unfold lag_box_cert. apply qltb_intro. apply Rlt_Qlt.
+  rewrite Q2R_0, point_lag_upper_R, Hxv. unfold pQ2R. simpl.
+  rewrite (laguerre_quadratic_vertex (Q2R a) (Q2R b) (Q2R c) HcR).
+  assert (HdR : Q2R b * Q2R b - 4 * Q2R a * Q2R c < 0).
+  { rewrite <- Q2R_0.
+    replace (Q2R b * Q2R b - 4 * Q2R a * Q2R c)
+      with (Q2R (b * b - (4 # 1) * a * c)%Q).
+    - apply Qlt_Rlt. exact Hd.
+    - rewrite Q2R_minus, !Q2R_mult, H4. reflexivity. }
+  lra.
+Qed.
+
 (* The two certificate kinds never both pass on overlapping data. *)
 Corollary box_cert_lag_exclusive p b1 b2 xs x :
   in_box p b1 -> in_box p b2 ->
@@ -237,3 +353,11 @@ Proof.
   exfalso. apply (lag_box_cert_sound p b2 x H2 E).
   exact (cert_hyperbolic p b1 xs H1 Hc).
 Qed.
+
+Print Assumptions laguerre_hyperbolic.
+Print Assumptions laguerre_quadratic_vertex.
+Print Assumptions quadratic_negative_discriminant_not_hyperbolic.
+Print Assumptions lag_upper_sound.
+Print Assumptions lag_box_cert_sound.
+Print Assumptions lag_box_cert_of_quadratic_neg_disc.
+Print Assumptions box_cert_lag_exclusive.

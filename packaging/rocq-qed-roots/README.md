@@ -17,7 +17,7 @@ ends in QED or QEX on its own. Hunt ticket:
 `docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md`.
 
 `qedpoly` and `qedinterval` currently ship inside this package (their
-closure is four files); they split into `rocq-qed-poly` /
+closure is five files); they split into `rocq-qed-poly` /
 `rocq-qed-interval` when a second consumer needs them without roots.
 
 ## What it provides
@@ -26,8 +26,8 @@ closure is four files); they split into `rocq-qed-poly` /
 |---|---|---|
 | `QedPoly` | `peval`, `lead`, `prodlin`, synthetic division, continuity; Q-side `pmulQ`, `peqQ` with Q2R transport | `factor_from_roots`, `peval_Q2R_pmulQ` |
 | `QedInterval` | `box` of rational coefficient intervals, exact range `ieval`, strict sign `isign`, `in_box` (the interface a future `qedanalytic` must produce) | `ieval_sound`, `isign_mul_neg` |
-| `QedRoots` | `hyperbolic` (root multiset), `simple_real_rooted` (distinct, all zeros); `box_cert`, `factor_cert` | **`cert_sound`**, `cert_hyperbolic`, **`factor_cert_sound`** |
-| `QedRootsRefute` | Formal derivative; Laguerre form `laguerre p x = p′² − p·p″`; `lag_box_cert` (interval upper bound of the Laguerre form < 0 at one rational point) | **`laguerre_hyperbolic`**, **`lag_box_cert_sound`**, `quadratic_negative_discriminant_not_hyperbolic`, `box_cert_lag_exclusive` |
+| `QedRoots` | `hyperbolic` (root multiset), `simple_real_rooted` (distinct, all zeros); `box_cert`, `factor_cert` | **`cert_sound`**, `cert_hyperbolic`, **`factor_cert_sound`**, `cert_roots_in_gaps` |
+| `QedRootsRefute` | Formal derivative; Laguerre form `laguerre p x = p′² − p·p″`; `lag_box_cert` (interval upper bound of the Laguerre form < 0 at one rational point) | **`laguerre_hyperbolic`**, **`lag_box_cert_sound`**, `lag_box_cert_of_quadratic_neg_disc`, `quadratic_negative_discriminant_not_hyperbolic`, `box_cert_lag_exclusive` |
 | `QedRootsExamples` | P5 = 6+41X+97X²+97X³+41X⁴+6X⁵ with a ±1/20 box; (X+1)²(X+2), (2X²+5X+2)²(X+3) via factors; negative controls | `P5_neighbourhood_simple_real_rooted`, `Q5_hyperbolic`, `double_root_box_uncertifiable` |
 
 ### `cert_sound`
@@ -57,8 +57,8 @@ A failed `box_cert` proves nothing, so refutation has its own certificate.
 For hyperbolic p, `L_p(x) = p′(x)² − p(x)p″(x) ≥ 0` everywhere (from
 `L_{(X−r)g} = g² + (X−r)² L_g`). `lag_box_cert b x` bounds `L` from above
 over the whole box at a rational x; if that bound is negative, **no** real
-p in the box is hyperbolic. In degree 2 the form at the vertex is half the
-discriminant, so the refutation is complete there (Turán). Example:
+p in the box is hyperbolic. In degree 2, negative rational discriminant makes
+`lag_box_cert` true at `(-b)/(2c)` (`lag_box_cert_of_quadratic_neg_disc`). Example:
 `P5up_neighbourhood_not_hyperbolic` — every quintic within ±1/2 of
 9+41X+97X²+97X³+41X⁴+6X⁵ is non-hyperbolic, while every quintic within
 ±1/20 of P5 (constant 6) is hyperbolic.
