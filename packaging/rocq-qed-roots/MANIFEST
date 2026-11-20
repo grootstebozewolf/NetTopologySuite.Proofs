@@ -1,0 +1,18 @@
+# MANIFEST for rocq-qed-roots
+# ---------------------------------------------------------------------------
+# Source-of-record paths (relative to the NetTopologySuite.Proofs repo root)
+# for every .v file vendored into this standalone package.  `assemble.sh`
+# copies these into ./theories, preserving the NTS.Proofs namespace so the
+# proof files build unmodified.  The .v files are NOT committed here.
+#
+# The package carries its own closure of the qed chain:
+#   QedPoly (qedpoly) -> QedInterval (qedinterval) -> QedRoots (qedroots)
+# plus QedRootsExamples (worked instances + negative controls).
+# Stdlib only (Reals / QArith / Qreals / Lra / Lia / List).  No Flocq.
+# Axioms: the three stdlib classical-reals axioms (sig_not_dec,
+# sig_forall_dec, functional_extensionality_dep) -- NOT axiom-free.
+
+theories/QedPoly.v
+theories/QedInterval.v
+theories/QedRoots.v
+theories/QedRootsExamples.v

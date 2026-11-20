@@ -54,7 +54,6 @@ PROBES=(
   docs/h1-vacuity/OverlayGuardedVacuityQEX.v
   docs/h1-vacuity/ArcOverlayBridgeQEX.v
   docs/h1-vacuity/CurveRegionModelQEX.v
-  docs/h1-vacuity/JensenSignCertificate.v
 )
 
 fail=0

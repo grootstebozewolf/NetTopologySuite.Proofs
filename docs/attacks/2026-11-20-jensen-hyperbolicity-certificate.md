@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-20
 Provenance: 7cebee2124d37d0ff60fa17b8d09ff6ca0ddbab0 (base); toolchain Rocq 9.2.0 + rocq-stdlib 9.2.0 (no MathComp, no Coquelicot)
-Theorems: `JensenSignCertificate.v : cert_sound`, `JensenSignCertificate.v : cert_hyperbolic`, `JensenSignCertificate.v : P5_neighbourhood_hyperbolic`, `JensenSignCertificate.v : double_root_uncertifiable`, `JensenSignCertificate.v : no_real_roots_uncertifiable`
+Theorems: `QedRoots.v : cert_sound`, `QedRoots.v : cert_hyperbolic`, `QedRoots.v : factor_cert_sound`, `QedRootsExamples.v : P5_neighbourhood_simple_real_rooted`, `QedRootsExamples.v : double_root_box_uncertifiable`, `QedRootsExamples.v : no_real_roots_box_uncertifiable`
 -->
 # Hunt: an orientation-like certificate for RH (finite Jensen hyperbolicity)
 
@@ -71,18 +71,46 @@ right first rung.
 | 0 | real-coefficient polynomial, strict sign alternation at d+1 increasing points ⇒ exactly d distinct real roots and full factorisation | QED | `alternating_simple_real_rooted` (IVT via `IVT_cor`, synthetic division `quot_spec`, `factor_from_roots`) |
 | 1 | rational box `[lo_j,hi_j]` + rational points; boolean checker `box_cert` (Q, `vm_compute`) | definition | `box_cert`, `ieval`, `isign` |
 | 2 | bridge: `box_cert b xs = true` ⇒ **every real** p in the box is simple-real-rooted ⇒ hyperbolic | QED | `cert_sound`, `cert_hyperbolic` |
-| 3 | probe P = (X+1)(2X+1)(X+2)(3X+1)(X+3) = 6+41X+97X²+97X³+41X⁴+6X⁵ (self-reciprocal, positive coeffs, negative roots — ξ-Jensen shape); points −4, −5/2, −3/2, −3/4, −2/5, −1/4; signs `[-1;1;-1;1;-1;1]` | QED | `P5_cert`, `P5_signs`, `P5_hyperbolic` (proof uses only the 6 signs, never the factored form) |
-| 4 | enclosure width: absolute ±1/20 on every coefficient preserves the certificate (min normalised margin \|P(x)\|/Σ\|x\|^j = 8/133 ≈ 0.060 at x = −5/2, −2/5) | QED | `P5_cert_width`, `P5_neighbourhood_hyperbolic` |
+| 3 | probe P = (X+1)(2X+1)(X+2)(3X+1)(X+3) = 6+41X+97X²+97X³+41X⁴+6X⁵ (self-reciprocal, positive coeffs, negative roots — ξ-Jensen shape); points −4, −5/2, −3/2, −3/4, −2/5, −1/4; signs `[-1;1;-1;1;-1;1]` | QED | `P5_cert`, `P5_signs`, `P5_simple_real_rooted` (proof uses only the 6 signs, never the factored form) |
+| 4 | enclosure width: absolute ±1/20 on every coefficient preserves the certificate (min normalised margin \|P(x)\|/Σ\|x\|^j = 8/133 ≈ 0.060 at x = −5/2, −2/5) | QED | `P5_cert_width`, `P5_neighbourhood_simple_real_rooted` |
 | 5 | ±1/10 rejected **at these points** (statement about the checker, not a non-hyperbolic witness) | QED (checker = false) | `P5_reject_width` |
-| 6 | multiplicity semantics: `hyperbolic` (multiset of roots) and `simple_real_rooted` (NoDup) are separate definitions; (X+1)²(X+2) is hyperbolic yet no box/points ever certify it; X²+1 never certifies | QED | `D3_hyperbolic`, `double_root_uncertifiable`, `no_real_roots_uncertifiable` |
+| 6 | multiplicity semantics: `hyperbolic` (multiset of roots) and `simple_real_rooted` (NoDup) are separate definitions; (X+1)²(X+2) is hyperbolic yet no box/points ever certify it; X²+1 never certifies | QED | `D3_hyperbolic`, `double_root_box_uncertifiable`, `no_real_roots_box_uncertifiable` |
 
-`Print Assumptions` on `P5_neighbourhood_hyperbolic` and
-`double_root_uncertifiable`: only `ClassicalDedekindReals.sig_not_dec`,
+`Print Assumptions` on `P5_neighbourhood_simple_real_rooted` and
+`double_root_box_uncertifiable`: only `ClassicalDedekindReals.sig_not_dec`,
 `sig_forall_dec`, `functional_extensionality_dep` (stdlib Reals
 foundations). No `Classical_Prop.classic`, no `Admitted`.
 
-Build: `rocq c docs/h1-vacuity/JensenSignCertificate.v` (stdlib only);
-also listed in `scripts/hunt_probe_smoke.sh`. Not in `_CoqProject.full`.
+Build: graduated from the probe `docs/h1-vacuity/JensenSignCertificate.v`
+(now removed) into the corpus as `theories/QedPoly.v`, `QedInterval.v`,
+`QedRoots.v`, `QedRootsExamples.v` (in `_CoqProject` and `_CoqProject.full`),
+packaged as `packaging/rocq-qed-roots`. See "Programme" below.
+
+| 7 | multiplicities expressible: `factor_cert` (p ≡ c·Π fₖ over Q, each fₖ box-certified, factors may repeat) ⇒ hyperbolic; (X+1)²(X+2) and (2X²+5X+2)²(X+3) certified | QED | `factor_cert_sound`, `D3_hyperbolic`, `Q5_hyperbolic` |
+
+## Programme (reframed 2026-11-20)
+
+Not "formalize RH" but: **the minimal verified computational substrate in
+Rocq on which RH-adjacent statements become finite, kernel-checkable
+certificates.** Each rung ends independently in QED or QEX.
+
+```
+qedinterval → qedpoly → qedroots → qedanalytic → qedjensen → RH experiments
+```
+
+| layer | library | status |
+|---|---|---|
+| qedinterval | `QedInterval.v` (in `rocq-qed-roots` for now) | QED: exact rational enclosure + strict sign; `in_box` is the interface qedanalytic must produce |
+| qedpoly | `QedPoly.v` (in `rocq-qed-roots` for now) | QED: eval, synthetic division, factor theorem, Q multiplication |
+| qedroots | `QedRoots.v` → package `rocq-qed-roots` | QED for sign-alternation + factor certificates; **OPEN**: Sturm / Cauchy index (root counting for non-real-rooted p), squarefree decomposition, non-hyperbolicity certificates |
+| qedanalytic | — | OPEN: certified enclosures of γ(n) (Flocq / interval), producing `in_box` |
+| qedjensen | — | OPEN: define J^{d,n}_Ξ, prove the certified coefficients are the intended ones, run `box_cert` |
+| DH control | — | OPEN: same `box_cert`, frozen |
+
+`rocq-qed-poly` / `rocq-qed-interval` split out of `rocq-qed-roots` when a
+second consumer needs them without roots. "Mint" in the CONTEXT.md sense
+(installable from the Rocq opam archive) happens on a
+`rocq-qed-roots-v*` release via `.github/workflows/package-qed-roots.yml`.
 
 ## Answers to the probe questions
 
@@ -99,7 +127,7 @@ also listed in `scripts/hunt_probe_smoke.sh`. Not in `_CoqProject.full`.
 4. **Repeated roots:** the certificate proves the stronger
    `simple_real_rooted`; `hyperbolic` is derived by a separate lemma and is
    stated with a root multiset. The certificate is sound but incomplete —
-   `double_root_uncertifiable` shows a repeated-root hyperbolic polynomial
+   `double_root_box_uncertifiable` shows a repeated-root hyperbolic polynomial
    always fails, so a failure is never read as "not hyperbolic", and
    nothing silently strengthens the target predicate.
 5. **Small exact sign list?** Yes: d+1 signs in {−1,+1} at rational points,
@@ -116,6 +144,6 @@ also listed in `scripts/hunt_probe_smoke.sh`. Not in `_CoqProject.full`.
 - Davenport–Heilbronn control not run. The acceptance rule to be applied to
   it is `box_cert` exactly as committed here; it is now frozen.
 
-SUMMARY ok=6 warn=0 bug=0
+SUMMARY ok=7 warn=0 bug=0
 
-OUTCOME: QED (probe rung) — rational sign certificate minted: interval-enclosed real coefficients → exact rational sign list → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.
+OUTCOME: QED (qedroots rung, packaged as rocq-qed-roots) — rational sign certificate: interval-enclosed real coefficients → exact rational sign list → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.

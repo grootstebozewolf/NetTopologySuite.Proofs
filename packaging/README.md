@@ -16,12 +16,13 @@ self-contained opam source tarball.
 |---|---|---|---|---|
 | [`rocq-robust-geometric-predicates`](./rocq-robust-geometric-predicates/) | 15 | Flocq | classical-reals only | Machine-checked robust binary64 geometric predicates (orientation, segment intersection, error-free expansions), sound vs. exact arithmetic. Fills a real ecosystem gap — no verified Rocq package for Shewchuk-style predicates existed before. |
 | [`rocq-spatial-algebra`](./rocq-spatial-algebra/) | 2 | Stdlib only | **none** (axiom-free) | DE-9IM intersection-matrix algebra + integer orientation-determinant overflow bounds. A tiny, dependency-free entry point for formal GIS / spatial-relation reasoning. |
+| [`rocq-qed-roots`](./rocq-qed-roots/) | 4 | Stdlib only | classical-reals only | Kernel-checked real-root certificates for polynomials from rational coefficient enclosures: sign-alternation (robust, interval) and factor (exact multiplicities) certificates. `qedroots` layer of the qed chain (qedinterval → qedpoly → qedroots → qedanalytic → qedjensen). |
 
 ## Releasing
 
 Each package publishes via its own GitHub Actions workflow
 (`.github/workflows/package-*.yml`): a release tagged `rocq-robust-geometric-predicates-v*`
-or `rocq-spatial-algebra-v*` builds the source tarball, attaches it (+ sha256) to
+`rocq-spatial-algebra-v*` or `rocq-qed-roots-v*` builds the source tarball, attaches it (+ sha256) to
 the release, and — when an `OPAM_PUBLISH_TOKEN` secret is configured — opens
 the opam-repository PR via `opam publish`.
 
