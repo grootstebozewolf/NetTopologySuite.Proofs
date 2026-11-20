@@ -177,3 +177,40 @@ slopes of `div.Nu`, `fm.lat`). This is where the theta-lift lattices must
 appear, and where the arithmetic content (about 17 M lines) actually lives.
 
 **SUMMARY (slice 4) ok 4 / warn 0 (m=0 resolved) / bug 0**
+
+## Slice 5: cross-check against the text of `remark.pdf` (2026-11-20)
+
+**Provenance.** The full text of the note was pasted into chat by the user,
+who presented it as `remark.pdf`. The agent still cannot reach alpo.ge (the
+proxy returns 403), so the text is **user-supplied, not fetched**.
+Quotations below are from that paste. This replaces the slice-2b summary as
+the source for the author's claims.
+
+| author's claim (quote / paraphrase) | source-code counterpart | verdict |
+|---|---|---|
+| "a descendant of Stepanov's … multiplicity is hard to find over the integers" | the overall shape of `ch_core` (slice 3) | consistent |
+| "for the von Mangoldt sum of length X, Claude's suggested length of chain of theta lifts … was √X" | `RestSize`: `x^(1/2−ε) ≤ m`; `ch_core`: `m ≤ x^(1/2+ε/2)` | **exact match** (slices 3–4) |
+| timeline 5: "switch to Λ aka Σ_{n≤X} Λ(n)·(X/n−1)⁺ − X log X + (1+γ)·X" | `Formalism/StatementOC.lean : Gz x = Sz x − x log x + (1+γ)x`, with `Sz x = Σ Λ(n)(x/n − 1)`; also `Formalism.HC.An.G` | **exact match**, symbol for symbol (slice 2) |
+| timeline 5: "Guinand–Weil had the sign" | the positivity step is formalized as Landau's theorem (`landau_family`, `zero_free_of_Chebyshev_growth`); the name `Guinand` never appears | consistent in role. The *sign* is the positivity input; the Lean route goes through Landau. Slice 2's label "Landau positivity" stays, with the author's framing noted. |
+| timeline 4/6/7: "W(S) ≥ 0 via a determinant … Stepanov with multiplicity one"; "W(…) ≥ 0 gives > 1−η"; GGP periods | `PositivityTheory/`; 266 files mention GGP | consistent; not traced |
+| timeline 8: "Iterated theta lifts U(X0) → U(X1) → ··· → U(Xm) between totally definite unitary groups … wins multiplicity m" | `UnitaryGroupThirdPlaceHypotheses`, `DefiniteSideCondition`, `ThetaPairLifts/` (slice 2 chain) | consistent; construction not traced |
+| timeline 12: "Seesaw … Bessel period … Rallis" | 3,624 files match Rallis/seesaw; 3,143 match Bessel | present |
+| timeline 13: "Bost slope inequality" | `SlopeIneq` in `Formalism/RankGapBounds/MeanBoundSecondForm.lean:151` (slice 4) | **match** (shape) |
+| timeline 11/19: "Iwasawa tower … specifically using Behrend!!" | `Formalism/BehrendSets/` (`BehrendVariance`, `TranslateMean`); 14,585 files mention Iwasawa | present |
+| timeline 17: "for the classes in H¹(o_E[1/ℓ], Q_ℓ/Z_ℓ(−e)) that we couldn't kill by twisting, fight for a significant weakening of Vandiver" | `VWin`: `Σ_{l∈S} log l · Σ_{1≤e<t} shaLen(ld l, e) ≤ √exp(x^ε)` over fields cut out by ψ (`ExistsPageN.lean`). The name `Vandiver` never appears. | **match** in content. Reading `VWin` as the "Vandiver window" is an inference. |
+| timeline 14: "one would stop at 2/3 a priori … need for 'division'" | not located | open |
+| "formalized … without assumptions" | static scan clean (steps 4–6); `#print axioms` not run here | unchanged: PENDING |
+
+**Relation to this repo's attack vector.** The note names the invariant: a
+*definite sign*, first via a determinant ("W(S) ≥ 0 via a determinant") and
+the "definite sign of the left-hand side of qN = Mk + R". It is the analogue
+of the question we posed ("what is to RH what orientation is to
+coordinates?"). Orientation is also the sign of a determinant. The analogy
+holds at the level of the **positivity mechanism**, not the
+compact-region/certified-numerics step, which the proof does not use.
+
+**Out of scope, not assessed.** The note's remarks on other groups'
+results (Ehrhart, Navier–Stokes, Siegel), the timing, and personal matters.
+
+**SUMMARY (slice 5) ok 9 / warn 0 / bug 0 / open 2** (cost-of-lift "2/3"
+step not located; mirror-vs-archive hash still not checked)
