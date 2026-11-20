@@ -86,3 +86,48 @@ shows the multiplicity group is the ℤ₂-tower layer
 (`|H| ≥ 2^e ≈ x^(2+8ε)`). The function-field analogy suggests R3-QEX for
 tower-free routes. A root-only route must supply a substitute for
 constant-field extension, not merely avoid auxiliary characters.
+
+## Slice 2: what the tower does, the "all n" substitute (2026-11-20)
+
+Read from `Formalism/BehrendSets/{Statement,StatementE}.lean` in the mirror
+@ `7cbf7a0`. This is a reading of statements; the interpretation is marked.
+
+| fact (paraphrase) | name |
+|---|---|
+| `OrdGrp s := (ℤ/2^(s+2))ˣ/±1`, cyclic of order `2^s`. `frob s l` is the Frobenius of a prime `l` in it. | `OrdGrp`, `frob`, `OrdCard` |
+| Explicit order law: `ord(frob l) ∣ 2^j ⇔ l ≡ ±1 (mod 2^(s+2−j))` | `OrdIff`, `OrdDvd` |
+| Short orbits need large primes: `ord(frob l) ≤ J ⇒ 2^(s+2) ≤ J·(l+1)`. With `2^s ≈ x^(2+8ε)`, every prime `l ≤ x` has orbit length `≳ x^(1+8ε)`. | `OrdLargeJ`, `ShortOrdLarge` |
+| The auxiliary prime `d ≡ 7 (16)` has maximal order `2^(s−1)` (inert-like) | `OrdD` |
+| Primes with short orbits are sparse: `Σ log l / l^2` and `Σ log l / l` over them are bounded | `ShortOrdSq`, `ShortOrdLin`, `OrdSqJ` |
+| A **Behrend-free** "thick" set `T ⊂ ℤ/n` (no nontrivial `α x₁ + β x₂ + γ x₃ = 0` with coefficients `≤ 2L`), of size `n/(8L)·exp(−C√(log n · log L))`. Each orbit window of length `2L` meets a translate of `T` **at most twice**, and short orbits at most once. Random-subset selection (`Select`, `BadOrbit`) controls the rest. | `BehrendFree`, `ThickSet`, `WindowTwo`, `OrbitOne`, `Select` |
+
+**Interpretation.** The tower supplies a **degree function on primes**:
+`deg(l) := ord(frob l)` in a cyclic 2-group. It is explicit (by `OrdIff`)
+and large for every prime up to `x`. This is the number-field stand-in for
+"pass to `F_{qⁿ}` with `n` so large that every closed point of small norm has
+large degree". That is the pigeonhole on `F_{qⁿ}/F_q` from remark timeline
+11. The Behrend set then caps how often a Frobenius orbit can hit the
+chosen positions. That cap is a bounded multiplicity of collisions, which is
+what keeps the √X chain's multiplicity count honest. Behrend is the
+"precise choice of the Iwasawa tower" of timeline 19, which the author
+expects to be unnecessary.
+
+**Consequence for R3 (by reasoning, not code).** Whatever replaces the
+tower must give primes an explicit, long-orbit "degree" in a finite group,
+compatible with Frobenius. If the replacement is **abelian over ℚ**, then by
+class field theory (Kronecker–Weber) it is a subfield of a cyclotomic field.
+Its Frobenius degrees are read off Dirichlet characters, so the canopy comes
+back automatically.
+
+| id | claim | OUTCOME |
+|---|---|---|
+| R3a | The tower's role is an explicit long-orbit degree function on primes `≤ x` (with Behrend collision control) | **QED (by reading)** |
+| R3b | Any *abelian* tower-free substitute for R3a is cyclotomic, so it is not root-only | **QEX-leaning (by Kronecker–Weber; argument, not formalized)** |
+| R3c | A root-only route must use a **non-abelian** (or non-Galois) degree structure, or avoid degree functions entirely (a different source of multiplicity) | **OPEN, the sharpened target** |
+
+**OUTCOME** OPEN. R3 is narrowed to R3c. Abelian substitutes lead back into
+the canopy (R3b). Note that a non-abelian degree structure would bring in
+higher-rank L-functions, which is a bigger canopy, not a smaller one. That is
+weak evidence that "root-only" may be the wrong goal, and that "smallest
+sufficient canopy" (for example, a single cyclotomic layer without Behrend) is
+the better-posed simplification target.
