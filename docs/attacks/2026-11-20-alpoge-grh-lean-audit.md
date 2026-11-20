@@ -112,3 +112,40 @@ Bombieri–Stepanov, the lower bound has to come from a separate
 twist/averaging trick. Here the conjugation-closed weighted family in
 `landau_family` plays that role. Expected location of the Stepanov /
 theta-lift step: R3–R4 (`TopG`, `VWin`). Not yet confirmed in source.
+
+## Slice 3: where the ½ exponent is produced (read from source, 2026-11-20)
+
+Traced down from R3 (`zeroFreeAll_of_topG`) in the mirror @ `7cbf7a0`. This
+is a reading of statements, not a check of the mathematics.
+
+| rung | statement (paraphrase) | where |
+|---|---|---|
+| R3a | Windowed Landau: if `Gm(x) ≤ x^(1/2 + (eD+eL+7)ε)` holds on a family's windows (lacunary, `la = 3/2`) for every small `ε`, the level is zero-free on `Re s > ½`. This is `level_of_tiedWin`, plus `FormB`, a windowed form of R2. | `Formalism/SharpRestriction/RamificationFrobenius/TotientGaloisClasses/TopWin.lean` |
+| R3b | That window inequality ⇐ `ChainTied` per window point. `ChainTied` packages a chain datum `Dd` whose local fields are divisor **ranks**, **slopes** `mu`/`muMax` of a lattice and its dual, and degree data. These are Arakelov / Harder–Narasimhan quantities, the natural home of a Bost slope inequality. | `Formalism/SharpRestriction/GlobalSchurBounds/TieGlobal.lean : ChainTied, TieLocal`; `Development/AutomorphicArithmetic/PrimitiveCosets/LevelGmLeOnFamilyScales.lean` |
+| R3c | `core_gm`: `CoreAtH` + `EAtH` ⇒ `Λ.Gm x ≤ x^(1/2 + (eD+eL+7)ε)` | `Development/AutomorphicArithmetic/PrimitiveCosets/CoreGm.lean` |
+| **R3d** | **`ch_core`, the analytic engine.** Hypotheses include chain length **`m ≤ x^(1/2+ε/2)`**, multiplicity/degree **`x·m ≤ k`**, and a per-element *gap* bound `gapA … ≤ x^(Cε)·errorBracket`, where `gapA = Σ_t Σ_j (ASK − Re MAIN)` is the arithmetic count minus its main term. Conclusion: `GmA ≤ x^(1/2+(C+3)ε) + SigA`. | `Development/AutomorphicArithmetic/DedekindLFunctions/LandauTheorems/ChCore.lean:343`; defs in `…/DedekindLFunctions/SplitInertia.lean` |
+
+**Reading (interpretation, not confirmed by the author's text).**
+
+- R3d has the Stepanov parameter balance: a chain of length `m ≈ √x`
+  ("chains of theta lifts of length about √X") against a multiplicity
+  `k ≥ x·m`.
+- In Stepanov's method for curves, an auxiliary polynomial of degree about
+  √q gives `#C(F_q) ≤ q + O(√q)`. Here, the `m ≤ x^(1/2)` constraint
+  is literally where the exponent ½ in `Gm(x) ≤ x^(1/2+…)` comes from.
+- The per-chain-element upper bound (`gapA`) is fed by rank and slope data
+  (R3b). That is where the Bost slope inequality plausibly enters; not yet
+  traced.
+- Combined with slices 2/2b: Stepanov gives a one-sided `Gm ≤ x^(½+ε)`,
+  Landau positivity turns it into a zero-free `Re s > ½`, and the reflection
+  `s ↔ 1−s` puts the zeros on the line.
+
+**Next target.** The proof of the `gapA` bound, and how `ChainTied` is
+inhabited (`TopG` → `forall_goal_of_shape_of_hyps`, `VWin` → `supplyChi`).
+That is where the theta lifts must be constructed. It is also the place for
+an `h1-vacuity`-style probe: are `CoreAtH` / `ChainTied` inhabited only by
+the genuine chain, or by something degenerate (for example `m = 0`, empty
+`TT`)? Note that `x·m ≤ k` with `m = 0` is trivially satisfiable, so
+`SizesA` / `RestSize` must exclude it.
+
+**SUMMARY (slice 3) ok 4 / warn 1 (degenerate-`m` question open) / bug 0**
