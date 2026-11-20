@@ -2805,6 +2805,13 @@ theories/CurvedOpObligation.v
 # Never OverlayNGCurved.  Two-body kiss ≠ self-kiss (#678); ≠ CircGamma; ≠ G1.
 theories/CurvedKissObligation.v
 theories/RelateTouchDiscs.v
+# CRV-TOUCH acceptance (spec-crv-touch.md): exact-Q tangency oracle on
+# rational input eggs, sigma Ext/Int certificate, reuse on Q equality,
+# coincident circles Decline before the tangency point, span-checked Hit
+# via a + b*sqrt(D) signs.  R bridge: sigma Ext -> disks_touch, Int ->
+# disk_covers.  Witnesses A1-A9 by vm_compute.  Not a noder / cook step /
+# ADR-0006 keyword.  Full-only: imports OverlayTouchRow.
+theories/CrvTouchKiss.v
 # General circular noding rung 1: splitting an arc at an N-AA node is sound,
 # witness-scoped on the DISC_OVERLAY locked fixture — child cut-chord side
 # tests = px-trichotomy at the node (chord-sign form, no atan2), cover and
