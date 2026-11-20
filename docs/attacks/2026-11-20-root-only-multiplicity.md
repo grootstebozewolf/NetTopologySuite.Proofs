@@ -232,3 +232,19 @@ idea is not.
 
 **OUTCOME** OPEN overall (R3c stands). S4 answered with a machine-checked
 core.
+
+### Slice 4b: density formalized (2026-11-20)
+
+`SphereNoRelQED.v` now also proves `sphere_slice_large`: some sphere slice
+`S_r ⊂ [0,d)^K` has `(K(d−1)² + 1)·|S_r| ≥ d^K`. It uses a generic pigeonhole
+(`pigeon`) over the enumerated cube (`allvec`, `|allvec K d| = d^K`). Both
+`sphere_digits_norel` (correctness) and `sphere_slice_large` (density) are
+*Closed under the global context*.
+
+The only remaining unformalized step is the final arithmetic: with
+`b ≈ (8L)^(1/ε')` and `d ≈ b/(8L)`, the slice's density in `[0, b^K)` is
+`N^(−ε'−o(1))`.
+
+| id | claim | OUTCOME |
+|---|---|---|
+| S4 | correctness and density of the crude sphere construction | **QED** (Rocq) except the final exponent arithmetic, which is routine |

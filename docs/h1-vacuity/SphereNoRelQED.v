@@ -19,9 +19,13 @@
                            vectors lie on one sphere satisfy NoRel, as long as
                            2*L*d < b with digits in [0,d).
 
-   Outcome: QED (host lane, Stdlib only).  Scope: this is the construction's
-   correctness, not its density.  The density of a sphere slice is the
-   pigeonhole count  d^k / (k d^2), which is not formalized here.  This is
+     sphere_slice_large  : density.  Some sphere slice S_r of [0,d)^K has
+                           (K(d-1)^2 + 1) * |S_r| >= d^K  (generic pigeonhole
+                           `pigeon` over the <= K(d-1)^2 + 1 radii).
+
+   Outcome: QED (host lane, Stdlib only), both theorems closed under the
+   global context.  Not formalized: the final arithmetic that, with base
+   b ~ (8L)^(1/eps'), the slice has density N^(-eps'-o(1)) in [0, b^K).  This is
    EVIDENCE for ticket docs/attacks/2026-11-20-root-only-multiplicity.md,
    slice 4 (S4), and NOT a product module.
 
@@ -197,3 +201,123 @@ Proof.
 Qed.
 
 Print Assumptions sphere_digits_norel.
+
+(* ---------- density: some sphere slice of [0,d)^K is large (pigeonhole) ---------- *)
+
+Section Pigeon.
+Variable A : Type.
+Variable f : A -> nat.
+Local Open Scope nat_scope.
+
+Lemma filter_split : forall (R : nat) (l : list A),
+  (forall x, In x l -> f x <= R) ->
+  length l = length (filter (fun x => Nat.ltb (f x) R) l)
+           + length (filter (fun x => Nat.eqb (f x) R) l).
+Proof.
+  intros R l. induction l as [|x l IH]; intros H; cbn [filter length]; auto.
+  assert (Hx : f x <= R) by (apply H; now left).
+  rewrite IH by (intros; apply H; now right).
+  destruct (Nat.ltb_spec (f x) R); destruct (Nat.eqb_spec (f x) R); cbn [filter length]; lia.
+Qed.
+
+Lemma filter_lt_eq : forall (R r : nat) (l : list A), r < R ->
+  length (filter (fun x => Nat.eqb (f x) r) (filter (fun x => Nat.ltb (f x) R) l))
+  = length (filter (fun x => Nat.eqb (f x) r) l).
+Proof.
+  intros R r l Hr. induction l as [|x l IH]; cbn [filter length]; auto.
+  destruct (Nat.ltb_spec (f x) R); cbn [filter length];
+    destruct (Nat.eqb_spec (f x) r); cbn [filter length]; rewrite ?IH; lia.
+Qed.
+
+(* Some value r <= R is hit by at least |l|/(R+1) elements. *)
+Theorem pigeon : forall (R : nat) (l : list A),
+  (forall x, In x l -> f x <= R) ->
+  exists r, r <= R /\ length l <= S R * length (filter (fun x => Nat.eqb (f x) r) l).
+Proof.
+  induction R as [|R IH]; intros l H.
+  - exists 0. split; [lia|].
+    assert (length (filter (fun x => Nat.eqb (f x) 0) l) = length l).
+    { induction l as [|x l IHl]; cbn [filter length]; auto.
+      assert (f x = 0) by (pose proof (H x (or_introl eq_refl)); lia).
+      rewrite (proj2 (Nat.eqb_eq _ _) H0). cbn [filter length]. f_equal.
+      apply IHl; intros; apply H; now right. }
+    lia.
+  - pose proof (filter_split (S R) l H) as Hs.
+    set (B := length (filter (fun x => Nat.eqb (f x) (S R)) l)) in *.
+    set (lA := filter (fun x => Nat.ltb (f x) (S R)) l) in *.
+    destruct (Nat.le_gt_cases (length l) (S (S R) * B)) as [Hb|Hb].
+    + exists (S R). split; [lia|exact Hb].
+    + destruct (IH lA) as [r [Hr Hc]].
+      { intros x Hx. unfold lA in Hx. apply filter_In in Hx as [_ Hx].
+        apply Nat.ltb_lt in Hx. lia. }
+      exists r. split; [lia|].
+      unfold lA in *; rewrite filter_lt_eq in Hc by lia.
+      set (c := length (filter (fun x => Nat.eqb (f x) r) l)) in *.
+      set (a := length (filter (fun x => Nat.ltb (f x) (S R)) l)) in *.
+      assert (H1 : S R * B < S R * c) by nia.
+      apply Nat.mul_lt_mono_pos_l in H1; [|lia]. nia.
+Qed.
+End Pigeon.
+
+(* All digit vectors in [0,d)^K. *)
+Fixpoint allvec (K d : nat) : list (list Z) :=
+  match K with
+  | O => [[]]
+  | S K' => flat_map (fun x => map (cons x) (allvec K' d)) (map Z.of_nat (seq 0 d))
+  end.
+
+Lemma len_fm : forall (l : list Z) (V : list (list Z)),
+  length (flat_map (fun x => map (cons x) V) l) = (length l * length V)%nat.
+Proof.
+  induction l as [|x l IH]; intros V; cbn [flat_map length]; [lia|].
+  rewrite length_app, length_map, IH. lia.
+Qed.
+
+Lemma allvec_length : forall K d, length (allvec K d) = Nat.pow d K.
+Proof.
+  induction K as [|K IH]; intros d; cbn [allvec]; [reflexivity|].
+  rewrite len_fm, length_map, length_seq, IH. cbn [Nat.pow]. lia.
+Qed.
+
+Lemma allvec_in : forall K d a, In a (allvec K d) ->
+  length a = K /\ Forall (fun x => 0 <= x < Z.of_nat d) a.
+Proof.
+  induction K as [|K IH]; intros d a Ha; cbn in Ha.
+  - destruct Ha as [<-|[]]. split; auto.
+  - apply in_flat_map in Ha as [x [Hx Ha]]. apply in_map_iff in Ha as [a' [<- Ha']].
+    apply in_map_iff in Hx as [n [<- Hn]]. apply in_seq in Hn.
+    destruct (IH d a' Ha') as [L F]. split; cbn; [lia|]. constructor; auto. lia.
+Qed.
+
+Lemma dot_self_bound : forall a d, Forall (fun x => 0 <= x < d) a ->
+  dot a a <= Z.of_nat (length a) * (d - 1) * (d - 1).
+Proof.
+  induction a as [|x a IH]; intros d F; cbn [dot length]; [lia|].
+  inversion F; subst. specialize (IH d H2). rewrite Nat2Z.inj_succ. nia.
+Qed.
+
+(* Density: some sphere slice S_r of [0,d)^K has (K(d-1)^2 + 1) * |S_r| >= d^K,
+   and (sphere_digits_norel) every such slice satisfies NoRel once 4Ld < b. *)
+Theorem sphere_slice_large : forall K d, (1 <= d)%nat ->
+  exists r : Z, exists Sl : list (list Z),
+    (forall a, In a Sl -> length a = K /\ Forall (fun x => 0 <= x < Z.of_nat d) a /\ dot a a = r) /\
+    (Nat.pow d K <= S (K * (d - 1) * (d - 1)) * length Sl)%nat.
+Proof.
+  intros K d Hd.
+  set (R := (K * (d - 1) * (d - 1))%nat).
+  destruct (pigeon (list Z) (fun a => Z.to_nat (dot a a)) R (allvec K d)) as [r [Hr Hc]].
+  { intros a Ha. destruct (allvec_in K d a Ha) as [L F].
+    pose proof (dot_self_bound a (Z.of_nat d) F). pose proof (dot_self_nonneg a).
+    rewrite L in H. unfold R.
+    assert (Z.of_nat K * (Z.of_nat d - 1) * (Z.of_nat d - 1)
+            = Z.of_nat (K * (d - 1) * (d - 1))) by (rewrite !Nat2Z.inj_mul, Nat2Z.inj_sub by lia; lia).
+    lia. }
+  exists (Z.of_nat r), (filter (fun a => Nat.eqb (Z.to_nat (dot a a)) r) (allvec K d)).
+  split.
+  - intros a Ha. apply filter_In in Ha as [Ha He]. apply Nat.eqb_eq in He.
+    destruct (allvec_in K d a Ha) as [L F]. pose proof (dot_self_nonneg a).
+    repeat split; auto. lia.
+  - rewrite allvec_length in Hc. exact Hc.
+Qed.
+
+Print Assumptions sphere_slice_large.
