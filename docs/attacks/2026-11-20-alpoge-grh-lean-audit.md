@@ -214,3 +214,28 @@ results (Ehrhart, Navier–Stokes, Siegel), the timing, and personal matters.
 
 **SUMMARY (slice 5) ok 9 / warn 0 / bug 0 / open 2** (cost-of-lift "2/3"
 step not located; mirror-vs-archive hash still not checked)
+
+## Slice 6: where the slope inequality is supplied for the real chain (2026-11-20)
+
+Read from the mirror source @ `7cbf7a0`, statements and proof skeletons only.
+
+| link | finding | where |
+|---|---|---|
+| `ChainTied` producer | `linkCore` turns family-level properties into `ChainTied` at every large window point. The properties are `CountF`, `SlopesMF`, `SlopesNF`, `LatF`, `NodesF`, **`FrameF`**, `LossFS`, `CharF`, `WinF`, `ChosenTT/QD/Thin`, `LinkIRR` and `LinkDIV`. | `Formalism/SharpRestriction/GlobalSchurBounds/LossesSmallShares.lean:39` |
+| `SlopeIneq` source | Inside `linkCore`, `liftZP_newton : (M.data …).SlopeIneq := M.data_SlopeIneq … hfr`. `hfr` is unpacked from `FrameF` / `Frame_at`. `Frame_at D η e` is the slope inequality itself, stated per datum `D` (`s − log|Word| − (1−δ)⁻¹(4uF·log(1+HH/uF) + (η+4√e)HH) ≤ μ_dual`), with family-uniform `(etaB + 4√eB)·x^CH ≤ 6`. | `…/GlobalSchurBounds/QuadraticLogDerivCongr.lean:188, 258, 699` |
+| `FrameF` proof | `frameF_of` derives it from `FrameRealF` (archimedean frame data), `LatF` (lattices), `ChosenProviso`, `ChosenCode` and `NuFullF`. At the call site, `FrameRealF` comes from `frameRealF_of''`, which uses ramification-rank (`ramRankF_of`, crystalline comparison) and matrix-coefficient (`matKF_of`) inputs. | `…/GlobalSchurBounds/TopDensityNGeSixteen.lean:606`; call site `LossesSmallShares.lean` (end) |
+| theta inputs | The same call site discharges the slope bounds (`SlopesMF`) via `flipTwoThree.KudlaFamilyStatement` (theta norm, theta condition, stabiliser, injectivity, norm bound). Kudla is the theta-correspondence literature, consistent with remark timeline 8–10 (norms of lifts, divisibility). | `LossesSmallShares.lean`; `Formalism/SharpRestriction/LevelLetterCocycles/StatementFamilies/` |
+| naming check: `FamilyTheoremThreeAdmitted` | **Benign.** "Admitted" means *admissible representation* (`Adm3`), not Coq's `Admitted`. It is a `Prop` proved by `stabiliser_family_of_definite` from discrete-series lowest-K-type and Weyl-dimension inputs. | `…/StandardLattice.lean:621`; `…/TheoremThreeFamilyOfFormalDegreeInput.lean:118` |
+
+**Status of the trace.** The main line is now followed from `RiemannHypothesis`
+down to the point where the Bost-type slope inequality (`Frame_at`) is
+*proved* per datum from lattice, frame and ramification inputs. Below this
+point the development fans out into the bulk of the 17 M lines:
+theta-lift norms, Kudla-type statements, crystalline comparison and
+discrete-series formulas. A per-lemma trace from here is no longer a
+meaningful slice by hand. The remaining questions are global ones, answered
+by steps 7–9 (build, `#print axioms`, kernel replay), plus the author's
+promised write-up for the mathematics.
+
+**SUMMARY (slice 6) ok 4 / warn 0 / bug 0**. Cumulative static trace: no
+defect found. Verdict unchanged: **PASS-STATIC / PENDING** (steps 7–10).
