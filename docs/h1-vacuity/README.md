@@ -185,7 +185,10 @@ to 0 are all 0 (`eval_zero_digits`). Together they give
 `thick_set_exists` packages both into an integer analogue of the external
 `HostThickExists`, with polynomial instead of `exp(−C√…)` loss. `orbit_one`
 rebuilds `OrbitOne`: a short Frobenius orbit meets a thick translate at most
-once. `Print Assumptions` reports *Closed under the global
+once. `window_two` rebuilds `WindowTwo`: a long orbit has no three hits in a
+window of length `2L`. The forced relation `a(t₃−t₁) = b(t₂−t₁)` is exactly
+`NoRel`, i.e. collinearity. `thick_set_window_two` composes it with
+`thick_set_exists`. `Print Assumptions` reports *Closed under the global
 context*. It is not in `scripts/hunt_probe_smoke.sh`, which is the flocq lane.
 
 ```sh

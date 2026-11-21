@@ -393,3 +393,49 @@ orbits: at most 2 hits per window) is the remaining half, and it is where
 
 **SUMMARY (slice 11) ok 2 / warn 0 / bug 0**. Verdict unchanged:
 **PASS-STATIC / PENDING**.
+
+## Slice 12: Rocq rebuild of `WindowTwo`, composed with the sphere set (2026-11-21)
+
+**Lean type** (`Formalism/BehrendSets/Statement.lean`):
+`WindowTwo : (∀ t ∈ T, 8Lt < n) → BehrendFree (2L) T → 2L < addOrderOf h → #{i ∈ [j, j+2L) : t₀ + i•h ∈ thick n T u} ≤ 2`.
+
+**Integer form proved** (`SphereNoRelQED.v : window_two`): no three indices
+`j ≤ i₁ < i₂ < i₃ < j+2L` all land in `T + u (mod n)`. Hypotheses:
+- `0 ≤ t` and `8Lt < n` on `T`;
+- **`NoRel` at coefficient size `2L`**, in place of `BehrendFree (2L)`;
+- `a·h ≢ 0 (mod n)` for `0 < a ≤ 2L`, which is `2L < addOrderOf h`.
+
+**Proof.**
+- Three hits give `n ∣ a(t₃−t₁) − b(t₂−t₁)` with `a = i₂−i₁ < b = i₃−i₁ < 2L`.
+- The size bounds give `|·| < n`, so `a(t₃−t₁) = b(t₂−t₁)`.
+- If the `t`'s are distinct, that is a `NoRel` relation (collinearity),
+  which contradicts the hypothesis.
+- If two `t`'s are equal, then `n ∣ a·h` or `n ∣ b·h`, which contradicts the
+  order of `h`.
+
+**Finding.** Lean's `WindowTwo` assumes `BehrendFree`. The relation it needs
+to exclude is exactly the `NoRel` relation (`j(s₂−s₁) = i(s₃−s₁)`), which is
+what `HostThickExists` actually produces. This rebuild shows `NoRel` suffices.
+
+**Composition** (`thick_set_window_two`). The sphere set of
+`thick_set_exists`, built with coefficient bound `2L`, has
+`d^K ≤ (K(d−1)²+1)·|T|` and satisfies the `WindowTwo` conclusion for every
+`n` with `8Lt < n` and every `h` of order `> 2L`. *Closed under the global
+context.*
+
+| Rocq theorem | OUTCOME |
+|---|---|
+| `window_two` | **QED, zero axioms** |
+| `thick_set_window_two` (sphere set ⇒ window-two) | **QED, zero axioms** |
+
+**Status of the Behrend collision layer.** It is now rebuilt end to end in
+Rocq, with zero axioms:
+1. existence with polynomial density (`thick_set_exists`);
+2. short orbits hit at most once (`orbit_one`);
+3. long orbits hit at most twice per window (`window_two`).
+
+The remaining definitional translations are orbit = coset and
+card ≤ 2 = no three distinct.
+
+**SUMMARY (slice 12) ok 2 / warn 0 / bug 0**. Verdict unchanged:
+**PASS-STATIC / PENDING**.

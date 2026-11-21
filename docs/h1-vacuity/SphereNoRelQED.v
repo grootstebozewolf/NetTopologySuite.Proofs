@@ -486,3 +486,104 @@ Proof.
 Qed.
 
 Print Assumptions orbit_one.
+
+(* ============================================================================
+   WindowTwo (Formalism/BehrendSets/Statement.lean):
+     (∀ t ∈ T, 8 L t < n) -> BehrendFree (2L) T -> 2L < addOrderOf h ->
+     ∀ j, #{ i ∈ [j, j+2L) : t0 + i•h ∈ thick n T u } ≤ 2
+   Integer form proved here: no THREE indices j ≤ i1 < i2 < i3 < j+2L all hit
+   T + u (mod n).  ("card ≤ 2" is "no three distinct", a finset translation.)
+   Hypothesis used: NoRel at coefficient size 2L -- the condition that the
+   external HostThickExists produces and that thick_set_exists (with L := 2L)
+   provides -- instead of BehrendFree: the forced relation is exactly
+     a*(t3 - t1) = b*(t2 - t1),  a = i2 - i1 < b = i3 - i1 < 2L,
+   i.e. three COLLINEAR digit vectors.
+   ========================================================================== *)
+
+Definition NoRelZ (T : Z -> Prop) (K : Z) : Prop :=
+  forall s1 s2 s3 i j, T s1 -> T s2 -> T s3 -> s1 <> s2 -> s1 <> s3 -> s2 <> s3 ->
+    0 < Z.abs i -> Z.abs i <= K -> 0 < Z.abs j -> Z.abs j <= K -> i <> j ->
+    j * (s2 - s1) <> i * (s3 - s1).
+
+Theorem window_two : forall (n L h u t0 : Z) (T : Z -> Prop),
+  0 < n -> 0 < L ->
+  (forall t, T t -> 0 <= t /\ 8 * L * t < n) ->
+  NoRelZ T (2 * L) ->
+  (forall a, 0 < a <= 2 * L -> ~ (n | a * h)) ->          (* 2L < addOrderOf h *)
+  forall j i1 i2 i3 t1 t2 t3,
+    j <= i1 -> i1 < i2 -> i2 < i3 -> i3 < j + 2 * L ->
+    T t1 -> T t2 -> T t3 ->
+    (n | t0 + i1 * h - (t1 + u)) -> (n | t0 + i2 * h - (t2 + u)) -> (n | t0 + i3 * h - (t3 + u)) ->
+    False.
+Proof.
+  intros n L h u t0 T Hn HL HT HNR Hord j i1 i2 i3 t1 t2 t3 Hj1 H12 H23 H3 T1 T2 T3 E1 E2 E3.
+  set (a := i2 - i1). set (b := i3 - i1).
+  assert (Ha : 0 < a < 2 * L) by (unfold a; lia).
+  assert (Hb : a < b < 2 * L) by (unfold a, b; lia).
+  (* D1 : n | a*h - (t2 - t1),  D2 : n | b*h - (t3 - t1) *)
+  assert (D1 : (n | a * h - (t2 - t1))).
+  { replace (a * h - (t2 - t1)) with ((t0 + i2 * h - (t2 + u)) - (t0 + i1 * h - (t1 + u)))
+      by (unfold a; ring). now apply Z.divide_sub_r. }
+  assert (D2 : (n | b * h - (t3 - t1))).
+  { replace (b * h - (t3 - t1)) with ((t0 + i3 * h - (t3 + u)) - (t0 + i1 * h - (t1 + u)))
+      by (unfold b; ring). now apply Z.divide_sub_r. }
+  (* n | E := a*(t3 - t1) - b*(t2 - t1) *)
+  assert (DE : (n | a * (t3 - t1) - b * (t2 - t1))).
+  { replace (a * (t3 - t1) - b * (t2 - t1)) with (b * (a * h - (t2 - t1)) - a * (b * h - (t3 - t1)))
+      by ring.
+    apply Z.divide_sub_r; now apply Z.divide_mul_r. }
+  destruct (HT t1 T1) as [P1 B1]. destruct (HT t2 T2) as [P2 B2]. destruct (HT t3 T3) as [P3 B3].
+  (* |E| < n, so E = 0 *)
+  assert (Up : 8 * L * (a * (t3 - t1) - b * (t2 - t1)) < n * b).
+  { assert (8 * L * (a * t3) <= a * n) by nia.
+    assert (0 <= 8 * L * ((b - a) * t1)) by nia.
+    assert (0 <= 8 * L * (b * t2)) by nia.
+    nia. }
+  assert (Lo : - (n * b) < 8 * L * (a * (t3 - t1) - b * (t2 - t1))).
+  { assert (8 * L * (b * t2) <= b * n) by nia.
+    assert (8 * L * ((b - a) * t1) <= (b - a) * n) by nia.
+    nia. }
+  assert (EZ : a * (t3 - t1) - b * (t2 - t1) = 0).
+  { destruct DE as [c Hc]. rewrite Hc in Up, Lo.
+    assert (c * (8 * L) < b) by nia. assert (- b < c * (8 * L)) by nia.
+    assert (c = 0) by nia. subst c. lia. }
+  (* collinearity: distinct t's contradict NoRel; equal t's contradict the order of h *)
+  destruct (Z.eq_dec t1 t2) as [e12|n12].
+  - apply (Hord a); [lia|]. rewrite e12 in D1. now replace (a * h) with (a * h - (t2 - t2)) by ring.
+  - destruct (Z.eq_dec t1 t3) as [e13|n13].
+    + apply (Hord b); [lia|]. rewrite e13 in D2. now replace (b * h) with (b * h - (t3 - t3)) by ring.
+    + destruct (Z.eq_dec t2 t3) as [e23|n23].
+      * subst t3. apply n12. assert ((a - b) * (t2 - t1) = 0) by lia.
+        apply Z.mul_eq_0 in H as [H|H]; lia.
+      * apply (HNR t1 t2 t3 a b T1 T2 T3 n12 n13 n23); try (rewrite ?Z.abs_eq; lia).
+Qed.
+
+Print Assumptions window_two.
+
+(* The sphere set of thick_set_exists, built with coefficient bound 2L, satisfies
+   the WindowTwo conclusion: composition of the two rebuilt lemmas. *)
+Corollary thick_set_window_two : forall (L : Z) (K d : nat) (b : Z),
+  (1 <= d)%nat -> 1 <= L -> 4 * (2 * L) * Z.of_nat d < b ->
+  exists T : list Z,
+    (Nat.pow d K <= S (K * (d - 1) * (d - 1)) * length T)%nat /\
+    forall (n h u t0 : Z), 0 < n -> (forall t, In t T -> 8 * L * t < n) ->
+      (forall a, 0 < a <= 2 * L -> ~ (n | a * h)) ->
+      forall j i1 i2 i3 t1 t2 t3,
+        j <= i1 -> i1 < i2 -> i2 < i3 -> i3 < j + 2 * L ->
+        In t1 T -> In t2 T -> In t3 T ->
+        (n | t0 + i1 * h - (t1 + u)) -> (n | t0 + i2 * h - (t2 + u)) ->
+        (n | t0 + i3 * h - (t3 + u)) -> False.
+Proof.
+  intros L K d b Hd HL Hb.
+  destruct (thick_set_exists (2 * L) K d b Hd ltac:(lia) Hb) as [T [_ [Hrange [HNR Hc]]]].
+  exists T. split; [exact Hc|].
+  intros n h u t0 Hn HTn Hord.
+  assert (HT' : forall t, In t T -> 0 <= t /\ 8 * L * t < n)
+    by (intros t Ht; split; [apply (Hrange t Ht) | apply HTn, Ht]).
+  assert (HNR' : NoRelZ (fun t => In t T) (2 * L)).
+  { intros s1 s2 s3 i j H1 H2 H3 N12 N13 N23 Hi1 Hi2 Hj1 Hj2 Hij.
+    exact (HNR s1 s2 s3 i j H1 H2 H3 N12 N13 N23 Hi1 Hi2 Hj1 Hj2 Hij). }
+  exact (window_two n L h u t0 (fun t => In t T) Hn ltac:(lia) HT' HNR' Hord).
+Qed.
+
+Print Assumptions thick_set_window_two.
