@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-21
 Provenance: ebe823e
-Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`, `MarkushevichBoundQEX.v : block_qex`, `MarkushevichBoundQEX.v : no_uniform_bound`
+Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`, `MarkushevichBoundQEX.v : block_qex`, `MarkushevichBoundQEX.v : no_uniform_bound`, `MarkushevichBoundQEX.v : small_gap`, `MarkushevichBoundQEX.v : psi_unbounded`
 -->
 # Masullo's GRH draft ("The Music of the Primes") against the Alpöge main line
 
@@ -274,3 +274,22 @@ This sharpens the publicly reported p. 444 objection. The failing inference is
 used, at the parameter where the Trace Formula is computed, in the
 nuclearity estimate that feeds the spectral side. Whether the proof can be
 mended is a question for specialists.
+
+## Slice 5: the slice-4 chain formalized, modulo named analytic inputs (2026-11-21)
+
+`MarkushevichBoundQEX.v` (Stdlib, `Q`), *Closed under the global context*:
+
+| Rocq theorem | statement | OUTCOME |
+|---|---|---|
+| `small_gap` | pigeonhole: a strictly increasing list `x₀ < … < x_n` in `[0, T]` with `T < n·g` has a consecutive gap `≤ g` | **QED, zero axioms**, no hypotheses |
+| `psi_unbounded` | given (ii) biorthogonality `⟨ψ_t, η_t⟩ = 1` and `⟨ψ_t, η_{t'}⟩ = 0` on the zero set, (iii) uniform continuity of `t ↦ η_t` in `N`, and (iv) Selberg-type density (for every `K`, increasing zero ordinates in `[0, T]` with `n > K·T`), **no `B > 0` bounds all `⟨ψ_t, ·⟩` by `B·N`** | **QED, zero axioms** (conditional on (ii)–(iv) as section hypotheses) |
+
+This replaces slice 4's steps (iv)–(v) by a proof. The remaining trusted
+inputs are exactly:
+- **(ii):** biorthogonality, which is Theorem 10.2.1.1 of the draft itself;
+- **(iii):** the dominated-convergence estimate for `‖η_t − η_{t'}‖_{−s,2}`,
+  `s > 1`;
+- **(iv):** Selberg's `N₀(T) ≫ T log T` for `ζ` on the critical line, which
+  makes the count beat `K·T` for every `K`.
+
+**SUMMARY (slice 5) ok 2 / warn 0 / bug 0.**

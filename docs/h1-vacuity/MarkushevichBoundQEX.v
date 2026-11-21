@@ -115,3 +115,121 @@ Qed.
 End ClosePair.
 
 Print Assumptions no_uniform_bound.
+
+(* ============================================================================
+   Slice 4 chain, formalized modulo named analytic inputs:
+     (iv)  Selberg-type density: for every K there is a strictly increasing
+           list of zero ordinates in [0, T] of length n with n - 1 > K * T
+           (true for zeta on Re s = 1/2: N_0(T) >> T log T)          [hypothesis]
+     (iii) uniform continuity of t |-> eta_t in ||.||_{-s,2}           [hypothesis]
+     (ii)  biorthogonality of (psi_t, eta_t) over the zero set          [hypothesis]
+   Proved: a pigeonhole gap lemma, and that no uniform bound B on the
+   functionals psi_t (the C of Masullo (10.3.1.18)) can exist.
+   ========================================================================== *)
+From Stdlib Require Import List ZArith.
+Import ListNotations.
+
+(* consecutive gaps all > g  =>  last - first > (length - 1) * g *)
+Fixpoint gaps_gt (g : Q) (l : list Q) : Prop :=
+  match l with
+  | x :: ((y :: _) as tl) => g < y - x /\ gaps_gt g tl
+  | _ => True
+  end.
+
+Fixpoint lastQ (d : Q) (l : list Q) : Q :=
+  match l with
+  | [] => d
+  | [x] => x
+  | _ :: tl => lastQ d tl
+  end.
+
+Lemma lastQ_indep : forall l d d' x, lastQ d (x :: l) = lastQ d' (x :: l).
+Proof.
+  induction l as [|y l IH]; intros d d' x; [reflexivity|].
+  change (lastQ d (x :: y :: l)) with (lastQ d (y :: l)).
+  change (lastQ d' (x :: y :: l)) with (lastQ d' (y :: l)).
+  apply IH.
+Qed.
+
+Lemma gaps_sum : forall g l x, 0 <= g -> gaps_gt g (x :: l) ->
+  inject_Z (Z.of_nat (length l)) * g <= lastQ x (x :: l) - x.
+Proof.
+  intros g l. induction l as [|y l IH]; intros x Hg H.
+  - change (lastQ x [x]) with x.
+    setoid_replace (inject_Z (Z.of_nat (length (@nil Q))) * g) with 0 by (cbn; ring). lra.
+  - destruct H as [Hxy Htl].
+    specialize (IH y Hg Htl).
+    assert (Hlast : lastQ x (x :: y :: l) = lastQ y (y :: l)).
+    { change (lastQ x (x :: y :: l)) with (lastQ x (y :: l)). apply lastQ_indep. }
+    rewrite Hlast.
+    replace (length (y :: l)) with (S (length l)) by reflexivity.
+    rewrite Nat2Z.inj_succ, <- Z.add_1_r, inject_Z_plus.
+    change (inject_Z 1) with 1. lra.
+Qed.
+
+(* pigeonhole: n points increasing in [0,T], n >= 2  =>  some gap <= T/(n-1) *)
+Theorem small_gap : forall (l : list Q) (x : Q) (T g : Q),
+  0 <= x -> lastQ x (x :: l) <= T -> 0 <= g ->
+  T < inject_Z (Z.of_nat (length l)) * g ->
+  ~ gaps_gt g (x :: l).
+Proof.
+  intros l x T g Hx HT Hg Hn H. pose proof (gaps_sum g l x Hg H). lra.
+Qed.
+
+Section Chain.
+Variable V : Type.
+Variable sub : V -> V -> V.
+Variable N : V -> Q.
+Variable eta : Q -> V.                        (* t |-> eta_t *)
+Variable psi : Q -> V -> Q.                   (* t |-> <psi_t, .> *)
+Variable Zt : Q -> Prop.                      (* t is a zero ordinate on the line *)
+Hypothesis psi_sub : forall t x y, psi t (sub x y) == psi t x - psi t y.
+Hypothesis bio1 : forall t, Zt t -> psi t (eta t) == 1.
+Hypothesis bio0 : forall t t', Zt t -> Zt t' -> ~ t == t' -> psi t (eta t') == 0.
+(* (iii) uniform continuity *)
+Hypothesis eta_cont : forall delta, 0 < delta -> exists gam, 0 < gam /\
+  forall t t', Qabs (t - t') < gam -> N (sub (eta t) (eta t')) < delta.
+(* (iv) Selberg-type density, as increasing lists of zero ordinates *)
+Hypothesis dense_zeros : forall K, 0 < K -> exists (x : Q) (l : list Q) (T : Q),
+  0 <= x /\ lastQ x (x :: l) <= T /\ Forall Zt (x :: l) /\ T < inject_Z (Z.of_nat (length l)) * (/ K) /\
+  (* strictly increasing *) gaps_gt 0 (x :: l).
+
+(* from a list with no gap > g, extract a consecutive pair with 0 < gap <= g *)
+Lemma pick_pair : forall g l x, Forall Zt (x :: l) -> gaps_gt 0 (x :: l) -> ~ gaps_gt g (x :: l) ->
+  exists t t', Zt t /\ Zt t' /\ 0 < t' - t /\ t' - t <= g.
+Proof.
+  intros g l. induction l as [|y l IH]; intros x HZ Hpos Hng.
+  - exfalso. apply Hng. exact I.
+  - destruct Hpos as [Hxy Hpos']. inversion HZ as [|? ? Zx HZ']; subst.
+    destruct (Qlt_le_dec g (y - x)) as [Hbig|Hsmall].
+    + apply (IH y); auto. intros Htl. apply Hng. split; assumption.
+    + exists x, y. inversion HZ'; subst. repeat split; auto.
+Qed.
+
+Theorem psi_unbounded : forall B, 0 < B -> ~ (forall t v, Zt t -> Qabs (psi t v) <= B * N v).
+Proof.
+  intros B HB Hbound.
+  destruct (eta_cont (/ (B + B)) ltac:(apply Qinv_lt_0_compat; lra)) as [gam [Hgam Hc]].
+  destruct (dense_zeros (/ (gam * (1 # 2))) ltac:(apply Qinv_lt_0_compat; lra))
+    as [x [l [T [Hx [HT [HZ [Hn Hinc]]]]]]].
+  assert (Hg : / / (gam * (1 # 2)) == gam * (1 # 2)) by (apply Qinv_involutive).
+  rewrite Hg in Hn.
+  pose proof (small_gap l x T (gam * (1 # 2)) Hx HT ltac:(lra) Hn) as Hng.
+  destruct (pick_pair (gam * (1 # 2)) l x HZ Hinc Hng) as [t [t' [Zt1 [Zt2 [Hp Hle]]]]].
+  (* ||psi_t|| >= 1 / N(eta_t - eta_t'), as in close_pair_lower *)
+  assert (Hne : ~ t == t') by (intros E; rewrite E in Hp; lra).
+  pose proof (Hbound t (sub (eta t) (eta t')) Zt1) as Hb.
+  rewrite psi_sub, (bio1 t Zt1), (bio0 t t' Zt1 Zt2 Hne) in Hb.
+  assert (E : Qabs (1 - 0) == 1) by reflexivity. rewrite E in Hb.
+  (* but N(eta_t - eta_t') < 1/(2B) since |t - t'| <= gam/2 < gam *)
+  assert (Hd : Qabs (t - t') < gam).
+  { rewrite Qabs_neg by lra. lra. }
+  pose proof (Hc t t' Hd) as HN.
+  assert (B * N (sub (eta t) (eta t')) < B * / (B + B)) by (apply Qmult_lt_l; lra).
+  assert (B * / (B + B) == 1 # 2) by (field; intros Z; lra).
+  lra.
+Qed.
+End Chain.
+
+Print Assumptions small_gap.
+Print Assumptions psi_unbounded.
