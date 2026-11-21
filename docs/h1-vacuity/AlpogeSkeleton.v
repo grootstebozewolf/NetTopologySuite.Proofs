@@ -39,7 +39,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -199,3 +199,18 @@ Proof.
   repeat constructor; simpl; intuition discriminate.
 Qed.
 Print Assumptions next_twelve_proved_are_refined.
+
+(* ---- four UNREFINED items, now STATED in Rocq (no proofs;
+        AlpogeDeepStatements.v), within the allowlist ---- *)
+Check AlpogeDeepStatements.TopG.
+Check AlpogeDeepStatements.HostExW.
+Check AlpogeDeepStatements.poleData_statement.
+Check AlpogeDeepStatements.landau_pole_asym_statement.
+
+Definition stated4 : list string :=
+  [ "TopG (shapeWin, from GLq.Green)"; "HostExW (supplyChi, VWin)"; "poleData"; "landau_pole_asym" ].
+
+Theorem stated_four_are_unrefined_items :
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (negb (snd t))) ledger) stated4) true.
+Proof. vm_compute. reflexivity. Qed.
+Print Assumptions stated_four_are_unrefined_items.

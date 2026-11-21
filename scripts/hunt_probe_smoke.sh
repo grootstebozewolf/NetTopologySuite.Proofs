@@ -69,6 +69,7 @@ PROBES=(
   docs/h1-vacuity/AlpogeRefineBatch.v
   docs/h1-vacuity/AlpogeRealsQED.v
   docs/h1-vacuity/AlpogeRealsQED2.v
+  docs/h1-vacuity/AlpogeDeepStatements.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 
