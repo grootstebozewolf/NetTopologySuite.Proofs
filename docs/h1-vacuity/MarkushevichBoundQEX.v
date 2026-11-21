@@ -10,14 +10,16 @@
    The draft uses the conclusion (bounded bi-orthogonal sequence, uniform C)
    on p. 451 (§10.3) and p. 468 (§10.4.3, spectral side of the Trace Formula).
 
-   Proved here (Stdlib, Q only, no hypotheses):
+   Proved here (Stdlib, Q only; block_qex has no hypotheses beyond 0 <= B,
+   the corollaries sit under the section parameters they name):
      block_qex       : in Q^2 with the Euclidean inner product, for every bound B
                        there is a biorthogonal pair (x1,x2),(f1,f2) with
                        1 <= |x_i|^2 <= 2 but f2(e2) = B + 1 on the unit vector e2.
-                       The l^2 direct sum of such blocks (eps_k -> 0) is a
-                       bounded, regular Markushevich basis of l^2 with unbounded
-                       {f_m}: the inference is FALSE in general.  (Assembling the
-                       direct sum is standard and not re-proved.)
+                       This is a LOCAL obstruction: one biorthogonal pair per B.
+                       The l^2 direct sum of such blocks (eps_k -> 0) would be a
+                       bounded, regular Markushevich basis with unbounded {f_m},
+                       i.e. a counterexample to the inference; that assembly is
+                       standard but NOT re-proved here.
      close_pair_lower: abstract lemma -- if f(x) = 1, f(x') = 0 and
                        |f(v)| <= B * N(v), then 1 <= B * N(x - x').  Hence a
                        biorthogonal system containing pairs at arbitrarily small

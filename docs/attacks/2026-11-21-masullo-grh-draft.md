@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-21
-Provenance: ebe823e
+Provenance: 0a8eb14
 Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`, `MarkushevichBoundQEX.v : block_qex`, `MarkushevichBoundQEX.v : no_uniform_bound`, `MarkushevichBoundQEX.v : small_gap`, `MarkushevichBoundQEX.v : psi_unbounded`
 -->
 # Masullo's GRH draft ("The Music of the Primes") against the Alpöge main line
@@ -335,3 +335,23 @@ matches slices 3–5 step for step:
   (10.3.1.18) was reported upstream first, in #1169.
 
 **SUMMARY (slice 6) ok 1 / warn 1 (precedence: the gap is upstream #1169; this finding is a reproduction with Rocq cores) / bug 0.**
+
+## Slice 7: wording corrections from the Cursor reviews (2026-11-21)
+
+The earlier text is kept for history. These readings replace it:
+
+| where | earlier wording | corrected reading |
+|---|---|---|
+| Status / SUMMARY | "the main theorem is publicly disputed" | Concerns are **reported** (Lean Zulip thread, details not posted; news coverage of the p. 444 objection). They were **not read here**, except that slices 3–6 later checked p. 444 against the text layer. |
+| comparison table, reading | Alpöge "proves" the growth bound; the claim is "machine-checkable but unread" | Alpöge's development **claims** the one-sided bound in a form a kernel could check. This repo's audit is **PASS-STATIC / PENDING**: it was not built, and `#print axioms` was not run. |
+| reading | "Connes showed that a trace formula of this kind is equivalent to RH" | Background **not verified in this finding**. It is a recollection of Connes (1999), cited as context. |
+| slice 3 | "`block_qex` … the inference is false in general" | `block_qex` is a **local obstruction** (one biorthogonal pair per bound `B`). The ℓ² direct sum that would be a counterexample basis is standard but **not compiled**. |
+| slice 3 | "independently confirms … genuine gap" | What is confirmed: the text-layer quotation of p. 444 matches, and "regular ⇒ `{f_m}` bounded" fails for Markushevich bases (modulo the uncompiled assembly). That pp. 451/468 inherit the gap is the slices 4–5 **argument**, and it was first reported upstream in #1169. |
+| probe header | `MarkushevichBoundQEX.v` "no hypotheses" | `block_qex` needs only `0 ≤ B`. `no_uniform_bound` and `psi_unbounded` sit under named section parameters (`fam_sub` / `fam_bound`; `psi_sub`, `bio1`/`bio0`, `eta_cont`, `dense_zeros`). |
+| slice 5 | `small_gap` "strictly increasing list" | `small_gap` assumes `0 ≤ x`, `last ≤ T`, `0 ≤ g` and `T < length(l)·g`, and concludes that not every gap exceeds `g`. Strict increase is part of `dense_zeros`, which `psi_unbounded` uses. |
+| slice 5 | trusted inputs "(ii)–(iv)" | Add `psi_sub` (additivity of `ψ_t`). `dense_zeros` asks for **distinct** ordinates with tail length `> K·T`. Selberg's or Conrey's counts must be read as counts of distinct ordinates; Conrey's simple zeros (as in #1169) give that directly. |
+| slice 4 | "the uniform-`C` step fails as stated" | This is the conclusion of an **argument**, not a compiled refutation of (10.3.1.18). Only `close_pair_lower` was machine-checked at the time; slice 5 then added `small_gap` and `psi_unbounded`, conditional on named inputs. |
+
+**SUMMARY (slice 7) ok 0 / warn 9 (wording corrected) / bug 0.**
+Unchanged: Theorem 12.5.1.1 is **READ / NOT ASSESSED**. The Alpöge audit is
+**PASS-STATIC / PENDING**. The (10.3.1.18) gap is upstream #1169.
