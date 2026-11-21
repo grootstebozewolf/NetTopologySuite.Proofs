@@ -498,3 +498,48 @@ via `lseries_re`). That is the logarithmic derivative of an **Euler product**.
 A function with only a functional equation has no such von Mangoldt
 expansion, so `Gz` / `Gchi` would not be its Mellin partners, and the step
 from the one-sided bound to zero-freeness would not start.
+
+## Slice 14: Rocq rebuild of the √X balance `GrowthSizeBound` (2026-11-21)
+
+**Lean** (`Formalism/SizeWindowBrackets/GrowthBoundGivesRiemannHypothesis.lean:119`,
+proved as `proposition_size_bound`,
+`…/ChainSlopeWindows/LipschitzWeightAndMinimum.lean:507`):
+`SizeWindows C ε x n nT nT2 m b k aE Err → nT·m·b·((nT2/n)/2)·(Gx − 4x^(1/2+ε)) ≤ Err + 2nT·m·b/x → Gx ≤ x^(1/2+(C+3)ε)`.
+
+This is the lemma that **forces** `m ≈ √x`. After dividing by the main term
+`D = nT·m·b·(nT2/n)`, the error splits into:
+
+| term | size | constraint it needs |
+|---|---|---|
+| `aE`-term `c·nT·aE(1 + m²/k)` | `≈ x^(Cε)·x/m` | `m ≥ x^(1/2−ε)`, i.e. `s ≤ e·m` |
+| `2nmb`-term `c·m·2n·m·b·x^ε` | `≈ x^(Cε)·m` | `m ≤ x^(1/2+ε/2)`, i.e. `m ≤ s·e₂` |
+| `q₂`-term (`nT2·k·b`…) | `≈ x^(Cε)·x^(1/2+…)` | `k ≤ n²·x^(1/2−ε)` |
+| `2nT·m·b/x` | `≈ x^ε/x` | (small) |
+
+Both of the first two terms are `x^(1/2+O(ε))` only when `m = x^(1/2±O(ε))`.
+This is the formal content of the remark's "length of chain … √X (And yet,
+what else could it be?)".
+
+**Rocq** (`LeanSkeletonRebuild.v`, Part 4, `growth_size_bound`). Over `Q`,
+with exponential atoms `s = x^(1/2)`, `e = x^ε`, `e₂ = x^(ε/2)`,
+`e₈ = x^(ε/8)`, `c = x^(Cε)`. The target is
+`x^(1/2+(C+3)ε) = e₈³·(s·c·e²·e₂·e₈)`. Divisions are named quotients
+(`q₁ = m²/k`, `q₂`, `ρ = nT2/n`, `w = 1/x`). Every `SizeWindows` conjunct
+appears as a hypothesis, **including Lean's `26 ≤ x^(3ε/8)`**. The bound is
+assembled as `4 + 8 + 8 + 4 + 4/3 = 25⅓ ≤ 26`. *Closed under the global
+context.*
+
+| Rocq theorem | OUTCOME |
+|---|---|
+| `growth_size_bound` | **QED, zero axioms** |
+
+The **translation** (not re-proved) is the exponent algebra
+`x^(a+b) = x^a·x^b` and monotonicity of `x^·` for `x ≥ 3`. That is how
+`SizeWindows`' real powers become the atoms.
+
+**SUMMARY (slice 14) ok 1 / warn 0 / bug 0**. Verdict unchanged:
+**PASS-STATIC / PENDING**. The main line now has Rocq rebuilds of:
+the √X balance (14), the definite sign (13), the ε-selection and reflection
+(8), the tower order laws (9–11) and the thick-set layer (root-only ticket,
+12). The Mathlib analysis and the slope/theta content of `ch_top` /
+`Frame_at` remain trusted.

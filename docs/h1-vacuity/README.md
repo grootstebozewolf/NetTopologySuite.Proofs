@@ -204,7 +204,10 @@ section hypotheses, each named after the Lean/Mathlib declaration it mirrors.
 `level_of_tiedWin`). `no_real_zero_right_of_theta` re-proves the definite-sign
 step of `landau_entire`: with `H ≥ 0`, the Mellin transform
 `M(σ) = (P'/P − …)/(σ(σ−1)) + C/(σ−θ) ≥ 0`, and since `σ(σ−1) < 0` in the strip
-this rules out a real zero. Both are *Closed under the global context*: zero axioms,
+this rules out a real zero. `growth_size_bound` re-proves `GrowthSizeBound`,
+the √X balance. From the `SizeWindows` constraints and the main inequality it
+gives `Gx ≤ x^(1/2+(C+3)ε)`, with the same `26 ≤ x^(3ε/8)` constant as Lean
+(term coefficients 4 + 8 + 8 + 4 + 4/3 ≤ 26). Both are *Closed under the global context*: zero axioms,
 under Lean's three-axiom budget.
 
 ```sh

@@ -250,3 +250,193 @@ Qed.
 End DefiniteSign.
 
 Print Assumptions no_real_zero_right_of_theta.
+
+(* ============================================================================
+   Part 4.  The sqrt(X) BALANCE: GrowthSizeBound
+   (Formalism/SizeWindowBrackets/GrowthBoundGivesRiemannHypothesis.lean:119,
+    proved in .../ChainSlopeWindows/LipschitzWeightAndMinimum.lean:507).
+
+   Lean:  SizeWindows C ε x n nT nT2 m b k aE Err ->
+          nT*m*b*((nT2/n)/2)*(Gx - 4 x^(1/2+ε)) <= Err + 2 nT m b / x ->
+          Gx <= x^(1/2 + (C+3) ε)
+
+   Translation to exponential atoms (x^(a+b) = x^a x^b; monotone since x >= 3):
+     s = x^(1/2)   (x = s^2),  e = x^ε,  e2 = x^(ε/2) (e2^2 = e),  e8 = x^(ε/8),
+     c = x^(Cε) >= 1,   target  x^(1/2+(C+3)ε) = e8^3 * (s c e^2 e2 e8).
+   Divisions become named quotients: q1 = m^2/k, q2 = nT2 k b x^ε/(n (n x^-ε)),
+   rho = nT2/n, w = 1/x.  SizeWindows' conjuncts become:
+     aE <= 2 s^2 b;  n <= 2 e8 nT;  1 <= e rho;  s <= e m;  m <= s e2;
+     s^2 m <= k;  e k <= n^2 s;  Err <= c (nT aE (1+q1) + m (2 n m b e + q2));
+     26 <= e8^3.
+   The two error terms that force m ~ sqrt x:
+     aE-term   ~ x/m  -> needs m >= x^(1/2)    (s <= e m)
+     2nmb-term ~ m    -> needs m <= x^(1/2)    (m <= s e2)
+   ========================================================================== *)
+Lemma ge1_mul : forall a b : Q, 1 <= a -> 1 <= b -> 1 <= a * b.
+Proof. intros; nra. Qed.
+
+Lemma le_mul_ge1 : forall x z : Q, 0 <= x -> 1 <= z -> x <= x * z.
+Proof. intros; nra. Qed.
+
+Lemma mul_le_l : forall x y z : Q, 0 <= z -> x <= y -> z * x <= z * y.
+Proof.
+  intros x y z Hz H. rewrite (Qmult_comm z x), (Qmult_comm z y).
+  apply Qmult_le_compat_r; assumption.
+Qed.
+
+Section Balance.
+
+Variables s e e2 e8 c b n nT nT2 m k aE Err Gx q1 q2 rho w : Q.
+Hypothesis Hs : 1 <= s.
+Hypothesis Hs3 : 3 <= s * s.
+Hypothesis He : 1 <= e.
+Hypothesis He2 : 1 <= e2.
+Hypothesis He8 : 1 <= e8.
+Hypothesis Hc : 1 <= c.
+Hypothesis H26 : 26 <= e8 * e8 * e8.
+Hypothesis Hb : 0 < b.
+Hypothesis Hn : 0 < n.
+Hypothesis HaE0 : 0 <= aE.
+Hypothesis HaE : aE <= 2 * (s * s) * b.
+Hypothesis HnT : n <= 2 * e8 * nT.
+Hypothesis Hrho : rho * n == nT2.
+Hypothesis Hrho1 : 1 <= e * rho.
+Hypothesis Hm1 : s <= e * m.
+Hypothesis Hm2 : m <= s * e2.
+Hypothesis Hk1 : s * s * m <= k.
+Hypothesis Hk2 : e * k <= n * n * s.
+Hypothesis Hq1 : q1 * k == m * m.
+Hypothesis Hq2 : q2 * (n * n) == nT2 * k * b * (e * e).
+Hypothesis HErr : Err <= c * (nT * aE * (1 + q1) + m * (2 * n * m * b * e + q2)).
+Hypothesis Hw : w * (s * s) == 1.
+Hypothesis Hmain : nT * m * b * rho * (Gx - 4 * s * e) <= 2 * Err + 4 * nT * m * b * w.
+
+Theorem growth_size_bound :
+  Gx <= e8 * e8 * e8 * (s * c * (e * e) * e2 * e8).
+Proof.
+  (* positivity *)
+  assert (Hrho0 : 0 < rho) by nra.
+  assert (Hm0 : 0 < m) by nra.
+  assert (HnT0 : 0 < nT) by nra.
+  assert (Hk0 : 0 < k) by nra.
+  assert (Hq10 : 0 <= q1) by nra.
+  assert (Hw0 : 0 < w) by nra.
+  assert (Hw3 : w <= 1 # 3) by nra.
+  set (D := nT * m * b * rho).
+  assert (HD : 0 < D) by (unfold D; repeat apply Qmult_lt_0_compat; lra).
+  set (T := s * c * (e * e) * e2 * e8).
+  assert (HT : 0 < T) by (unfold T; repeat apply Qmult_lt_0_compat; lra).
+  (* (i) aE-term:  2 c nT aE (1+q1) <= D * (8 c e^2 s) *)
+  assert (I1 : q1 * (s * s) <= m).
+  { assert (q1 * (s * s * m) <= q1 * k) by nra.
+    assert (q1 * (s * s) * m <= m * m) by nra. nra. }
+  assert (I2 : aE * (1 + q1) <= 2 * b * (s * s + m)).
+  { assert (aE * (1 + q1) <= 2 * (s * s) * b * (1 + q1)) by nra. nra. }
+  assert (I3 : s * s + m <= 2 * e * m * s) by nra.
+  assert (A1 : aE * (1 + q1) <= 2 * b * (2 * e * m * s)).
+  { apply Qle_trans with (2 * b * (s * s + m)); [exact I2|]. apply mul_le_l; [lra|exact I3]. }
+  assert (Hee : e <= e * e * rho) by nra.
+  assert (Ti : 2 * c * (nT * aE * (1 + q1)) <= D * (8 * c * (e * e) * s)).
+  { apply Qle_trans with ((2 * c * nT) * (2 * b * (2 * e * m * s))).
+    - setoid_replace (2 * c * (nT * aE * (1 + q1))) with ((2 * c * nT) * (aE * (1 + q1))) by ring.
+      apply mul_le_l; [nra | exact A1].
+    - unfold D.
+      setoid_replace ((2 * c * nT) * (2 * b * (2 * e * m * s))) with ((8 * c * nT * b * m * s) * e) by ring.
+      setoid_replace (nT * m * b * rho * (8 * c * (e * e) * s)) with ((8 * c * nT * b * m * s) * (e * e * rho)) by ring.
+      apply mul_le_l; [|exact Hee].
+      assert (0 <= c * nT) by nra. assert (0 <= c * nT * b) by nra. assert (0 <= c * nT * b * m) by nra. nra. }
+  (* (ii) 2nmb-term:  2 c m (2 n m b e) <= D * (8 c e8 e^2 s e2) *)
+  assert (Tii : 2 * c * (m * (2 * n * m * b * e)) <= D * (8 * c * e8 * (e * e) * s * e2)).
+  { assert (Z0 : 0 <= 4 * c * m * m * b * e) by (assert (0 <= c * m) by nra; assert (0 <= c * m * m) by nra; assert (0 <= c * m * m * b) by nra; nra).
+    apply Qle_trans with ((4 * c * m * m * b * e) * (2 * e8 * nT)).
+    - setoid_replace (2 * c * (m * (2 * n * m * b * e))) with ((4 * c * m * m * b * e) * n) by ring.
+      apply mul_le_l; [exact Z0 | exact HnT].
+    - assert (Z1 : 0 <= 8 * c * m * b * e * e8 * nT) by (assert (0 <= c * m) by nra; assert (0 <= c * m * b) by nra; assert (0 <= c * m * b * e) by nra; assert (0 <= c * m * b * e * e8) by nra; nra).
+      apply Qle_trans with ((8 * c * m * b * e * e8 * nT) * (s * e2)).
+      + setoid_replace ((4 * c * m * m * b * e) * (2 * e8 * nT)) with ((8 * c * m * b * e * e8 * nT) * m) by ring.
+        apply mul_le_l; [exact Z1 | exact Hm2].
+      + unfold D.
+        setoid_replace ((8 * c * m * b * e * e8 * nT) * (s * e2)) with ((8 * c * m * b * e8 * nT * s * e2) * e) by ring.
+        setoid_replace (nT * m * b * rho * (8 * c * e8 * (e * e) * s * e2)) with ((8 * c * m * b * e8 * nT * s * e2) * (e * e * rho)) by ring.
+        apply mul_le_l; [|exact Hee].
+        assert (0 <= c * m) by nra; assert (0 <= c * m * b) by nra; assert (0 <= c * m * b * e8) by nra;
+        assert (0 <= c * m * b * e8 * nT) by nra; assert (0 <= c * m * b * e8 * nT * s) by nra; nra. }
+  (* (iii) q2-term:  2 c m q2 <= D * (4 c e s e8) *)
+  assert (Q1 : q2 * n == rho * k * b * (e * e)).
+  { assert (q2 * n * n == rho * n * k * b * (e * e)) by (rewrite Hrho; nra). nra. }
+  assert (Zrb : 0 <= rho * b * (e * e)) by (assert (0 <= rho * b) by nra; nra).
+  assert (Q2 : q2 <= rho * b * e * n * s).
+  { assert (E1 : q2 * n * e == rho * b * (e * e) * (e * k)).
+    { rewrite Q1. ring. }
+    assert (E2 : q2 * n * e <= rho * b * (e * e) * (n * n * s)).
+    { rewrite E1. apply mul_le_l; [exact Zrb | exact Hk2]. }
+    assert (Hne : 0 < n * e) by (apply Qmult_lt_0_compat; lra).
+    apply Qmult_le_l with (n * e); [exact Hne|].
+    setoid_replace (n * e * q2) with (q2 * n * e) by ring.
+    setoid_replace (n * e * (rho * b * e * n * s)) with (rho * b * (e * e) * (n * n * s)) by ring.
+    exact E2. }
+  assert (Zcm : 0 <= 2 * c * m) by nra.
+  assert (Tiii : 2 * c * (m * q2) <= D * (4 * c * e * s * e8)).
+  { apply Qle_trans with ((2 * c * m) * (rho * b * e * n * s)).
+    - setoid_replace (2 * c * (m * q2)) with ((2 * c * m) * q2) by ring.
+      apply mul_le_l; [exact Zcm | exact Q2].
+    - assert (Z2 : 0 <= 2 * c * m * rho * b * e * s).
+      { assert (0 <= c * m) by nra. assert (0 <= c * m * rho) by nra.
+        assert (0 <= c * m * rho * b) by nra. assert (0 <= c * m * rho * b * e) by nra. nra. }
+      apply Qle_trans with ((2 * c * m * rho * b * e * s) * (2 * e8 * nT)).
+      + setoid_replace ((2 * c * m) * (rho * b * e * n * s)) with ((2 * c * m * rho * b * e * s) * n) by ring.
+        apply mul_le_l; [exact Z2 | exact HnT].
+      + unfold D. apply Qle_lteq. right. ring. }
+  (* (iv) 4 nT m b w <= D * (4/3) e *)
+  assert (Znmb : 0 <= nT * m * b) by (assert (0 <= nT * m) by nra; nra).
+  assert (Tiv : 4 * nT * m * b * w <= D * ((4 # 3) * e)).
+  { unfold D.
+    setoid_replace (4 * nT * m * b * w) with ((nT * m * b) * (4 * w)) by ring.
+    setoid_replace (nT * m * b * rho * ((4 # 3) * e)) with ((nT * m * b) * ((4 # 3) * (e * rho))) by ring.
+    apply mul_le_l; [exact Znmb | lra]. }
+  (* assemble: D (Gx - 4se) <= D (X1 + X2 + X3 + X4) *)
+  assert (HE2 : 2 * Err <= 2 * c * (nT * aE * (1 + q1)) + 2 * c * (m * (2 * n * m * b * e)) + 2 * c * (m * q2)).
+  { assert (2 * Err <= 2 * (c * (nT * aE * (1 + q1) + m * (2 * n * m * b * e + q2)))) by lra.
+    setoid_replace (2 * (c * (nT * aE * (1 + q1) + m * (2 * n * m * b * e + q2))))
+      with (2 * c * (nT * aE * (1 + q1)) + 2 * c * (m * (2 * n * m * b * e)) + 2 * c * (m * q2)) in H by ring.
+    exact H. }
+  assert (Hsum : D * (Gx - 4 * s * e) <=
+                 D * (8 * c * (e * e) * s + 8 * c * e8 * (e * e) * s * e2 + 4 * c * e * s * e8 + (4 # 3) * e)).
+  { assert (HM : D * (Gx - 4 * s * e) <= 2 * Err + 4 * nT * m * b * w) by (unfold D; exact Hmain).
+    setoid_replace (D * (8 * c * (e * e) * s + 8 * c * e8 * (e * e) * s * e2 + 4 * c * e * s * e8 + (4 # 3) * e))
+      with (D * (8 * c * (e * e) * s) + D * (8 * c * e8 * (e * e) * s * e2) + D * (4 * c * e * s * e8) + D * ((4 # 3) * e))
+      by ring.
+    lra. }
+  assert (Hcan : Gx - 4 * s * e <= 8 * c * (e * e) * s + 8 * c * e8 * (e * e) * s * e2 + 4 * c * e * s * e8 + (4 # 3) * e).
+  { apply Qmult_le_l with D; [exact HD|]. exact Hsum. }
+  (* each piece <= coefficient * T, total <= 26 T <= e8^3 T *)
+  assert (Zs : 0 <= s) by lra. assert (Ze : 0 <= e) by lra. assert (Zc : 0 <= c) by lra.
+  assert (P1 : s * e <= T).
+  { unfold T. setoid_replace (s * c * (e * e) * e2 * e8) with ((s * e) * (c * e * e2 * e8)) by ring.
+    apply le_mul_ge1; [nra|]. repeat apply ge1_mul; lra. }
+  assert (P2 : c * (e * e) * s <= T).
+  { unfold T. setoid_replace (s * c * (e * e) * e2 * e8) with ((c * (e * e) * s) * (e2 * e8)) by ring.
+    apply le_mul_ge1; [|apply ge1_mul; lra].
+    assert (0 <= c * (e * e)) by nra. nra. }
+  assert (P3 : c * e8 * (e * e) * s * e2 == T) by (unfold T; ring).
+  assert (P4 : c * e * s * e8 <= T).
+  { unfold T. setoid_replace (s * c * (e * e) * e2 * e8) with ((c * e * s * e8) * (e * e2)) by ring.
+    apply le_mul_ge1; [|apply ge1_mul; lra].
+    assert (0 <= c * e) by nra. assert (0 <= c * e * s) by nra. nra. }
+  assert (P5 : e <= T).
+  { unfold T. setoid_replace (s * c * (e * e) * e2 * e8) with (e * (s * c * e * e2 * e8)) by ring.
+    apply le_mul_ge1; [lra|]. repeat apply ge1_mul; lra. }
+  assert (G26 : Gx <= 26 * T).
+  { setoid_replace (8 * c * (e * e) * s) with (8 * (c * (e * e) * s)) in Hcan by ring.
+    setoid_replace (8 * c * e8 * (e * e) * s * e2) with (8 * (c * e8 * (e * e) * s * e2)) in Hcan by ring.
+    setoid_replace (4 * c * e * s * e8) with (4 * (c * e * s * e8)) in Hcan by ring.
+    setoid_replace (4 * s * e) with (4 * (s * e)) in Hcan by ring.
+    rewrite P3 in Hcan. lra. }
+  assert (H26T : 26 * T <= e8 * e8 * e8 * T).
+  { apply Qmult_le_compat_r; [exact H26 | lra]. }
+  lra.
+Qed.
+
+End Balance.
+
+Print Assumptions growth_size_bound.
