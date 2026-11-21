@@ -387,3 +387,16 @@ Markushevich bases**. The slice 7 caveat ("local obstruction only") is
 superseded by this theorem.
 
 **SUMMARY (slice 8) ok 1 / warn 0 / bug 0.**
+
+## Slice 9: reported upstream (2026-11-21)
+
+The independent reproduction and the Rocq cores (`direct_sum_qex`,
+`close_pair_lower`, `small_gap`, `psi_unbounded`, at commit `d4fd825`) were
+posted by the repository owner as a comment on the prior report:
+<https://github.com/mccorvie/riemann-masullo/issues/1169#issuecomment-7055218403>.
+The comment credits #1169's priority and its use of Conrey's simple zeros.
+It adds the p. 444 source of the inference, its uses on pp. 444/447/451/468,
+and the `a = 1/2` indexing (pp. 440, 487, 519). It states that the analytic
+inputs are hypotheses and that repairability is not assessed.
+
+**SUMMARY (slice 9) ok 1 / warn 0 / bug 0.**
