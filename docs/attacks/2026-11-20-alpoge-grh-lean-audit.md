@@ -488,3 +488,13 @@ stay as trusted Mathlib-level content.
 
 **SUMMARY (slice 13) ok 1 / warn 1 (erratum to slices 2/2b/5, now corrected) / bug 0**.
 Verdict unchanged: **PASS-STATIC / PENDING**.
+
+### Slice 13 addendum: where the Euler product enters (2026-11-21)
+
+With the sign relocated to `H ≥ 0`, the Davenport–Heilbronn lesson (symmetry
+alone is insufficient) still holds, through a different door. The Mellin
+identity needs `Σ_S LSeries(Λ(n)·Re χ(n)) = −P'/P` on `Re s > 1` (`hsumL`,
+via `lseries_re`). That is the logarithmic derivative of an **Euler product**.
+A function with only a functional equation has no such von Mangoldt
+expansion, so `Gz` / `Gchi` would not be its Mellin partners, and the step
+from the one-sided bound to zero-freeness would not start.
