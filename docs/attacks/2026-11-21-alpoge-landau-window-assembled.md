@@ -30,7 +30,7 @@ named hypotheses:
 | `Hle` | `landau_pole_re_le` (with `2 < σ`) | every pole has `Re ρ < σ` |
 | `LF` | `landau_finite` | `Z` is finite on every box in `Re s > 0` |
 | `HA` | definition | `A k γ = ‖(−1)^k Φ^{(k)}(σ+iγ)/k!‖ ≥ 0` |
-| `KEY` | `landau_window_key` | `(A k γ + B k)·(σ−θ)^k ≤ C·s^k` for arbitrarily large `k`, at every rate `s ≥ 1`. This is `e^{ηU} ≤ s^k` for `U ≤ k`, as in `LandauWindowCore.v`. |
+| `KEY` | `landau_window_key` | `(A k γ + B k)·(σ−θ)^k ≤ C·s^k` for arbitrarily large `k`, at every rate `s > 1`. This is `e^{ηU} ≤ s^k` for `U ≤ k` with `s = e^η`, `η > 0`. |
 | `CAUCHY` | `landau_cauchy` | on a pole-free disc about `σ`: `B k ≥ −M/e^k` |
 | `POLE1` | `landau_pole_asym` (norm) | at an isolated pole of `σ+iγ`: `A k γ ≥ cn/d'^k − M/e^k` with **`cn > 0`** |
 | `POLE2` | `landau_pole_asym` (real part) plus `PoleData`'s real-pole clause | at an isolated real pole `β`: `B k ≥ cr/(σ−β)^k − M/e^k` with **`cr > 0`** |

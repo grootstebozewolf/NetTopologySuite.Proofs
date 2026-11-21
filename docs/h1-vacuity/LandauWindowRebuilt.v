@@ -19,7 +19,8 @@
      A k g   = |(-1)^k Phi^(k)(sigma + i g)/k!|   (norm of a Taylor coefficient)
      B k     = Re((-1)^k Phi^(k)(sigma)/k!)
      KEY     = landau_window_key, with e^(eta U) <= s^k for k >= U (as in
-               LandauWindowCore.v: any rate s >= 1 is available)
+               LandauWindowCore.v: any rate s > 1 is available,
+               s = e^eta with eta > 0)
      CAUCHY  = landau_cauchy on a pole-free disc about sigma
      POLE1   = landau_pole_asym at an isolated pole rho of sigma + i g, with
                |c| / d^(k+1) >= (|c|/d') / d'^k for d <= d'  (residue c <> 0)
@@ -152,8 +153,8 @@ Proof.
   lra.
 Qed.
 
-(* A rate s >= 1 with s d < e, for 0 < d < e. *)
-Lemma rate : forall d e, 0 < d -> d < e -> exists s, 1 <= s /\ s * d < e.
+(* A rate s > 1 with s d < e, for 0 < d < e. *)
+Lemma rate : forall d e, 0 < d -> d < e -> exists s, 1 < s /\ s * d < e.
 Proof.
   intros d e Hd Hde. exists ((1 # 2) * (1 + e / d)).
   assert (E : (1 # 2) * (1 + e / d) * d == (1 # 2) * (d + e)) by (field; lra).
@@ -179,7 +180,7 @@ Hypothesis LF : forall lo y0 R, 0 < lo -> exists F : list (Q * Q),
   (forall w, Z w -> lo <= fst w -> - R <= snd w - y0 <= R -> In w F).
 Variables (A : nat -> Q -> Q) (B : nat -> Q).
 Hypothesis HA : forall k g, 0 <= A k g.
-Hypothesis KEY : exists C, forall s, 1 <= s -> forall K, exists k, (K <= k)%nat /\
+Hypothesis KEY : exists C, forall s, 1 < s -> forall K, exists k, (K <= k)%nat /\
   forall g, (A k g + B k) * qpow (sigma - theta) k <= C * qpow s k.
 Hypothesis CAUCHY : forall D2 e, (forall w, Z w -> ~ d2 sigma 0 w < D2) ->
   0 < e -> e * e < D2 -> exists M, forall k, - M <= B k * qpow e k.
@@ -231,7 +232,7 @@ Proof.
     destruct (POLE1 g rho r2 q1 q2 HrZ Hiso Hq1 Hq1a Hq12 Hq2b) as [cn [M1 [Hcn HM1]]].
     destruct (CAUCHY D2 q2 Hfree Hq2 ltac:(lra)) as [M2 HM2].
     destruct (rate q1 q2 Hq1 Hq12) as [s [Hs1 Hsd]].
-    apply (window_contra cn q1 q2 (M1 + M2) C s Hcn Hq1 Hs1 Hsd).
+    apply (window_contra cn q1 q2 (M1 + M2) C s Hcn Hq1 (Qlt_le_weak _ _ Hs1) Hsd).
     intro K. destruct (HK s Hs1 K) as [k [Hk Hb]]. exists k. split; [exact Hk|].
     apply (glue_complex cn (A k g) (B k) (qpow q2 k) (qpow q1 k) (qpow E k) (qpow s k) C M1 M2).
     + apply HA.
@@ -252,7 +253,7 @@ Proof.
     assert (HeE : e < E) by (apply sq_lt_inv; lra).
     destruct (POLE2 beta r2 e HbZ Hby Hiso Hde Heb) as [cr [M [Hcr HM]]].
     destruct (rate d e Hd Hde) as [s [Hs1 Hsd]].
-    apply (window_contra cr d e M C s Hcr Hd Hs1 Hsd).
+    apply (window_contra cr d e M C s Hcr Hd (Qlt_le_weak _ _ Hs1) Hsd).
     intro K. destruct (HK s Hs1 K) as [k [Hk Hb]]. exists k. split; [exact Hk|].
     apply (glue_real cr (A k 0) (B k) (qpow e k) (qpow d k) (qpow E k) (qpow s k) C M).
     + apply HA.
@@ -282,7 +283,7 @@ Theorem landau_window_hyps_consistent :
      (forall w, In w F -> Z w) /\
      (forall w, Z w -> lo <= fst w -> - R <= snd w - y0 <= R -> In w F)) /\
   (forall k g, 0 <= A k g) /\
-  (exists C, forall s, 1 <= s -> forall K, exists k, (K <= k)%nat /\
+  (exists C, forall s, 1 < s -> forall K, exists k, (K <= k)%nat /\
      forall g, (A k g + B k) * qpow (sigma - theta) k <= C * qpow s k) /\
   (forall D2 e, (forall w, Z w -> ~ d2 sigma 0 w < D2) ->
      0 < e -> e * e < D2 -> exists M, forall k, - M <= B k * qpow e k).

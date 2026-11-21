@@ -64,6 +64,7 @@ PROBES=(
   docs/h1-vacuity/LandauWindowRebuilt.v
   docs/h1-vacuity/FormBRebuilt.v
   docs/h1-vacuity/WinSeamRebuilt.v
+  docs/h1-vacuity/LandauKeyRebuilt.v
 )
 
 fail=0
