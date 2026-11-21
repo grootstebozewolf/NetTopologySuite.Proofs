@@ -54,6 +54,10 @@ PROBES=(
   docs/h1-vacuity/OverlayGuardedVacuityQEX.v
   docs/h1-vacuity/ArcOverlayBridgeQEX.v
   docs/h1-vacuity/CurveRegionModelQEX.v
+  docs/h1-vacuity/SphereNoRelQED.v
+  docs/h1-vacuity/TowerOrderLawQED.v
+  docs/h1-vacuity/LeanSkeletonRebuild.v
+  docs/h1-vacuity/MarkushevichBoundQEX.v
 )
 
 fail=0

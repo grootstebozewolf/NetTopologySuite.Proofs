@@ -173,3 +173,64 @@ CI compiles it after the flocq corpus via `scripts/hunt_probe_smoke.sh`.
 rocq c -Q theories NTS.Proofs -Q theories-flocq NTS.Proofs.Flocq \
   docs/h1-vacuity/HobbyHlemma43Check.v
 ```
+
+[`SphereNoRelQED.v`](SphereNoRelQED.v) is a host-lane probe (Stdlib only) for
+ticket [`2026-11-20-root-only-multiplicity.md`](../attacks/2026-11-20-root-only-multiplicity.md)
+(S4). Read on base-b digit vectors, the external Lean development's `NoRel`
+condition is a collinearity predicate. Distinct points of one integer sphere
+are never collinear (`sphere_no_collinear`). Balanced digits that evaluate
+to 0 are all 0 (`eval_zero_digits`). Together they give
+`sphere_digits_norel`. A generic pigeonhole gives the density bound
+`sphere_slice_large`: some slice has `(K(d−1)²+1)·|S_r| ≥ d^K`.
+`thick_set_exists` packages both into an integer analogue of the external
+`HostThickExists`, with polynomial instead of `exp(−C√…)` loss. `orbit_one`
+rebuilds `OrbitOne`: a short Frobenius orbit meets a thick translate at most
+once. `window_two` rebuilds `WindowTwo`: a long orbit has no three hits in a
+window of length `2L`. The forced relation `a(t₃−t₁) = b(t₂−t₁)` is exactly
+`NoRel`, i.e. collinearity. `thick_set_window_two_sized` composes it with
+`thick_set_exists` for every modulus `n ≥ 8L·b^K`. `Print Assumptions` reports *Closed under the global
+context*. CI compiles all three Rocq rebuild probes (`SphereNoRelQED.v`,
+`TowerOrderLawQED.v`, `LeanSkeletonRebuild.v`) via `scripts/hunt_probe_smoke.sh`.
+They need only Stdlib, so `rocq c <file>` also works on its own.
+
+```sh
+rocq c docs/h1-vacuity/SphereNoRelQED.v
+```
+
+[`LeanSkeletonRebuild.v`](LeanSkeletonRebuild.v) is a host-lane probe (Stdlib,
+`Q` only) that re-derives the logical skeleton of the external RH/GRH Lean
+development from its types, without running Lean. The deep facts enter as
+section hypotheses, each named after the Lean/Mathlib declaration it mirrors.
+These are conditional skeletons, not a check of the Lean proof.
+`critLine` mirrors the reflection in `Formalism.VW.critLine`. `rh_of_every_full`
+adds the `rh_of_right` half, giving Mathlib's full `RiemannHypothesis` shape.
+`zero_free_half` has the shape of `level_of_tiedWin`: it re-proves
+`exists_small_eps`, and takes the `1/2` exponent and Landau as inputs, without
+windows or `FormBAt`. `no_real_zero_right_of_theta` is the definite-sign step of
+`landau_entire`, after the Mellin identity has been cleared of denominators.
+`growth_size_bound` mirrors `GrowthSizeBound` with Lean's `26 ≤ x^(3ε/8)`; the
+coefficients 4 + 8 + 8 + 4 + 4/3 are this proof's own accounting, not Lean's.
+The bounds `x^(1/2−ε) ≤ m ≤ x^(1/2+ε/2)` are hypotheses, not derived.
+`Print Assumptions` reports *Closed under the global context*: section
+hypotheses become parameters, not axioms.
+
+```sh
+rocq c docs/h1-vacuity/LeanSkeletonRebuild.v
+```
+
+[`TowerOrderLawQED.v`](TowerOrderLawQED.v) rebuilds the external development's
+`Formalism/BehrendSets/StatementE.lean : OrdLargeJ` (the 2-power tower's order
+law) from its type, with **no hypotheses**. For odd `l ≥ 2` and `1 ≤ k ≤ J`,
+if `2^N | l^k ∓ 1` then `2^N ≤ J(l+1)` (`ord_large_J`). The proof is a
+lifting-the-exponent style strong induction (`lte`). It also rebuilds the
+exact law `OrdDvd` (`ord_dvd`): for odd `l` and `j ≥ 1`,
+`l^(2^j) ≡ ±1 (mod 2^N)` holds iff `l ≡ ±1 (mod 2^(N−j))`, with truncated
+subtraction as in Lean. That proof goes through the exact valuation
+`val_exact`: `2^n ∣ l^(2^(j+1))−1 ⇔ 2^n ∣ (l²−1)·2^j`. As a corollary, it
+rebuilds `OrdD` (`ord_d`: `d ≡ 7 (mod 16)` has maximal order). *Closed under
+the global context*. The compile prints Stdlib 9.1 deprecation warnings for `Znumtheory`
+names.
+
+```sh
+rocq c docs/h1-vacuity/TowerOrderLawQED.v
+```
