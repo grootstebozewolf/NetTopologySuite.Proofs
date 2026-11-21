@@ -621,3 +621,139 @@ Qed.
 End TiedWinWindows.
 
 Print Assumptions level_of_tiedWin_rebuilt.
+
+(* ============================================================================
+   Part 7.  The CORE slice: ch_core = core (averaging) ∘ GrowthSizeBound.
+   Development/.../LandauTheorems/ChCore.lean :
+     core      (CharacterBalanceMoves, l.283): per-coset bound + orthogonality
+               identity + lower bound Y  ==>  main inequality
+       |TT| m b (delta2/2) Y <= Err + 2 |TT| m b / x
+     ch_core   (l.343): core with Y = G - 4 x^(1/2+eps), then
+               proposition_size_bound (= growth_size_bound, Part 4).
+   Named hypotheses (the analytic inputs, not re-proved):
+     per_u   : for each coset index u0 in A0,
+               sum_t sum_j Re Th(u0,t) <= Err + 2 |TT| m b / x
+               (th_le + ch_balance + gapA <= Err);
+     ortho   : sum_{u0 in A0} (that sum) = |A0| * (m b (delta2/2)) * Tsum
+               (sum_Th: orthogonality of the characters of H / A0);
+     lowY    : |TT| * Y <= Tsum   (one_char, with Y = G - 4 x^(1/2+eps)).
+   ========================================================================== *)
+From Stdlib Require Import List ZArith Lia.
+Import ListNotations.
+
+Fixpoint lsum (l : list Q) : Q := match l with [] => 0 | v :: tl => v + lsum tl end.
+
+Lemma lsum_le : forall (l : list Q) E, Forall (fun v => v <= E) l ->
+  lsum l <= inject_Z (Z.of_nat (length l)) * E.
+Proof.
+  induction l as [|v tl IH]; intros E H; cbn [lsum length].
+  - setoid_replace (inject_Z (Z.of_nat 0) * E) with 0 by (cbn; ring). lra.
+  - inversion H as [|? ? Hv Htl]; subst. specialize (IH E Htl).
+    rewrite Nat2Z.inj_succ, <- Z.add_1_r, inject_Z_plus. change (inject_Z 1) with 1. lra.
+Qed.
+
+Section Core.
+Variables us : list Q.                          (* per-coset sums, one per u0 in A0 *)
+Variables nTT m b delta2 x Err Y Tsum : Q.
+Hypothesis HA0 : (1 <= length us)%nat.
+Hypothesis Hfac : 0 <= m * b * (delta2 * (1 # 2)).
+Hypothesis per_u : Forall (fun v => v <= Err + 2 * nTT * m * b / x) us.
+Hypothesis ortho : lsum us == inject_Z (Z.of_nat (length us)) * (m * b * (delta2 * (1 # 2)) * Tsum).
+Hypothesis lowY : nTT * Y <= Tsum.
+
+Theorem core_rebuilt : nTT * m * b * (delta2 * (1 # 2)) * Y <= Err + 2 * nTT * m * b / x.
+Proof.
+  set (nA := inject_Z (Z.of_nat (length us))).
+  assert (HnA : 0 < nA).
+  { unfold nA. change 0 with (inject_Z 0). rewrite <- Zlt_Qlt. lia. }
+  pose proof (lsum_le us _ per_u) as Hs. fold nA in Hs, ortho.
+  rewrite ortho in Hs.
+  (* cancel nA > 0 *)
+  assert (Hc : m * b * (delta2 * (1 # 2)) * Tsum <= Err + 2 * nTT * m * b / x).
+  { apply Qmult_le_l with nA; [exact HnA | exact Hs]. }
+  assert (m * b * (delta2 * (1 # 2)) * (nTT * Y) <= m * b * (delta2 * (1 # 2)) * Tsum)
+    by (apply mul_le_l; [exact Hfac | exact lowY]).
+  setoid_replace (nTT * m * b * (delta2 * (1 # 2)) * Y)
+    with (m * b * (delta2 * (1 # 2)) * (nTT * Y)) by ring.
+  lra.
+Qed.
+End Core.
+
+Print Assumptions core_rebuilt.
+
+(* ch_core, composed: the averaging core feeds GrowthSizeBound's main inequality
+   (delta2 = rho = nT2/n, Y = Gx - 4 x^(1/2+eps), w = 1/x, x = s^2). *)
+Theorem ch_core_rebuilt :
+  forall (us : list Q) (s e e2 e8 c b n nT nT2 m k aE Err Gx q1 q2 rho w Tsum : Q),
+  (* core inputs *)
+  (1 <= length us)%nat ->
+  Forall (fun v => v <= Err + 2 * nT * m * b * w) us ->
+  lsum us == inject_Z (Z.of_nat (length us)) * (m * b * (rho * (1 # 2)) * Tsum) ->
+  nT * (Gx - 4 * s * e) <= Tsum ->
+  (* SizeWindows, in exponential atoms (as in Part 4) *)
+  1 <= s -> 3 <= s * s -> 1 <= e -> 1 <= e2 -> 1 <= e8 -> 1 <= c ->
+  26 <= e8 * e8 * e8 -> 0 < b -> 0 < n -> 0 <= aE -> aE <= 2 * (s * s) * b ->
+  n <= 2 * e8 * nT -> rho * n == nT2 -> 1 <= e * rho -> s <= e * m -> m <= s * e2 ->
+  s * s * m <= k -> e * k <= n * n * s -> q1 * k == m * m ->
+  q2 * (n * n) == nT2 * k * b * (e * e) ->
+  Err <= c * (nT * aE * (1 + q1) + m * (2 * n * m * b * e + q2)) ->
+  w * (s * s) == 1 ->
+  Gx <= e8 * e8 * e8 * (s * c * (e * e) * e2 * e8).
+Proof.
+  intros us s e e2 e8 c b n nT nT2 m k aE Err Gx q1 q2 rho w Tsum
+    HA0 Hper Hortho HlowY Hs Hs3 He He2 He8 Hc H26 Hb Hn HaE0 HaE HnT Hrho Hrho1 Hm1 Hm2 Hk1 Hk2 Hq1 Hq2 HErr Hw.
+  assert (Hrho0 : 0 < rho) by nra.
+  assert (Hm0 : 0 < m) by nra.
+  assert (Hfac : 0 <= m * b * (rho * (1 # 2))).
+  { assert (0 <= m * b) by nra. apply Qmult_le_0_compat; [lra | lra]. }
+  (* x = s^2, so 2 nT m b / x = 2 nT m b w; restate per_u with /x *)
+  assert (Hx0 : ~ s * s == 0) by (intro Z; rewrite Z in Hs3; lra).
+  assert (Hwx : w == / (s * s)).
+  { transitivity (w * ((s * s) * / (s * s))).
+    - rewrite Qmult_inv_r by exact Hx0. ring.
+    - rewrite Qmult_assoc, Hw. ring. }
+  assert (Hper' : Forall (fun v => v <= Err + 2 * nT * m * b / (s * s)) us).
+  { eapply Forall_impl; [|exact Hper]. intros v Hv. unfold Qdiv. rewrite <- Hwx. exact Hv. }
+  pose proof (core_rebuilt us nT m b rho (s * s) Err (Gx - 4 * s * e) Tsum HA0 Hfac Hper' Hortho HlowY) as Hcore.
+  (* main inequality of growth_size_bound *)
+  assert (Hmain : nT * m * b * rho * (Gx - 4 * s * e) <= 2 * Err + 4 * nT * m * b * w).
+  { unfold Qdiv in Hcore. rewrite <- Hwx in Hcore. nra. }
+  exact (growth_size_bound s e e2 e8 c b n nT nT2 m k aE Err Gx q1 q2 rho w
+           Hs Hs3 He He2 He8 Hc H26 Hb Hn HaE0 HaE HnT Hrho Hrho1 Hm1 Hm2 Hk1 Hk2 Hq1 Hq2 HErr Hw Hmain).
+Qed.
+
+Print Assumptions ch_core_rebuilt.
+
+(* Non-vacuity of ch_core_rebuilt (h1-vacuity discipline): its hypotheses are
+   jointly satisfiable.  Witness: x = 16 (s = 4), x^(eps/8) = 3, x^(eps/2) = 81,
+   x^eps = 6561 (consistent: e2^2 = e, e8^4 = e2), c = 1, b = 1, n = 200,
+   nT = 34, nT2 = 200, rho = 1, m = 1, k = 16, aE = 0, Err = 0, Gx = 0,
+   q1 = 1/16, q2 = 16 * 6561^2 / 200, w = 1/16, Tsum = nT (Gx - 4 s e),
+   one coset with per-coset sum v = m b (rho/2) Tsum. *)
+Theorem ch_core_nonvacuous :
+  let s := 4 in let e := 6561 in let e2 := 81 in let e8 := 3 in let c := 1 in
+  let b := 1 in let n := 200 in let nT := 34 in let nT2 := 200 in let m := 1 in
+  let k := 16 in let aE := 0 in let Err := 0 in let Gx := 0 in let q1 := 1 # 16 in
+  let rho := 1 in let w := 1 # 16 in
+  let q2 := 16 * (6561 * 6561) / 200 in
+  let Tsum := nT * (Gx - 4 * s * e) in
+  let us := [m * b * (rho * (1 # 2)) * Tsum] in
+  (1 <= length us)%nat /\
+  Forall (fun v => v <= Err + 2 * nT * m * b * w) us /\
+  lsum us == inject_Z (Z.of_nat (length us)) * (m * b * (rho * (1 # 2)) * Tsum) /\
+  nT * (Gx - 4 * s * e) <= Tsum /\
+  1 <= s /\ 3 <= s * s /\ 1 <= e /\ 1 <= e2 /\ 1 <= e8 /\ 1 <= c /\
+  26 <= e8 * e8 * e8 /\ 0 < b /\ 0 < n /\ 0 <= aE /\ aE <= 2 * (s * s) * b /\
+  n <= 2 * e8 * nT /\ rho * n == nT2 /\ 1 <= e * rho /\ s <= e * m /\ m <= s * e2 /\
+  s * s * m <= k /\ e * k <= n * n * s /\ q1 * k == m * m /\
+  q2 * (n * n) == nT2 * k * b * (e * e) /\
+  Err <= c * (nT * aE * (1 + q1) + m * (2 * n * m * b * e + q2)) /\
+  w * (s * s) == 1 /\
+  e2 * e2 == e /\ e8 * e8 * e8 * e8 == e2.
+Proof.
+  cbv zeta.
+  repeat split; try (cbn; reflexivity); try (vm_compute; reflexivity);
+    try (constructor; [vm_compute; discriminate|constructor]);
+    try (vm_compute; discriminate); try lra.
+Qed.
+Print Assumptions ch_core_nonvacuous.
