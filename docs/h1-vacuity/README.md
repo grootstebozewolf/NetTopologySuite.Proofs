@@ -189,3 +189,16 @@ context*. It is not in `scripts/hunt_probe_smoke.sh`, which is the flocq lane.
 ```sh
 rocq c docs/h1-vacuity/SphereNoRelQED.v
 ```
+
+[`LeanSkeletonRebuild.v`](LeanSkeletonRebuild.v) is a host-lane probe (Stdlib,
+`Q` only) that re-derives the logical skeleton of the external RH/GRH Lean
+development from its types, without running Lean. The deep facts enter as
+section hypotheses, each named after the Lean/Mathlib declaration it mirrors.
+`critLine` re-proves the reflection argument (`Formalism.VW.critLine`).
+`zero_free_half` re-proves the ε-selection (`exists_small_eps`,
+`level_of_tiedWin`). Both are *Closed under the global context*: zero axioms,
+under Lean's three-axiom budget.
+
+```sh
+rocq c docs/h1-vacuity/LeanSkeletonRebuild.v
+```

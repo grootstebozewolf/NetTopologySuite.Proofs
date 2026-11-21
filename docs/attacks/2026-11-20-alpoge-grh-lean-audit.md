@@ -277,3 +277,40 @@ Closes the slice-5 open item (remark timeline 14: "precise computation of the
 cross-check. The audit verdict is unchanged: **PASS-STATIC / PENDING**. The
 remaining opens are the build, `#print axioms`, kernel replay and the archive
 hash.
+
+## Slice 8: Rocq rebuild of the logical skeleton from the Lean types (2026-11-21)
+
+Owner instruction: do not install Lean. Read the types and rebuild from Rocq
+lemmas within the three-axiom budget (Lean's `propext`, `Classical.choice`,
+`Quot.sound`).
+
+**Probe:** `docs/h1-vacuity/LeanSkeletonRebuild.v` (Stdlib, scalars in `Q`,
+so the Stdlib-Reals axioms are avoided). The deep facts are **section
+hypotheses**, each mirroring a named Lean/Mathlib declaration. The steps
+between them are re-proved.
+
+| Rocq theorem | mirrors (Lean) | hypotheses = trusted imports | OUTCOME |
+|---|---|---|---|
+| `critLine` | `Formalism.VW.critLine` | `L = Λ/Γ` with `Γ ≠ 0` on `Re s > 0` (`LFunction_eq_completed_div_gammaFactor`, `gammaFactor_ne_zero`); FE `Λ(χ,s)=0 → Λ(χ⁻¹,1−s)=0` (`completedLFunction_one_sub`); `prim χ → prim χ⁻¹` (`conductor_inv`); **`EveryCharacter`** | **QED, zero axioms** |
+| `rh_strip_of_every` | `Formalism.VW.rh_of_every` (strip form, χ = 1 mod 1) | same | **QED, zero axioms** |
+| `exists_small_eps` | `TopWin.lean : exists_small_eps` (for `K ≥ 0`) | none | **QED, zero axioms** |
+| `zero_free_half` | `level_of_tiedWin` shape | `zero_free_of_Chebyshev_growth` (Landau); `ch_core`/`core_gm` growth exponent `1/2 + Kε` for all small `ε` | **QED, zero axioms** |
+
+**What this establishes.** Given the trusted imports and the two
+development-internal outputs (`EveryCharacter` and the growth bound), the
+glue the Lean development uses to reach RH/GRH is sound. It is re-derived
+independently of Lean's elaborator and kernel, in a second proof assistant.
+The reflection argument matches Lean's, including the choice of the
+`Or.inr` (`s ≠ 1`) branch. `Print Assumptions`: *Closed under the global
+context* for both main theorems.
+
+**What it does not establish.** The hypotheses themselves. In particular,
+`EveryCharacter` and the growth bound are the 17 M-line content. The Mathlib
+facts (functional equation, Γ non-vanishing) are standard but are assumed
+here, not re-proved. Scalars are `Q`; the real-variable content only enters
+through the hypotheses, which is enough for order reasoning but not a
+re-proof of analysis.
+
+**SUMMARY (slice 8) ok 4 / warn 0 / bug 0**. Verdict unchanged:
+**PASS-STATIC / PENDING**, now with an independent Rocq check of the top-level
+glue.
