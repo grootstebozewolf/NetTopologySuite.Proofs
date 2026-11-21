@@ -202,3 +202,15 @@ under Lean's three-axiom budget.
 ```sh
 rocq c docs/h1-vacuity/LeanSkeletonRebuild.v
 ```
+
+[`TowerOrderLawQED.v`](TowerOrderLawQED.v) rebuilds the external development's
+`Formalism/BehrendSets/StatementE.lean : OrdLargeJ` (the 2-power tower's order
+law) from its type, with **no hypotheses**. For odd `l ≥ 2` and `1 ≤ k ≤ J`,
+if `2^N | l^k ∓ 1` then `2^N ≤ J(l+1)` (`ord_large_J`). The proof is a
+lifting-the-exponent style strong induction (`lte`). *Closed under the global
+context*. The compile prints Stdlib 9.1 deprecation warnings for `Znumtheory`
+names.
+
+```sh
+rocq c docs/h1-vacuity/TowerOrderLawQED.v
+```

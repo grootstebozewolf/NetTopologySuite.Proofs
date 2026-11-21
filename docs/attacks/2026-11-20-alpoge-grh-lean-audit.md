@@ -314,3 +314,30 @@ re-proof of analysis.
 **SUMMARY (slice 8) ok 4 / warn 0 / bug 0**. Verdict unchanged:
 **PASS-STATIC / PENDING**, now with an independent Rocq check of the top-level
 glue.
+
+## Slice 9: Rocq rebuild of the tower order law `OrdLargeJ` (2026-11-21)
+
+**Lean type** (`Formalism/BehrendSets/StatementE.lean`):
+`OrdLargeJ : ∀ s J l (hl : Coprime l 2^(s+2)), 2 ≤ l → orderOf (frob s l hl) ≤ J → 2^(s+2) ≤ J·(l+1)`,
+with `frob` in `(ℤ/2^(s+2))ˣ ⧸ ⟨−1⟩`.
+
+**Translation (definitional).** `frob^k = 1 ⇔ l^k ≡ ±1 (mod 2^(s+2))`. Coprime
+to a power of 2 means odd.
+
+**Probe:** `docs/h1-vacuity/TowerOrderLawQED.v`, with **no section
+hypotheses**.
+
+| Rocq theorem | statement | OUTCOME |
+|---|---|---|
+| `lte` | `l` odd, `l ≥ 2`, `k ≥ 1`: `2^n ∣ l^k−1 ⇒ 2^n ≤ k(l+1)`, and `2^n ∣ l^k+1 ⇒ 2^n ≤ l+1` (strong induction on `k`, lifting-the-exponent style) | **QED, zero axioms** |
+| `ord_large_J` | integer form of `OrdLargeJ` for every exponent `N` (Lean: `N = s+2`) | **QED, zero axioms** |
+
+**Meaning.** This is the fact behind "every small prime has a long Frobenius
+orbit" (root-only ticket, slice 2). With `2^s ≈ x^(2+8ε)`, every prime
+`l ≤ x` has orbit length `≳ x^(1+8ε)`. It is now checked independently of
+Lean, with nothing assumed beyond the definitional translation above.
+
+**SUMMARY (slice 9) ok 2 / warn 0 / bug 0**. Verdict unchanged:
+**PASS-STATIC / PENDING**. Independently re-derived in Rocq so far: the top-level
+glue (slice 8), the tower order law (slice 9), and the thick-set construction
+(`SphereNoRelQED.v`, root-only ticket).
