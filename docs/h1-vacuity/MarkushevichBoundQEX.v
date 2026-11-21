@@ -18,8 +18,9 @@
                        This is a LOCAL obstruction: one biorthogonal pair per B.
                        The l^2 direct sum of such blocks (eps_k -> 0) would be a
                        bounded, regular Markushevich basis with unbounded {f_m},
-                       i.e. a counterexample to the inference; that assembly is
-                       standard but NOT re-proved here.
+                       i.e. a counterexample to the inference.  The assembly is
+                       compiled below as direct_sum_qex (on finitely supported
+                       block sequences; density of c00 in l^2 is the translation).
      close_pair_lower: abstract lemma -- if f(x) = 1, f(x') = 0 and
                        |f(v)| <= B * N(v), then 1 <= B * N(x - x').  Hence a
                        biorthogonal system containing pairs at arbitrarily small
@@ -235,3 +236,65 @@ End Chain.
 
 Print Assumptions small_gap.
 Print Assumptions psi_unbounded.
+
+(* ============================================================================
+   The direct-sum assembly (answering "block_qex is only local").
+   Space: finitely supported sequences of Q^2-blocks (c00 over blocks; its
+   completion is l^2).  A vector supported on one block k is written
+   (k, p) with p : Q * Q; the l^2 inner product of two single-block vectors is
+     ip (k, p) (k', q) = dot2 p q   if k = k',   0 otherwise
+   (orthogonality of distinct blocks -- the definition of the direct sum).
+   Family, block k uses B := k (eps_k = 1/(k+1)):
+     x(k,0) = (k, x1),  x(k,1) = (k, x2 k),  f(k,0) = (k, f1 k),  f(k,1) = (k, f2 k).
+   Proved: global biorthogonality, uniform bounds 1 <= |x|^2 <= 2, the standard
+   unit vectors of every block lie in span{x}, and no uniform bound on the
+   functionals.  Translation (standard, not re-proved): c00 is dense in l^2,
+   so a total biorthogonal system spanning c00 is a Markushevich basis of l^2.
+   ========================================================================== *)
+From Stdlib Require Import Arith Lia.
+
+Definition bvec : Type := (nat * (Q * Q))%type.
+Definition ip (u v : bvec) : Q := if Nat.eqb (fst u) (fst v) then dot2 (snd u) (snd v) else 0.
+
+Definition kq (k : nat) : Q := inject_Z (Z.of_nat k).
+Lemma kq_nonneg : forall k, 0 <= kq k.
+Proof. intros k. unfold kq. change 0 with (inject_Z 0). rewrite <- Zle_Qle. lia. Qed.
+
+Definition xv (k : nat) (j : bool) : bvec := (k, if j then x2 (kq k) else x1).
+Definition fv (k : nat) (j : bool) : bvec := (k, if j then f2 (kq k) else f1 (kq k)).
+
+Theorem direct_sum_qex :
+  (* biorthogonality: <f(k,j), x(k',j')> = 1 iff (k,j) = (k',j'), else 0 *)
+  (forall k j k' j', ip (fv k j) (xv k' j') == if andb (Nat.eqb k k') (Bool.eqb j j') then 1 else 0) /\
+  (* uniformly bounded and regular *)
+  (forall k j, 1 <= ip (xv k j) (xv k j) /\ ip (xv k j) (xv k j) <= 2) /\
+  (* spanning: the unit vectors of block k are combinations of x(k,0), x(k,1) *)
+  (forall k, xv k false = (k, (1, 0))) /\
+  (forall k, (kq k + 1) * (snd (snd (xv k true)) - snd (snd (xv k false))) == 1 /\
+             fst (snd (xv k true)) - fst (snd (xv k false)) == 0) /\
+  (* unbounded functionals: f(k,1) on the unit vector (k,(0,1)) equals k+1 *)
+  (forall k, ip (k, (0, 1)) (k, (0, 1)) == 1 /\ ip (fv k true) (k, (0, 1)) == kq k + 1) /\
+  (forall B, exists k, B < ip (fv k true) (k, (0, 1))).
+Proof.
+  split; [|split; [|split; [|split; [|split]]]].
+  - intros k j k' j'. unfold ip, fv, xv; cbn [fst snd].
+    destruct (Nat.eqb k k') eqn:E.
+    + apply Nat.eqb_eq in E; subst k'.
+      destruct (block_qex (kq k) (kq_nonneg k)) as [A1 [A2 [A3 [A4 _]]]].
+      destruct j, j'; cbn; [exact A4 | exact A3 | exact A2 | exact A1].
+    + cbn. reflexivity.
+  - intros k j. unfold ip, xv; cbn [fst snd]. rewrite Nat.eqb_refl.
+    destruct (block_qex (kq k) (kq_nonneg k)) as [_ [_ [_ [_ [B1 [B2 [B3 [B4 _]]]]]]]].
+    destruct j; split; assumption.
+  - intros k. reflexivity.
+  - intros k. unfold xv, x1, x2; cbn [fst snd]. split; [|ring].
+    pose proof (eps_mul (kq k) (kq_nonneg k)). setoid_replace (eps (kq k) - 0) with (eps (kq k)) by ring.
+    exact H.
+  - intros k. unfold ip, fv, f2, dot2; cbn [fst snd]. rewrite Nat.eqb_refl. split; ring.
+  - intros B. destruct (Qarchimedean B) as [p Hp].
+    exists (Pos.to_nat p). unfold ip, fv, f2, dot2; cbn [fst snd]. rewrite Nat.eqb_refl.
+    unfold kq. rewrite positive_nat_Z.
+    assert (inject_Z (Z.pos p) == (Z.pos p # 1)) by reflexivity. lra.
+Qed.
+
+Print Assumptions direct_sum_qex.

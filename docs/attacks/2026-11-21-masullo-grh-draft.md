@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-21
 Provenance: 0a8eb14
-Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`, `MarkushevichBoundQEX.v : block_qex`, `MarkushevichBoundQEX.v : no_uniform_bound`, `MarkushevichBoundQEX.v : small_gap`, `MarkushevichBoundQEX.v : psi_unbounded`
+Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`, `MarkushevichBoundQEX.v : block_qex`, `MarkushevichBoundQEX.v : no_uniform_bound`, `MarkushevichBoundQEX.v : small_gap`, `MarkushevichBoundQEX.v : psi_unbounded`, `MarkushevichBoundQEX.v : direct_sum_qex`
 -->
 # Masullo's GRH draft ("The Music of the Primes") against the Alpöge main line
 
@@ -355,3 +355,35 @@ The earlier text is kept for history. These readings replace it:
 **SUMMARY (slice 7) ok 0 / warn 9 (wording corrected) / bug 0.**
 Unchanged: Theorem 12.5.1.1 is **READ / NOT ASSESSED**. The Alpöge audit is
 **PASS-STATIC / PENDING**. The (10.3.1.18) gap is upstream #1169.
+
+## Slice 8: the direct-sum counterexample compiled (2026-11-21)
+
+This answers the review point that `block_qex` was only a local obstruction.
+`MarkushevichBoundQEX.v : direct_sum_qex` (Stdlib, `Q`) is *Closed under the
+global context*, with no section hypotheses.
+
+**Space.** Finitely supported sequences of `Q²` blocks (`c₀₀` over blocks).
+Single-block vectors are pairs `(k, p)`. The direct-sum inner product is
+`ip (k,p) (k',q) = dot2 p q` when `k = k'`, and `0` otherwise.
+
+**Family.** In block `k`, take `ε_k = 1/(k+1)` (i.e. `block_qex` with `B = k`):
+- `x(k,0) = (k,(1,0))`, `x(k,1) = (k,(1,ε_k))`;
+- `f(k,0) = (k,(1,−(k+1)))`, `f(k,1) = (k,(0,k+1))`.
+
+**Proved in one statement:**
+- **global biorthogonality:** `⟨f(k,j), x(k',j')⟩ = 1` iff `(k,j) = (k',j')`,
+  and `0` otherwise, across blocks too;
+- **uniformly bounded and regular:** `1 ≤ ‖x(k,j)‖² ≤ 2` for all `k`, `j`;
+- **spanning:** `(k,(1,0)) = x(k,0)` and
+  `(k,(0,1)) = (k+1)·(x(k,1) − x(k,0))`, so `span{x} = c₀₀`;
+- **unbounded functionals:** `f(k,1)` takes the value `k+1` on the unit vector
+  `(k,(0,1))`, so for every `B` some functional exceeds `B` on a unit vector.
+
+**Translation (standard, not re-proved).** `c₀₀` is dense in `ℓ²`, so this
+total, spanning biorthogonal system extends to a Markushevich basis of `ℓ²`.
+The vectors are bounded and bounded away from `0`, and `{f_m}` is unbounded.
+With that standard step, **"regular ⇒ `{f_m}` bounded" (p. 444) is false for
+Markushevich bases**. The slice 7 caveat ("local obstruction only") is
+superseded by this theorem.
+
+**SUMMARY (slice 8) ok 1 / warn 0 / bug 0.**
