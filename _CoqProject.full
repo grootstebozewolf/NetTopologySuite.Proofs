@@ -4664,3 +4664,10 @@ theories-flocq/Orient_b64_stage_d_cc.v
 # no-underflow).  QEX: the magnitude bound alone gives neither exactness
 # (1 - 2^-60) nor no-underflow (2^-600 coordinates).
 theories-flocq/Orient_b64_grid_cc.v
+# qed chain: qedinterval -> qedpoly -> qedroots (stdlib only, 3-axiom, no Admitted).
+# Packaged as rocq-qed-roots (packaging/rocq-qed-roots). Sturm/Cauchy index: OPEN.
+theories/QedPoly.v
+theories/QedInterval.v
+theories/QedRoots.v
+theories/QedRootsRefute.v
+theories/QedRootsExamples.v

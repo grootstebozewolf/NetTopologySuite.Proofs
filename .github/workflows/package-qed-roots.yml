@@ -1,0 +1,275 @@
+name: Package rocq-qed-roots
+
+# Validate and publish the standalone `rocq-qed-roots` opam package
+# (packaging/rocq-qed-roots/), extracted from the corpus via its
+# MANIFEST + assemble.sh.  Mirrors package-robust-predicates.yml.
+#
+# NOTE: the package itself needs NO Flocq -- its only deps are rocq-core +
+# rocq-stdlib, and its five source files use only the three stdlib classical-reals axioms (no
+# Flocq).  CI nonetheless reuses the pinned `toolchain` container (which
+# already has rocq + opam) purely for reliability and parity with the other
+# package/oracle workflows; Flocq present in the image is simply unused.
+#
+#   - validate: on PRs/pushes touching the package (and on demand) assemble
+#     the sources, `opam lint`, then `make` + `make install` -- exactly the
+#     commands opam runs.  Catches manifest drift, opam-file regressions,
+#     and build breakage.
+#   - publish: on a `rocq-qed-roots-v*` release, build the self-contained
+#     source tarball (`make package`), attach it + sha256 to the release, and
+#     -- when OPAM_PUBLISH_TOKEN is configured -- open the opam-repository PR
+#     via `opam publish` (otherwise prints the manual command, still succeeds).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packaging/rocq-qed-roots/**'
+      - 'packaging/rocq-spatial-algebra/**'
+      - 'Dockerfile'
+      - '.github/workflows/package-qed-roots.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/rocq-qed-roots/**'
+      - 'packaging/rocq-spatial-algebra/**'
+      - 'Dockerfile'
+      - '.github/workflows/package-qed-roots.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  PKG_DIR: packaging/rocq-qed-roots
+  OPAM_FILE: rocq-qed-roots.opam
+
+concurrency:
+  group: package-qed-roots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Assemble, build, lint, install
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute toolchain tag (content-addressed by Dockerfile)
+        id: toolchain
+        # GHCR follows the OCI spec: repository names must be lowercase.
+        # `github.repository_owner` preserves the account's casing
+        # (MerkatorBV), and Actions expressions have no lowercasing
+        # function, so fold the case here with bash parameter expansion.
+        run: |
+          echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+          echo "TOOLCHAIN_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/nts-proofs-toolchain" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image from GHCR
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Assemble, build, lint, and install the package
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e PKG_DIR -e OPAM_FILE \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              cd "$PKG_DIR"
+              ./assemble.sh /workspace
+              opam lint "$OPAM_FILE"
+              make -j"$(nproc)"
+              make install
+              echo "OK: built $(ls theories/*.vo | wc -l)/5 .vo, linted, installed."
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+
+      # Both rocq-qed-roots and rocq-spatial-algebra install under the
+      # NTS.Proofs logpath.  Check before any mint that their MANIFESTs are
+      # disjoint and that both install into one switch and load together.
+      - name: Co-install with rocq-spatial-algebra (shared NTS.Proofs logpath)
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              dup=$(cat packaging/rocq-qed-roots/MANIFEST packaging/rocq-spatial-algebra/MANIFEST \
+                    | grep -v "^#" | grep -v "^$" | sort | uniq -d)
+              test -z "$dup" || { echo "MANIFEST overlap: $dup"; exit 1; }
+              # fresh container: reinstall rocq-qed-roots (its .vo persist in the mount)
+              make -C packaging/rocq-qed-roots install
+              cd packaging/rocq-spatial-algebra
+              ./assemble.sh /workspace
+              make -j"$(nproc)"
+              make install
+              cd /workspace
+              printf "From NTS.Proofs Require Import DE9IM RelateIntDetBound QedRoots QedRootsRefute.\nCheck cert_sound.\nCheck idet_fits_int64_for_int32_coords.\n" > /tmp/Both.v
+              rocq c /tmp/Both.v
+              echo "OK: rocq-spatial-algebra and rocq-qed-roots co-installed and load together."
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+
+  publish:
+    name: Build tarball and publish on release
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'rocq-qed-roots-v')
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute toolchain tag
+        id: toolchain
+        # GHCR follows the OCI spec: repository names must be lowercase.
+        # `github.repository_owner` preserves the account's casing
+        # (MerkatorBV), and Actions expressions have no lowercasing
+        # function, so fold the case here with bash parameter expansion.
+        run: |
+          echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+          echo "TOOLCHAIN_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/nts-proofs-toolchain" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image (with buildx fallback)
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build self-contained source tarball
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e PKG_DIR \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              cd "$PKG_DIR"
+              make package
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+          ls -la packaging/rocq-qed-roots/dist/rocq-qed-roots.tar.gz
+          sha256sum packaging/rocq-qed-roots/dist/rocq-qed-roots.tar.gz | tee packaging/rocq-qed-roots/dist/rocq-qed-roots.tar.gz.sha256
+
+      - name: Attach tarball to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            packaging/rocq-qed-roots/dist/rocq-qed-roots.tar.gz
+            packaging/rocq-qed-roots/dist/rocq-qed-roots.tar.gz.sha256
+
+      - name: Submit to opam-repository (if OPAM_PUBLISH_TOKEN configured)
+        env:
+          OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
+          OPAM_TARGET_REPO: ${{ vars.OPAM_TARGET_REPO || 'coq/opam' }}
+          TAG: ${{ github.event.release.tag_name }}
+          TARBALL_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/rocq-qed-roots.tar.gz
+        run: |
+          if [ -z "${OPAM_PUBLISH_TOKEN:-}" ]; then
+            echo "::notice::OPAM_PUBLISH_TOKEN not set -- skipping automated opam-repository PR; tarball is attached to the release."
+            {
+              echo "To submit manually:"
+              echo "  opam publish --repo=$OPAM_TARGET_REPO --tag=$TAG \\"
+              echo "    $TARBALL_URL \\"
+              echo "    $PKG_DIR/$OPAM_FILE"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Clean semver from the tag (strip the "rocq-qed-roots-v" prefix):
+          #   rocq-qed-roots-v0.1.0 -> 0.1.0.  MUST be exported so `docker -e
+          #   VERSION` passes it into the container (a bare assignment is not
+          #   in the environment -> `set -u` would trip).
+          export VERSION="${TAG#rocq-qed-roots-v}"
+          # opam-publish reads its GitHub token from OPAM_PUBLISH_GH_TOKEN
+          # (NOT GITHUB_TOKEN).  Best-effort: the tarball is already attached,
+          # so if opam publish trips (auth/fork/etc.) we warn + print the
+          # manual command and still succeed.
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e OPAMYES=1 \
+            -e OPAM_PUBLISH_GH_TOKEN="$OPAM_PUBLISH_TOKEN" \
+            -e OPAM_TARGET_REPO -e TARBALL_URL -e PKG_DIR -e OPAM_FILE -e VERSION \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              opam install -y opam-publish
+              # opam-publish takes the package NAME from the opam filename
+              # (rocq-qed-roots) and the VERSION from the version: field;
+              # set it from the tag so the submitted package is
+              # rocq-qed-roots.$VERSION (not the raw tag).
+              echo "version: \"$VERSION\"" >> "$PKG_DIR/$OPAM_FILE"
+              # opam-publish reads its Continue/Submit confirmations from the
+              # controlling TTY, not stdin, so in CI (no tty) it aborts with no
+              # regardless of yes-pipe, OPAMYES, or OPAMCONFIRMLEVEL (all three
+              # were verified ineffective). Run it under a pseudo-tty via
+              # util-linux script(1) and feed y to every prompt. pipefail OFF
+              # so the yes SIGPIPE does not mask the exit code; script -e
+              # returns the wrapped opam publish exit status.
+              export OPAMYES=1 OPAMCONFIRMLEVEL=unsafe-yes
+              set +o pipefail
+              yes | script -qec "opam publish --no-browser --repo=$OPAM_TARGET_REPO $TARBALL_URL $PKG_DIR/$OPAM_FILE" /dev/null
+            ' || {
+              echo "::warning::opam publish did not complete; the release tarball is attached. Submit manually: OPAM_PUBLISH_GH_TOKEN=<token> opam publish --repo=$OPAM_TARGET_REPO $TARBALL_URL $PKG_DIR/$OPAM_FILE"
+              printf 'opam publish skipped/failed; the release tarball is attached. Submit manually: OPAM_PUBLISH_GH_TOKEN=<token> opam publish --repo=%s %s %s\n' "$OPAM_TARGET_REPO" "$TARBALL_URL" "$PKG_DIR/$OPAM_FILE" >> "$GITHUB_STEP_SUMMARY"
+            }
+

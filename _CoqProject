@@ -529,3 +529,10 @@ theories/LnIvt.v
 # Winding fixtures only (five sample rings). No local-constancy or convex-class
 # headline. 3-axiom. No Admitted.
 theories/CurveRingWindFixtures.v
+# qed chain: qedinterval -> qedpoly -> qedroots (stdlib only, 3-axiom, no Admitted).
+# Packaged as rocq-qed-roots (packaging/rocq-qed-roots). Sturm/Cauchy index: OPEN.
+theories/QedPoly.v
+theories/QedInterval.v
+theories/QedRoots.v
+theories/QedRootsRefute.v
+theories/QedRootsExamples.v

@@ -1,0 +1,62 @@
+opam-version: "2.0"
+synopsis: "Kernel-checked real-root certificates for polynomials from rational coefficient enclosures"
+description: """
+The `qedroots` layer of a verified computational substrate for finite,
+kernel-checkable polynomial certificates (chain: qedinterval -> qedpoly ->
+qedroots -> qedanalytic -> qedjensen), extracted from the
+NetTopologySuite.Proofs corpus.
+
+  - `QedPoly`: coefficient-list polynomials over R and Q, synthetic
+    division, the factor theorem from distinct roots, executable Q
+    multiplication with its R transport.
+  - `QedInterval`: rational enclosures of P(x) over a box of
+    coefficient intervals, with a strict sign decision.
+  - `QedRoots`: `hyperbolic` (multiset of real roots) and
+    `simple_real_rooted` as separate predicates; a robust sign-alternation
+    certificate (`cert_sound`: every REAL coefficient vector inside a
+    rational box is simple-real-rooted) and a factor certificate with
+    explicit multiplicities (`factor_cert_sound`).
+  - `QedRootsRefute`: the Laguerre inequality p'^2 - p p'' >= 0 for
+    hyperbolic p, and a robust refutation certificate
+    (`lag_box_cert_sound`: NO real coefficient vector in the box is
+    hyperbolic); on point boxes a negative discriminant is accepted at the
+    vertex, and that acceptance is not proved for proper boxes.
+  - `QedRootsExamples`: a quintic certified with a +-1/20
+    coefficient box, repeated-root instances, negative controls and refuted instances.
+
+Certificates are booleans over Q decided by `vm_compute`; floating point
+never enters.  Sound, deliberately not complete.  Stdlib only; uses the
+three stdlib classical-reals axioms.
+
+Provenance: github.com/MerkatorBV/NetTopologySuite.Proofs (assembled via
+the package MANIFEST).
+"""
+maintainer: "Jeroen Bloemscheer <jeroen.bloemscheer@merkator.com>"
+authors: ["NetTopologySuite.Proofs contributors"]
+license: "BSD-3-Clause"
+homepage: "https://github.com/MerkatorBV/NetTopologySuite.Proofs"
+bug-reports: "https://github.com/MerkatorBV/NetTopologySuite.Proofs/issues"
+dev-repo: "git+https://github.com/MerkatorBV/NetTopologySuite.Proofs.git"
+
+depends: [
+  "rocq-core" {>= "9.2" & < "9.3~"}
+  "rocq-stdlib"
+]
+
+build: [
+  [make "-j%{jobs}%"]
+]
+install: [
+  [make "install"]
+]
+
+tags: [
+  "category:Mathematics/Algebra"
+  "keyword:polynomials"
+  "keyword:real roots"
+  "keyword:hyperbolic polynomials"
+  "keyword:certificates"
+  "keyword:interval arithmetic"
+  "logpath:NTS.Proofs"
+  "date:2026-11-20"
+]
