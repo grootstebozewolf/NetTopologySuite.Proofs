@@ -204,3 +204,73 @@ whether pp. 451/468 can be repaired, for example with truncations that keep
 `t` gaps bounded below, or weighted constants. That is not assessed.
 
 **SUMMARY (slice 3) ok 2 / warn 1 (gap in a used inference; repairability not assessed) / bug 0.**
+
+## Slice 4: the gap bites at `a = 1/2`, where the Trace Formula is computed (2026-11-21)
+
+This answers the question slice 3 left open.
+
+**1. The `a`-line basis is indexed by zeros on `Re s = a`.** Theorem 10.2.1.1
+(p. 440) takes `t ∈ ℝ` "such that `ρ_{χ,t} := χ|·|_F^{a+it}` is a zero of
+`L(s, χ)`". That is Tate's parametrization (Notation 10.2.1.1:
+`χ|·|^z_F`, `z ∈ ℂ`), so the critical line is **`a = 1/2`**.
+
+**2. The Trace Formula is computed at `a = 1/2`.**
+- p. 487: the trace calculation "will, in turn, be possible upon further
+  assuming `a = 1/2` and `s ≥ 2[F:Q]`".
+- p. 519 (§12.5): "in the special case the parameter `a` is chosen to be
+  `a = 1/2` … This is also where the necessity of the choice `a = 1/2` is
+  explained".
+- pp. 435–438: the Fourier transform extends continuously only for
+  `a = 1/2`.
+- p. 466: the spectral side uses Theorems 10.2.1.1 and 10.3.1.1 for these
+  bases.
+
+**3. What `C` must bound.** (10.3.1.18), p. 451, needs
+`‖η_{χ_k,t_{k,j},m'}‖_{−s,2} · ‖ψ_{χ_k,t_{k,j},m}‖_{s,2} ≤ C` "independent of
+`m'` and of `(k, j)`", i.e. **one `C` for all zeros**. The text adds "the
+countable set `{η}` … and its bi-orthogonal in `W^{s,2}(C_F)` are both contained
+in the closed ball of radius `C^{1/2}`". That uniform `C` makes the
+singular-value bounds (10.3.1.20)–(10.3.1.22) independent of the zero, and
+those bounds give the convergence `A_K → A_{(k,j)}` and the spectral
+nuclearity that §10.4.3 feeds into the Trace Formula (p. 468).
+
+**4. At `a = 1/2` no such `C` exists** (argument, not formalized; every step
+is standard, but a specialist should check):
+- (i) `|⟨ψ, η⟩_{s,2}| ≤ ‖ψ‖_{s,2}‖η‖_{−s,2}` (Cauchy–Schwarz with reciprocal
+  weights). So `f = ⟨ψ_t, ·⟩` satisfies `close_pair_lower`'s hypothesis with
+  `N = ‖·‖_{−s,2}` and `B = ‖ψ_t‖_{s,2}`.
+- (ii) Biorthogonality gives `⟨ψ_t, η_t⟩ = 1` and `⟨ψ_t, η_{t'}⟩ = 0` (same
+  `χ`, `m = 0`), so `‖ψ_t‖_{s,2} ≥ 1/‖η_t − η_{t'}‖_{−s,2}`
+  (`MarkushevichBoundQEX.v : close_pair_lower`).
+- (iii) `‖η_t − η_{t'}‖_{−s,2}² = vol(C_F¹)·∫_ℝ |e^{itu} − e^{it'u}|²(1+u²)^{−s/2} du ≤ vol·∫ min(4, |t−t'|²u²)(1+u²)^{−s/2} du`,
+  which tends to `0` as `|t−t'| → 0`, uniformly in `t` (dominated
+  convergence, `s > 1`).
+- (iv) For `χ = 1` (`ζ`), Selberg gives `N₀(T) ≫ T log T` zeros on
+  `Re s = 1/2` up to height `T`. So consecutive ordinates `t < t'` with
+  `t' − t → 0` exist (average gap `≪ 1/log T`).
+- (v) Hence `sup_t ‖ψ_t‖_{s,2} = ∞` (`no_uniform_bound`), while
+  `‖η_t‖_{−s,2}` stays in `[1/C₀, C₀]` (Proposition 10.2.1.3). So **no uniform
+  `C` exists** in (10.3.1.18).
+
+**5. Repairability (reading).** The estimates survive only if the
+`t`-dependent constant `C_t ≈ ‖ψ_t‖` is beaten by the decay of `φ̂^{(i)}(t)`
+(φ ∈ D(C_F), so `φ̂` decays faster than any polynomial on vertical lines).
+`C_t` behaves roughly like the reciprocal distance from `η_t` to the span of
+its neighbours, which is controlled by gaps between consecutive critical
+zeros, and **no unconditional lower bound on those gaps is known**. Such
+bounds are tied to questions like the simplicity of zeros. So a repair needs
+either an unconditional growth bound for `‖ψ_t‖` (a new input) or a
+different route to nuclearity. Neither is supplied on pp. 450–451.
+
+| item | OUTCOME |
+|---|---|
+| normalization: `a`-lines are `Re s = a` in Tate's parametrization; the TF is at `a = 1/2` | **located** (pp. 440, 435–438, 487, 519) |
+| `C` in (10.3.1.18) must be uniform over all zeros | **located** (p. 451) |
+| at `a = 1/2`, `sup_t ‖ψ_t‖ = ∞` via `close_pair_lower` + continuity of `t ↦ η_t` + Selberg | **argument** (steps i–v; `close_pair_lower` / `no_uniform_bound` are machine-checked, the rest is standard analysis not formalized) |
+| fatal? | **not assessed.** Repair needs unconditional control of `‖ψ_t‖` growth against `φ̂` decay. |
+
+**SUMMARY (slice 4) ok 2 / warn 1 (uniform-`C` step in §10.3 fails as stated at `a = 1/2`; repairability open) / bug 0.**
+This sharpens the publicly reported p. 444 objection. The failing inference is
+used, at the parameter where the Trace Formula is computed, in the
+nuclearity estimate that feeds the spectral side. Whether the proof can be
+mended is a question for specialists.
