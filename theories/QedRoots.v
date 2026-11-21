@@ -11,8 +11,8 @@
                            distinct, and they are ALL the real zeros.
 
    Certificates (boolean, decided by vm_compute over Q):
-     box_cert b xs     d+1 increasing rational points; the exact rational
-                       enclosure of P(x_i) over the box has a strict sign,
+     box_cert b xs     d+1 increasing rational points; a rational enclosure
+                       of P(x_i) over the box has a strict sign,
                        alternating.  Robust (an open condition on the box).
                        Sound:  in_box p b -> box_cert b xs = true
                                -> simple_real_rooted p          (cert_sound)

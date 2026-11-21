@@ -5,11 +5,11 @@
        qedinterval -> qedpoly -> qedroots -> qedanalytic -> qedjensen.
 
    A `box` is a list of rational intervals [lo_j, hi_j], one per coefficient
-   (low degree first).  `ieval b x` encloses the range of c |-> sum c_j x^j
-   over the box at a rational point x.  Proved: it is an ENCLOSURE
-   (`ieval_sound`).  It is also tight (Horner with an exact scalar, the map
-   being linear in c), but tightness is not proved here.  `isign` reads off a strict sign
-   (+1 / -1) or 0 when the enclosure straddles zero.
+   (low degree first).  `ieval b x` encloses c |-> sum c_j x^j over the box
+   at a rational point x.  Proved: it is an enclosure (`ieval_sound`).
+   Tightness (every value between the endpoints is attained) is not proved.
+   `isign` reads off a strict sign (+1 / -1) or 0 when the enclosure
+   straddles zero.
 
    The interface towards qedanalytic is `in_box`: a REAL coefficient list
    lying inside a rational box.  Whatever certifies the enclosure (Flocq,

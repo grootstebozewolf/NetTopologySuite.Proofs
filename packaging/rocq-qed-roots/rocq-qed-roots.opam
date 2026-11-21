@@ -9,7 +9,7 @@ NetTopologySuite.Proofs corpus.
   - `QedPoly`: coefficient-list polynomials over R and Q, synthetic
     division, the factor theorem from distinct roots, executable Q
     multiplication with its R transport.
-  - `QedInterval`: exact rational enclosures of P(x) over a box of
+  - `QedInterval`: rational enclosures of P(x) over a box of
     coefficient intervals, with a strict sign decision.
   - `QedRoots`: `hyperbolic` (multiset of real roots) and
     `simple_real_rooted` as separate predicates; a robust sign-alternation
@@ -19,8 +19,8 @@ NetTopologySuite.Proofs corpus.
   - `QedRootsRefute`: the Laguerre inequality p'^2 - p p'' >= 0 for
     hyperbolic p, and a robust refutation certificate
     (`lag_box_cert_sound`: NO real coefficient vector in the box is
-    hyperbolic); on point boxes complete in degree 2 (discriminant / Turan),
-    not on proper boxes.
+    hyperbolic); on point boxes a negative discriminant is accepted at the
+    vertex, and that acceptance is not proved for proper boxes.
   - `QedRootsExamples`: a quintic certified with a +-1/20
     coefficient box, repeated-root instances, negative controls and refuted instances.
 

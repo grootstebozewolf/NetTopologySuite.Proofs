@@ -56,9 +56,11 @@ For the hyperbolicity question a cheaper exact root count suffices:
 
 The certificate is literally **d+1 exact signs at rational points** — the
 orientation-predicate analogue asked for in Q5. Each sign is decided from
-the exact rational range of P(x_i) over the coefficient box (Horner with an
-exact scalar is exact, the map c ↦ P(x) being linear), so the analytic
-uncertainty stays left of the bridge and the predicate is exact.
+a rational enclosure of P(x_i) over the coefficient box (Horner in the
+coefficients at a fixed rational x). `ieval_sound` proves the enclosure.
+That the endpoints are attained is not proved. A strict sign of the
+enclosure is a strict sign of P(x_i), so the analytic uncertainty stays
+left of the bridge and the predicate is exact.
 
 Trade-off, recorded rather than hidden: the certificate cannot see repeated
 roots (see Q4). A Sturm/Sturm–Habicht route would, and remains the upgrade
@@ -90,7 +92,7 @@ packaged as `packaging/rocq-qed-roots`. See "Programme" below.
 
 | 7 | multiplicities expressible: `factor_cert` (p ≡ c·Π fₖ over Q, each fₖ box-certified, factors may repeat) ⇒ hyperbolic; (X+1)²(X+2) and (2X²+5X+2)²(X+3) certified | QED | `factor_cert_sound`, `D3_hyperbolic`, `Q5_hyperbolic` |
 
-| 8 | refutation: hyperbolic ⇒ Laguerre form p′² − p·p″ ≥ 0 everywhere; `lag_box_cert` (interval upper bound < 0 at one rational x) ⇒ no p in the box is hyperbolic; for **point boxes** with rational coefficients, complete in degree 2 (vertex value = discriminant/2, i.e. Turán) | QED | `laguerre_hyperbolic`, `lag_box_cert_sound`, `quadratic_negative_discriminant_not_hyperbolic`, `lag_box_cert_of_quadratic_neg_disc` |
+| 8 | refutation: hyperbolic ⇒ Laguerre form p′² − p·p″ ≥ 0 everywhere; `lag_box_cert` (interval upper bound < 0 at one rational x) ⇒ no p in the box is hyperbolic; on a **point box** with rational `a, b, c`, `c ≠ 0` and `b² − 4ac < 0`, the checker accepts the vertex (value = discriminant/2). The converse, that every non-hyperbolic quadratic has negative discriminant, is not proved | QED | `laguerre_hyperbolic`, `lag_box_cert_sound`, `quadratic_negative_discriminant_not_hyperbolic`, `lag_box_cert_of_quadratic_neg_disc` |
 | 9 | instances: X²+1 at 0, (X+1)(X²+1) at 1/2; P5 lifted by +3 refuted on a ±1/2 box at −1/4, against P5 itself certified on ±1/20 | QED | `x2_plus_one_not_hyperbolic`, `cubic_not_hyperbolic`, `P5up_neighbourhood_not_hyperbolic` |
 
 Why step 8 matters for the control: QEX-2B ("DH fails while ξ passes")
@@ -100,7 +102,7 @@ has a frozen pair of instruments: `box_cert` (accept) and `lag_box_cert`
 (`box_cert_lag_exclusive`). A DH instance that neither accepts nor refutes
 is recorded as undecided at that (d,n), not as a separation.
 
-| 10 | review QEX against our own claim "Laguerre refutation complete in degree 2": false for proper boxes. `beta_box` = 1 + [−3/2, 3/2]X + X² is inhabited and wholly non-hyperbolic, yet `lag_box_cert` fails at every rational x (independent enclosures of p, p′, p″ lose the correlation; upper bound ≥ 1/4). Claim narrowed to point boxes | QEX (recorded as warn) | `beta_box_not_hyperbolic`, `beta_box_lag_never` |
+| 10 | review QEX: `lag_box_cert` does not refute every non-hyperbolic proper box, even in degree 2. `beta_box` = 1 + [−3/2, 3/2]X + X² is inhabited and wholly non-hyperbolic, yet `lag_box_cert` fails at every rational x (independent enclosures of p, p′, p″ lose the correlation; upper bound ≥ 1/4). The point-box theorem is acceptance under a negative discriminant, not a classification of every non-hyperbolic quadratic | QEX (recorded as warn) | `beta_box_not_hyperbolic`, `beta_box_lag_never` |
 | 11 | non-vacuity: an inverted interval made `in_box _ b` empty and the soundness theorems vacuous. Both checkers now require `box_wf` (lo ≤ hi), which provably yields an inhabitant; the neighbourhood boxes contain their centres | QED | `box_cert_inhabited`, `lag_box_cert_inhabited`, `box_wf_inhabited`, `P5_width_box_inhabited`, `P5up_width_box_inhabited` |
 
 ## Programme (reframed 2026-11-20)
@@ -115,9 +117,9 @@ qedinterval → qedpoly → qedroots → qedanalytic → qedjensen → RH experi
 
 | layer | library | status |
 |---|---|---|
-| qedinterval | `QedInterval.v` (in `rocq-qed-roots` for now) | QED: exact rational enclosure + strict sign; `in_box` is the interface qedanalytic must produce |
+| qedinterval | `QedInterval.v` (in `rocq-qed-roots` for now) | QED: rational enclosure + strict sign; tightness unproved; `in_box` is the interface qedanalytic must produce |
 | qedpoly | `QedPoly.v` (in `rocq-qed-roots` for now) | QED: eval, synthetic division, factor theorem, Q multiplication |
-| qedroots | `QedRoots.v`, `QedRootsRefute.v` → package `rocq-qed-roots` | QED: sign-alternation + factor certificates (accept), Laguerre certificate (refute; complete in degree 2 for point boxes only, not for proper boxes); **OPEN**: Sturm / Cauchy index, squarefree decomposition, refutation complete beyond degree 2 |
+| qedroots | `QedRoots.v`, `QedRootsRefute.v` → package `rocq-qed-roots` | QED: sign-alternation + factor certificates (accept), Laguerre certificate (refute; on point boxes a negative discriminant is accepted at the vertex; proper boxes are not covered); **OPEN**: Sturm / Cauchy index, squarefree decomposition, refutation beyond the negative-discriminant point case |
 | qedanalytic | — | OPEN: certified enclosures of γ(n) (Flocq / interval), producing `in_box` |
 | qedjensen | — | OPEN: define J^{d,n}_Ξ, prove the certified coefficients are the intended ones, run `box_cert` |
 | DH control | — | OPEN: same `box_cert`, frozen |
@@ -162,6 +164,6 @@ second consumer needs them without roots. "Mint" in the CONTEXT.md sense
 
 SUMMARY ok=10 warn=1 bug=0
 
-OUTCOME: QED (qedroots rung, packaged as rocq-qed-roots) — rational sign certificate: interval-enclosed real coefficients → exact rational sign list → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.
+OUTCOME: QED (qedroots rung, packaged as rocq-qed-roots) — rational sign certificate: interval-enclosed real coefficients → rational sign list from an enclosure → simple real-rootedness → hyperbolicity, all `Qed`. Hunt overall stays OPEN: ξ enclosures and the DH control are the next rungs.
 
-> Superseded-by: docs/attacks/2026-11-20-qedroots-vertex-cert.md
+The follow-up `docs/attacks/2026-11-20-qedroots-vertex-cert.md` records the vertex checker and the isolating-gap export. It does not replace this write-up.

@@ -13,7 +13,7 @@
 | Module | Contents | Headline |
 |---|---|---|
 | `QedPoly` | `peval`, `lead`, `prodlin`, synthetic division, continuity, formal derivative; Q-side `pmulQ`, `peqQ`, `pderivQ` with Q2R transport | `factor_from_roots`, `peval_Q2R_pmulQ`, `peval_derivable` |
-| `QedInterval` | `box` of rational coefficient intervals, enclosure `ieval` (tight; tightness unproved), strict sign `isign`, `in_box` (the interface `qedanalytic` must produce), box derivative | `ieval_sound`, `isign_mul_neg`, `in_box_pderiv` |
+| `QedInterval` | `box` of rational coefficient intervals, enclosure `ieval` (sound; tightness unproved), strict sign `isign`, `in_box` (the interface `qedanalytic` must produce), box derivative | `ieval_sound`, `isign_mul_neg`, `in_box_pderiv` |
 | `QedRoots` | `hyperbolic` (root multiset) vs `simple_real_rooted` (distinct, all zeros), separate definitions; `box_cert` (robust sign alternation), `factor_cert` (exact multiplicities) | **`cert_sound`**, `cert_roots_in_gaps`, **`factor_cert_sound`** |
 | `QedRootsRefute` | Laguerre form `p′² − p·p″ ≥ 0` for hyperbolic p; `lag_box_cert` (enclosed upper bound < 0 at one rational point refutes the whole box) | **`laguerre_hyperbolic`**, **`lag_box_cert_sound`**, `lag_box_cert_of_quadratic_neg_disc`, `box_cert_lag_exclusive` |
 | `QedRootsExamples` | P5 = 6+41X+97X²+97X³+41X⁴+6X⁵ accepted on ±1/20; P5up (P5 with constant term 9) refuted on ±1/2; `beta_box` negative control; repeated roots via factors; negative controls | `P5_neighbourhood_simple_real_rooted`, `P5up_neighbourhood_not_hyperbolic`, `double_root_box_uncertifiable`, `beta_box_lag_never` |

@@ -2,13 +2,14 @@
 date: 2026-11-20
 Provenance: a0411a057fc5fdc8e0c76bcf55324e423b1cb7fe
 Theorems: `QedRootsRefute.v : lag_box_cert_of_quadratic_neg_disc`, `QedRoots.v : cert_roots_in_gaps`, `QedRootsExamples.v : x2_plus_one_not_hyperbolic`
-Supersedes: docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md
 -->
-# Follow-up: degree-2 checker completeness on point boxes, and isolating gaps
+# Follow-up: vertex acceptance on negative-discriminant point boxes, and isolating gaps
 
 Records the review corrections on the qedroots certificate at
-`a0411a057fc5fdc8e0c76bcf55324e423b1cb7fe`. The parent ticket stays the
-write-up of the sign-alternation and Laguerre proofs.
+`a0411a057fc5fdc8e0c76bcf55324e423b1cb7fe`. The parent ticket
+`docs/attacks/2026-11-20-jensen-hyperbolicity-certificate.md` stays the
+write-up of the sign-alternation and Laguerre proofs. This file does not
+replace it.
 
 `lag_box_cert_of_quadratic_neg_disc` states that rational `a`, `b`, `c`
 with `~ (c == 0)` and `b² − 4ac < 0` make
@@ -27,6 +28,8 @@ coefficient, and no Davenport–Heilbronn run are in this follow-up.
 
 SUMMARY ok=2 warn=0 bug=0
 
-OUTCOME: QED for the rational quadratic boolean certificate and for the
-isolating-gap export. Sturm, squarefree search, Flocq `in_box`, and the
-Davenport–Heilbronn control stay QEX.
+OUTCOME: QED for acceptance of a negative-discriminant rational point
+quadratic at its vertex, and for the isolating-gap export. That is not a
+proof that every non-hyperbolic quadratic has negative discriminant.
+Sturm, squarefree search, Flocq `in_box`, and the Davenport–Heilbronn
+control stay QEX.
