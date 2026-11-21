@@ -62,6 +62,7 @@ PROBES=(
   docs/h1-vacuity/LandauWindowCore.v
   docs/h1-vacuity/LandauDichotomyQED.v
   docs/h1-vacuity/LandauWindowRebuilt.v
+  docs/h1-vacuity/FormBRebuilt.v
 )
 
 fail=0
