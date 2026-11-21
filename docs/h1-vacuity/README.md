@@ -207,8 +207,12 @@ rocq c docs/h1-vacuity/LeanSkeletonRebuild.v
 `Formalism/BehrendSets/StatementE.lean : OrdLargeJ` (the 2-power tower's order
 law) from its type, with **no hypotheses**. For odd `l ≥ 2` and `1 ≤ k ≤ J`,
 if `2^N | l^k ∓ 1` then `2^N ≤ J(l+1)` (`ord_large_J`). The proof is a
-lifting-the-exponent style strong induction (`lte`). *Closed under the global
-context*. The compile prints Stdlib 9.1 deprecation warnings for `Znumtheory`
+lifting-the-exponent style strong induction (`lte`). It also rebuilds the
+exact law `OrdDvd` (`ord_dvd`): for odd `l` and `j ≥ 1`,
+`l^(2^j) ≡ ±1 (mod 2^N)` holds iff `l ≡ ±1 (mod 2^(N−j))`, with truncated
+subtraction as in Lean. That proof goes through the exact valuation
+`val_exact`: `2^n ∣ l^(2^(j+1))−1 ⇔ 2^n ∣ (l²−1)·2^j`. *Closed under the
+global context*. The compile prints Stdlib 9.1 deprecation warnings for `Znumtheory`
 names.
 
 ```sh

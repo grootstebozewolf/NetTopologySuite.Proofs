@@ -341,3 +341,30 @@ Lean, with nothing assumed beyond the definitional translation above.
 **PASS-STATIC / PENDING**. Independently re-derived in Rocq so far: the top-level
 glue (slice 8), the tower order law (slice 9), and the thick-set construction
 (`SphereNoRelQED.v`, root-only ticket).
+
+## Slice 10: Rocq rebuild of the exact order law `OrdDvd` (2026-11-21)
+
+**Lean type** (`Formalism/BehrendSets/StatementE.lean`):
+`OrdDvd : ∀ s l j (hl : Coprime l 2^(s+2)), orderOf (frob s l hl) ∣ 2^j ↔ (l ≡ 1 ∨ l ≡ −1 [ZMOD 2^(s+2−j)])`.
+
+**Integer form** (with `frob^(2^j) = 1 ⇔ l^(2^j) ≡ ±1 (mod 2^(s+2))`, and
+`N = s+2`): for odd `l` and `1 ≤ j`,
+`(2^N ∣ l^(2^j)−1 ∨ 2^N ∣ l^(2^j)+1) ↔ (2^(N−j) ∣ l−1 ∨ 2^(N−j) ∣ l+1)`.
+Truncated subtraction is used, as in Lean. The case `j = 0` is the identity.
+
+**Probe:** `docs/h1-vacuity/TowerOrderLawQED.v` (same file as slice 9), with
+**no section hypotheses beyond `l` odd**.
+
+| Rocq theorem | statement | OUTCOME |
+|---|---|---|
+| `val_exact` | `2^n ∣ l^(2^(j+1))−1 ⇔ 2^n ∣ (l²−1)·2^j` (exact 2-adic valuation, induction on `j`) | **QED, zero axioms** |
+| `sq_minus_one` | `2^(m+1) ∣ l²−1 ⇔ 2^m ∣ l−1 ∨ 2^m ∣ l+1` | **QED, zero axioms** |
+| `ord_dvd` | integer form of `OrdDvd`, all `N`, all `j ≥ 1`, including the edge `N ≤ j+1` | **QED, zero axioms** |
+
+**Meaning.** Together with `ord_large_J` (slice 9), the tower's **explicit
+degree function on primes** (root-only ticket, slice 2) is now independently
+verified in both directions. These are exactly the facts that make the
+ℤ₂-tower the number-field stand-in for `F_{qⁿ}/F_q`.
+
+**SUMMARY (slice 10) ok 3 / warn 0 / bug 0**. Verdict unchanged:
+**PASS-STATIC / PENDING**.
