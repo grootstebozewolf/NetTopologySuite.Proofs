@@ -39,7 +39,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED.
+  AlpogeRealsQED AlpogeRealsQED2.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -171,3 +171,31 @@ Proof.
 Qed.
 Print Assumptions twelve_proved_are_refined.
 Print Assumptions main_line_from_core.
+
+(* ---- the next twelve, PROVED over R with an allowlist-clean logarithm
+        (AlpogeRealsQED2.v) ---- *)
+Check AlpogeRealsQED2.level_of_tiedWin.        Check AlpogeRealsQED2.windowHyp_of_rpow_eventually.
+Check AlpogeRealsQED2.windowInequality_of_artinInputs.  Check AlpogeRealsQED2.core_gm.
+Check AlpogeRealsQED2.character_balance_core.  Check AlpogeRealsQED2.tiedCore_of_chainTied.
+Check AlpogeRealsQED2.charFamily_LFunction_ne_zero_of_one_le_re.
+Check AlpogeRealsQED2.lemmaL.                  Check AlpogeRealsQED2.zeroFree_of_rpow_window.
+Check AlpogeRealsQED2.formB.                   Check AlpogeRealsQED2.landau_pole_re_le.
+Check AlpogeRealsQED2.zeroFreeAll_of_topG.
+
+Definition realsNext : list string := [
+  "zeroFreeOn_of_tiedWin_cyc / level_of_tiedWin"; "windowHyp_of_rpow_eventually";
+  "windowInequality_of_artinInputs"; "core_gm"; "CharacterBalanceMoves.core";
+  "tiedCore_of_chainTied"; "charFamily_LFunction_ne_zero_of_one_le_re"; "lemmaL";
+  "zeroFree_of_rpow_window"; "formB"; "landau_pole_re_le";
+  "zeroFreeAll_of_topG / plugWin (composition)" ].
+
+(* the next twelve are refined ledger items, and all 24 proved over R are distinct *)
+Theorem next_twelve_proved_are_refined :
+  @eq nat (length realsNext) 12%nat /\
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) realsNext) true /\
+  NoDup (reals12 ++ realsNext).
+Proof.
+  split; [reflexivity|]. split; [vm_compute; reflexivity|].
+  repeat constructor; simpl; intuition discriminate.
+Qed.
+Print Assumptions next_twelve_proved_are_refined.
