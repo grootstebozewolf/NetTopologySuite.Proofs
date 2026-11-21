@@ -293,3 +293,45 @@ inputs are exactly:
   makes the count beat `K·T` for every `K`.
 
 **SUMMARY (slice 5) ok 2 / warn 0 / bug 0.**
+
+## Slice 6: prior art. The gap is already reported upstream (2026-11-21)
+
+**Precedence.** The slice 3–5 gap is reported in the formalization project as
+issue **mccorvie/riemann-masullo#1169**, "Manuscript gap at (10.3.1.18): close
+zeta zeros preclude the uniform biorthogonal bound". It was opened on
+2026-11-20T23:35Z by `yikerman`, **before** this finding, and was found here via
+`gh api search/issues` after slices 3–5 were written. The argument there
+matches slices 3–5 step for step:
+- dual-norm identity `‖η_t − η_u‖² = c∫|e^{i(t−u)x} − 1|²/(1+x²) dx` (at `s = 2`);
+- dominated convergence;
+- many critical-line zeros, hence close pairs (`≫ T log T` against `O_δ(T)`
+  for a `δ`-separated set);
+- `1 = |(η_t − η_u)(ψ_t)| ≤ ‖η_t − η_u‖‖ψ_t‖`, including for the quotient norm.
+
+**Where #1169 is sharper.**
+- It cites **Conrey's Theorem 1** (a positive proportion of *simple*
+  critical-line zeros) instead of Selberg. That makes the `m = 0` indexing and
+  the distinctness of ordinates explicit.
+- It notes that the same close pairs occur in any centred strip of positive
+  width, where the factor `e^{−2α|x|}` preserves the convergence. So the gap
+  also affects the `I`-based strip bases (Theorem 10.2.2.1), not only the
+  `a`-line.
+
+**What this finding adds.**
+- An independent reproduction, from reading the draft.
+- The location of the inference's source (Terminology 10.2.1.2(2), p. 444)
+  and of its other uses (Corollaries 10.2.1.4 and 10.2.2.3, p. 468).
+- **Machine-checked cores** in `MarkushevichBoundQEX.v`:
+  - `block_qex`: the general inference is false;
+  - `close_pair_lower` / `no_uniform_bound`;
+  - `small_gap`: the pigeonhole step;
+  - `psi_unbounded`: the full chain, with biorthogonality, continuity and
+    density as named hypotheses.
+
+**Corrections to slices 3–5.**
+- Slice 3's "independently confirms that the publicly reported p. 444
+  objection is a genuine gap" stands.
+- It should not be read as a new discovery. The specific failure at
+  (10.3.1.18) was reported upstream first, in #1169.
+
+**SUMMARY (slice 6) ok 1 / warn 1 (precedence: the gap is upstream #1169; this finding is a reproduction with Rocq cores) / bug 0.**
