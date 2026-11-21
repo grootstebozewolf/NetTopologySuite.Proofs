@@ -58,6 +58,8 @@ PROBES=(
   docs/h1-vacuity/TowerOrderLawQED.v
   docs/h1-vacuity/LeanSkeletonRebuild.v
   docs/h1-vacuity/MarkushevichBoundQEX.v
+  docs/h1-vacuity/MasulloRepairCondition.v
+  docs/h1-vacuity/LandauWindowCore.v
 )
 
 fail=0
