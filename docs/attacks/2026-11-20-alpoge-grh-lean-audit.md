@@ -239,3 +239,41 @@ promised write-up for the mathematics.
 
 **SUMMARY (slice 6) ok 4 / warn 0 / bug 0**. Cumulative static trace: no
 defect found. Verdict unchanged: **PASS-STATIC / PENDING** (steps 7–10).
+
+## Slice 7: the "stop at 2/3 a priori" item and "division" (2026-11-21)
+
+Closes the slice-5 open item (remark timeline 14: "precise computation of the
+'cost' of each lift, showing that one would stop at 2/3 a priori … need for
+'division'"). Read from the mirror source @ `7cbf7a0`.
+
+- **No 2/3 exponent is formalized.** There is no `x^(2/3)`; the only
+  `two_thirds` hits are `Real.eulerMascheroniConstant_lt_two_thirds`. That is
+  expected: the final argument does not stop at 2/3, so the a-priori bound
+  never appears as a theorem.
+- **"Division" is formalized** as `division_rows_rational_lattice D`. On each
+  chain level `i ≤ m`, the Frobenius/Hecke-type operator factors as
+  `FFop = Dop ∘ Gs`, with `Gs ∘ GsD = T − Nm`. The Hermitian pairing scales
+  as `ipC(FFop φ, FFop ψ) = T^(N_i)·ipC(φ, ψ)`. In words: each lift step
+  admits a division by `T`, up to a norm term. It is proved for every datum
+  (`UnusedSlot33.division_rational_lattice`, via `finiteModel_of_heckeEstimate`
+  and `finite_order_of_totally_real`), and feeds `linkCore` as `s59`
+  (audit slice 6).
+  - `Development/AbelianVarietyTheory/Definitions/GlobalTwisting/LevelChainSharpColumnValuationOwnChainIff.lean:349`
+  - `Formalism/SharpRestriction/GlobalSchurBounds/GlobalRankLatticeProofs/UnitTraceSumBounds/DivisionRationalLattice.lean`
+- **Where the cost appears (interpretation).** `ch_core`'s error bracket
+  contains `nT·aE·(1 + m²/k)`. The chain cost is quadratic in the chain
+  length `m`, and it is divided by the multiplicity/degree `k ≥ x·m`.
+  Without that division (`k = O(1)`), the standard balance `X/m + m²` is
+  optimal at `m ≈ X^(1/3)`, with error `X^(2/3)`. That is the "stop at 2/3 a
+  priori". With `k ≥ x·m`, the quadratic cost becomes `m/x`, and `m ≈ √X`
+  becomes affordable.
+
+| item | OUTCOME |
+|---|---|
+| "2/3 a priori" | **Not formalized, by design** (superseded). Its mechanism is explained by the `m²/k` term. |
+| "need for division" | **Located and proved**: `division_rows_rational_lattice` |
+
+**SUMMARY (slice 7) ok 2 / warn 0 / bug 0 / open 0** for the remark
+cross-check. The audit verdict is unchanged: **PASS-STATIC / PENDING**. The
+remaining opens are the build, `#print axioms`, kernel replay and the archive
+hash.
