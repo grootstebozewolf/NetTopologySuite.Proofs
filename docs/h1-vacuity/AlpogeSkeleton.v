@@ -39,7 +39,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -214,3 +214,24 @@ Theorem stated_four_are_unrefined_items :
   @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (negb (snd t))) ledger) stated4) true.
 Proof. vm_compute. reflexivity. Qed.
 Print Assumptions stated_four_are_unrefined_items.
+
+(* ---- the third batch, PROVED over R (AlpogeRealsQED3.v) ---- *)
+Check AlpogeRealsQED3.landau_dichotomy.     Check AlpogeRealsQED3.landau_nearest.
+Check AlpogeRealsQED3.landau_window.        Check AlpogeRealsQED3.landau_tails.
+Check AlpogeRealsQED3.landau_window_key.    Check AlpogeRealsQED3.proposition_size_bound.
+Check AlpogeRealsQED3.ch_core.              Check AlpogeRealsQED3.landau_pole_re_le_bound.
+
+Definition realsThird : list string := [
+  "landau_dichotomy"; "landau_nearest"; "landau_window"; "landau_tails"; "landau_window_key";
+  "proposition_size_bound (GrowthSizeBound)"; "ch_core"; "landau_pole_re_le_bound" ].
+
+(* the third batch are refined ledger items; all 32 proved over R are distinct *)
+Theorem third_batch_proved_are_refined :
+  @eq nat (length realsThird) 8%nat /\
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) realsThird) true /\
+  NoDup (reals12 ++ realsNext ++ realsThird).
+Proof.
+  split; [reflexivity|]. split; [vm_compute; reflexivity|].
+  repeat constructor; simpl; intuition discriminate.
+Qed.
+Print Assumptions third_batch_proved_are_refined.
