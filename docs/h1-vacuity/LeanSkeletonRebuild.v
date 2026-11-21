@@ -464,3 +464,72 @@ Qed.
 End Balance.
 
 Print Assumptions growth_size_bound.
+
+(* ============================================================================
+   Part 5.  Masullo's deduction (The Music of the Primes, draft 2026-11-20,
+   §1.4.5 / Ch. 13), for comparison with Part 2 (zero_free_half) and Part 1.
+
+   Masullo: for each a > 0 the Trace Formula on W_I, I = [-a, a], gives
+     L'_f/L_f(s + 1/2, chi) holomorphic on Re s > a  (except s = 1/2 when chi
+     is trivial on C_F^1);
+   "since a > 0 is arbitrary" there are no zeros with Re > 1/2, and "by the
+   functional equation" none with Re < 1/2.
+
+   Trusted inputs (named hypotheses):
+     TF    : the Trace Formula consequence, for every a > 0 -- a zero of L at
+             w = s + 1/2 would be a pole of L'/L, so: Re w > 1/2 + a -> no zero
+             (unless chi trivial and w = 1).  THIS carries the content
+             (Theorem 12.5.1.1); here it is an assumption.
+     FE    : as in Part 1 (completed L-function functional equation).
+   Re-proved: the "a arbitrary" step and the reflection.
+   Contrast with Part 2: no growth function, no Landau sign -- the exponent
+   1/2 enters through the strip I = [-a, a] centred at the line, not through
+   a bound Gm(x) <= x^(1/2 + K eps).
+   ========================================================================== *)
+Section Masullo.
+
+Variable C : Type.
+Variable re : C -> Q.
+Variable onem : C -> C.
+Hypothesis re_onem : forall s, re (onem s) == 1 - re s.
+Variable one_pt : C.
+Hypothesis re_one : re one_pt == 1.
+Variable Ch : Type.
+Variable inv : Ch -> Ch.
+Variable trivial : Ch.
+Variable prim : Ch -> Prop.
+Hypothesis prim_inv : forall chi, prim chi -> prim (inv chi).
+Variable Lz Cz : Ch -> C -> Prop.
+Hypothesis L_to_C : forall chi s, 0 < re s -> Lz chi s -> Cz chi s.
+Hypothesis C_to_L : forall chi s, 0 < re s -> Cz chi s -> Lz chi s.
+Hypothesis FE : forall chi s, prim chi -> Cz chi s -> Cz (inv chi) (onem s).
+
+(* Trace Formula consequence, one statement per strip half-width a > 0. *)
+Hypothesis TF : forall a, 0 < a -> forall chi w,
+  (1 # 2) + a < re w -> (chi <> trivial \/ w <> one_pt) -> ~ Lz chi w.
+
+(* "since a > 0 is arbitrary": zero-free on Re w > 1/2 *)
+Lemma masullo_right_of_half : forall chi w,
+  1 # 2 < re w -> (chi <> trivial \/ w <> one_pt) -> ~ Lz chi w.
+Proof.
+  intros chi w Hw Hx. apply (TF ((re w - (1 # 2)) * (1 # 2))); [lra | lra | exact Hx].
+Qed.
+
+(* "by the functional equation": zeros in the strip lie on the line *)
+Theorem masullo_critLine : forall chi s, prim chi ->
+  0 < re s -> re s < 1 -> Lz chi s -> re s == 1 # 2.
+Proof.
+  intros chi s Hp H0 H1 Hz.
+  destruct (Q_dec (re s) (1 # 2)) as [[Hlt|Hgt]|Heq]; [| |exact Heq]; exfalso.
+  - pose proof (re_onem s) as Ho.
+    apply (masullo_right_of_half (inv chi) (onem s)).
+    + lra.
+    + right. intros E. rewrite E in Ho. lra.
+    + apply C_to_L; [lra|]. apply FE; [exact Hp | now apply L_to_C].
+  - apply (masullo_right_of_half chi s); auto.
+    right. intros E. rewrite E in H1. lra.
+Qed.
+
+End Masullo.
+
+Print Assumptions masullo_critLine.

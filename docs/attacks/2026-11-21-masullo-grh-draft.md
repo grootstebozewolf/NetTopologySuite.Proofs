@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-21
 Provenance: ebe823e
-Theorems: none — reading of an external manuscript; no Rocq theorem in this finding
+Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`
 -->
 # Masullo's GRH draft ("The Music of the Primes") against the Alpöge main line
 
@@ -119,3 +119,35 @@ Possible next probe: rebuild the §1.4.5 deduction in `LeanSkeletonRebuild.v`
 style (holomorphy of `L'/L` on `C_{>a}` for every `a > 0`, plus the functional
 equation, gives zero-freeness off the line) from named hypotheses. It would be
 cheap, and it would make the comparison with `zero_free_half` exact.
+
+## Slice 2: the §1.4.5 deduction rebuilt in Rocq (2026-11-21)
+
+`LeanSkeletonRebuild.v`, Part 5. The Trace Formula consequence enters as a
+named hypothesis `TF`: for every `a > 0`, a zero at `w` with
+`Re w > 1/2 + a` is impossible (a zero would be a pole of `L'/L`), unless
+`χ` is trivial and `w = 1`. The functional equation enters as in Part 1.
+
+| Rocq theorem | mirrors | OUTCOME |
+|---|---|---|
+| `masullo_right_of_half` | "since `a > 0` is arbitrary" (§1.4.5): choose `a = (Re w − 1/2)/2` | **QED, zero axioms** (conditional on `TF`) |
+| `masullo_critLine` | "by the functional equation the same holds over `C_{<1/2}`" | **QED, zero axioms** (conditional on `TF`, FE) |
+
+**What the side-by-side shows.**
+
+| | Alpöge glue (`zero_free_half`, `critLine`) | Masullo glue (`masullo_critLine`) |
+|---|---|---|
+| assumed core | `ch_core` growth `Gm(x) ≤ x^(1/2+Kε)` for all small `ε`, plus Landau (sign) | `TF`: a zero-free `Re w > 1/2 + a` for every `a > 0` |
+| where `1/2` enters | the growth exponent | the centre of the strip `I = [−a, a]` |
+| sign step | yes (`no_real_zero_right_of_theta`) | none |
+| reflection | identical | identical |
+
+The two glues are equally short. In both, `1/2` is an **input**: Alpöge
+derives it from the √X window (`growth_size_bound`, where the window is itself
+a hypothesis), and Masullo builds it into the weights. The difference lies
+entirely in the assumed core. `TF` for all `a > 0` is already the statement
+"zero-free right of `1/2 + a` for every `a`", so `masullo_right_of_half` is
+almost definitional. That makes concrete the reading above: Masullo's route
+puts essentially all of the content in Theorem 12.5.1.1, while Alpöge's splits
+it into a growth bound and a sign.
+
+**SUMMARY (slice 2) ok 2 / warn 0 / bug 0.**
