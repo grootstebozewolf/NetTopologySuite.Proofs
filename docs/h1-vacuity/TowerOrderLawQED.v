@@ -395,3 +395,38 @@ Proof.
 Qed.
 
 Print Assumptions ord_d.
+
+(* ============================================================================
+   Orbit-length bound (closes the slice-9 review point: ord_large_J alone is the
+   divisibility law; the "long orbit" statement also needs the division and a
+   size for 2^N, which PageN supplies in the Lean development).
+
+   orbit_length : for every odd l with 2 <= l <= x and every k >= 1 with
+                  l^k ≡ ±1 (mod 2^N):   2^N <= k * (x + 1).
+   So every such l has Frobenius order (in (Z/2^N)^x / ±1) at least
+   2^N / (x + 1).  With PageN's 2^(s+2) >= 4 x^(2+8 eps) that is
+   >= 4 x^(2+8eps)/(x+1) ~ x^(1+8 eps): the "long orbit" of the root-only
+   ticket, now with only PageN's size as an explicit input.
+   ========================================================================== *)
+Theorem orbit_length : forall (x l : Z) (N k : nat),
+  Z.odd l = true -> 2 <= l -> l <= x -> (1 <= k)%nat ->
+  (2 ^ Z.of_nat N | l ^ Z.of_nat k - 1) \/ (2 ^ Z.of_nat N | l ^ Z.of_nat k + 1) ->
+  2 ^ Z.of_nat N <= Z.of_nat k * (x + 1).
+Proof.
+  intros x l N k Hodd Hl2 Hlx Hk H.
+  pose proof (ord_large_J l Hodd Hl2 N k k Hk (Nat.le_refl k) H) as Hb.
+  assert (0 <= Z.of_nat k) by lia. nia.
+Qed.
+
+(* With an explicit PageN-type size, the order exceeds any J with J*(x+1) < 2^N. *)
+Corollary orbit_longer_than : forall (x l J : Z) (N k : nat),
+  Z.odd l = true -> 2 <= l -> l <= x -> (1 <= k)%nat ->
+  J * (x + 1) < 2 ^ Z.of_nat N ->
+  (2 ^ Z.of_nat N | l ^ Z.of_nat k - 1) \/ (2 ^ Z.of_nat N | l ^ Z.of_nat k + 1) ->
+  J < Z.of_nat k.
+Proof.
+  intros x l J N k Hodd Hl2 Hlx Hk HJ H.
+  pose proof (orbit_length x l N k Hodd Hl2 Hlx Hk H). nia.
+Qed.
+
+Print Assumptions orbit_longer_than.
