@@ -439,3 +439,52 @@ card ≤ 2 = no three distinct.
 
 **SUMMARY (slice 12) ok 2 / warn 0 / bug 0**. Verdict unchanged:
 **PASS-STATIC / PENDING**.
+
+## Slice 13: correction. What the positivity actually is, plus its Rocq rebuild (2026-11-21)
+
+**Erratum to slices 2, 2b and 5.** Those slices described the positivity
+as "non-negativity of the Dirichlet coefficients of a conjugation-symmetric
+combination of `−L'/L`". **That is wrong for the Lean proof.** Reading
+`landau_family` / `landau_entire` in full
+(`…/TotientGaloisClasses/Landau.lean:115, 380`):
+
+- `landau_family` has **no** coefficient-sign hypothesis. `S` is any finite
+  family closed under `χ ↦ χ⁻¹`, and `R ≠ 0` is arbitrary.
+- The non-negative object is **`H(x) := C·x^θ − (R·Gz(x) + Σ_S Gchi(x)) ≥ 0`**
+  (`hH`). That is the one-sided growth bound itself.
+- `landau_entire` is Landau's theorem for **Mellin transforms of
+  non-negative functions**. With `P = ζ₁^R·∏_S L(χ)`, the transform satisfies
+  `M(σ) = (P'/P(σ) − (a+bσ))/(σ(σ−1)) + C/(σ−θ) = ∫₁^∞ H(x)·x^(−σ−1) dx ≥ 0`
+  (`hM`, `PhiP`).
+- Closure under `χ ↦ χ⁻¹` is used only to make `P'/P` **real on the real
+  axis** (`hi`, `him`), not to make coefficients positive.
+- **The sign mechanism.** At a real zero `σ₀ ∈ (θ,1)` of `P` of order
+  `m ≥ 1`, `P'/P(σ) = m/(σ−σ₀) + O(1)` tends to `+∞`, while `σ(σ−1) < 0`. So
+  `M(σ) → −∞`, which contradicts `M ≥ 0`. The analytic part of
+  `landau_entire` (the `lan` iteration) pushes the abscissa down to `θ`.
+
+The overall reading stands: a one-sided bound plus a definite sign gives a
+zero-free half-plane. But the sign lives in `H ≥ 0` and the negativity of
+`σ(σ−1)` in the strip, not in Dirichlet coefficients. The remark's
+"Guinand–Weil had the sign" fits this better than the earlier "Landau
+positivity of coefficients" label did.
+
+**Rocq rebuild** (`LeanSkeletonRebuild.v`, Part 3,
+`no_real_zero_right_of_theta`). Over `Q`, the identity is cleared of the
+positive denominators `u = σ−σ₀`, `σ−θ` and `σ(1−σ)`. The hypothesis is
+`(m + r·u)(σ₀+u−θ) ≤ C·u·s(1−s)` (with `s = σ₀+u`, `|r| ≤ B`) for all small
+`u > 0`. Under that hypothesis, `0 < θ < σ₀ < 1` and `m > 0` give `False`.
+Proof: choose `u ≤ m(σ₀−θ)/(2(B(σ₀−θ)+|C|+1))`. Then the left side is
+`≥ m(σ₀−θ)/2`, while the right side is `≤ |C|·u`, which is less than that.
+
+| Rocq theorem | mirrors | OUTCOME |
+|---|---|---|
+| `no_real_zero_right_of_theta` | sign step of `landau_entire` (real zero ⇒ `M < 0`) | **QED, zero axioms** |
+
+The **translation** (not re-proved) consists of: the Mellin identity
+`hM`/`PhiP`, the local expansion of `P'/P` at a zero, and the analytic
+continuation iteration `lan` / `landauEq`. These are complex analysis and
+stay as trusted Mathlib-level content.
+
+**SUMMARY (slice 13) ok 1 / warn 1 (erratum to slices 2/2b/5, now corrected) / bug 0**.
+Verdict unchanged: **PASS-STATIC / PENDING**.

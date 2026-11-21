@@ -158,3 +158,95 @@ Qed.
 End TiedWin.
 
 Print Assumptions zero_free_half.
+
+(* ============================================================================
+   Part 3.  The DEFINITE SIGN inside landau_entire / landau_family
+   (Formalism/SharpRestriction/RamificationFrobenius/TotientGaloisClasses/Landau.lean).
+
+   What is non-negative in the Lean proof is NOT a Dirichlet coefficient but
+     H(x) := C * x^theta - (R*Gz(x) + sum_S Gchi(x))  >= 0      (hH; from the
+   one-sided growth bound), and its Mellin transform satisfies (hM, PhiP)
+     M(sigma) = (P'/P(sigma) - (a + b*sigma)) / (sigma*(sigma-1)) + C/(sigma-theta) >= 0
+   for real sigma.  Closure of S under chi |-> chi^-1 only makes P'/P real on
+   the real axis (`him`).  Near a real zero sigma0 in (theta,1) of P of order
+   m >= 1, P'/P(sigma) = m/(sigma - sigma0) + r with r bounded; since
+   sigma(sigma-1) < 0 there, M -> -infinity: contradiction.
+
+   Rebuilt here: that contradiction, over Q, with the identity multiplied out
+   by the positive quantities u = sigma - sigma0, sigma - theta,
+   sigma(1 - sigma) (denominator clearing = translation; |a + b sigma| is
+   absorbed in the bound B on r):
+     M >= 0   <->   (m + r*u) * (sigma0 + u - theta) <= C * u * s * (1 - s),
+                    s = sigma0 + u.
+   ========================================================================== *)
+Section DefiniteSign.
+
+Variables theta sigma0 m B C Cabs delta : Q.
+Hypothesis H_theta : 0 < theta.
+Hypothesis H_order : theta < sigma0.
+Hypothesis H_lt1 : sigma0 < 1.
+Hypothesis H_m : 0 < m.                (* order of the zero, >= 1 *)
+Hypothesis H_B : 0 <= B.
+Hypothesis H_Cabs : Qabs C <= Cabs.
+Hypothesis H_delta : 0 < delta.
+
+(* M(sigma0 + u) >= 0 for all small u > 0, cleared of denominators *)
+Hypothesis M_nonneg : forall u, 0 < u -> u < delta -> u < 1 - sigma0 ->
+  exists r, - B <= r /\ r <= B /\
+    (m + r * u) * (sigma0 + u - theta) <= C * u * ((sigma0 + u) * (1 - (sigma0 + u))).
+
+Theorem no_real_zero_right_of_theta : False.
+Proof.
+  set (E := m * (sigma0 - theta)).
+  set (K := B * (sigma0 - theta) + Cabs + 1).
+  assert (HCa : 0 <= Cabs) by (eapply Qle_trans; [apply Qabs_nonneg | exact H_Cabs]).
+  assert (HE : 0 < E) by (unfold E; apply Qmult_lt_0_compat; lra).
+  assert (HK : 0 < K) by (unfold K; assert (0 <= B * (sigma0 - theta)) by (apply Qmult_le_0_compat; lra); lra).
+  set (u := Qmin (Qmin (delta * (1 # 2)) ((1 - sigma0) * (1 # 2))) (E / (2 * K))).
+  assert (Hu1 : u <= Qmin (delta * (1 # 2)) ((1 - sigma0) * (1 # 2))) by apply Q.le_min_l.
+  assert (Hu2 : u <= delta * (1 # 2)) by (eapply Qle_trans; [exact Hu1 | apply Q.le_min_l]).
+  assert (Hu3 : u <= (1 - sigma0) * (1 # 2)) by (eapply Qle_trans; [exact Hu1 | apply Q.le_min_r]).
+  assert (Hu4 : u <= E / (2 * K)) by apply Q.le_min_r.
+  assert (H2K : 0 < 2 * K) by lra.
+  assert (Hdiv : 0 < E / (2 * K)) by (apply Qlt_shift_div_l; lra).
+  assert (Hu0 : 0 < u).
+  { unfold u. apply Q.min_glb_lt; [apply Q.min_glb_lt|]; lra. }
+  (* 2K u <= E *)
+  assert (HKu : 2 * K * u <= E).
+  { apply Qle_trans with (2 * K * (E / (2 * K))).
+    - apply Qmult_le_l; [exact H2K | exact Hu4].
+    - rewrite Qmult_div_r; [lra|]. intros Z. rewrite Z in H2K. discriminate H2K. }
+  destruct (M_nonneg u Hu0 ltac:(lra) ltac:(lra)) as [r [Hr1 [Hr2 Hineq]]].
+  (* m + r u >= m/2:  B u <= m/2  because  B (sigma0-theta) u <= K u <= E/2 *)
+  assert (HBu : B * u <= m * (1 # 2)).
+  { assert (Hs : 0 < sigma0 - theta) by lra.
+    assert (HBK : B * (sigma0 - theta) * u <= K * u).
+    { apply Qmult_le_r; [exact Hu0|]. unfold K. lra. }
+    assert (Hm2 : (sigma0 - theta) * (B * u) <= (sigma0 - theta) * (m * (1 # 2))).
+    { unfold E in HKu. nra. }
+    apply Qmult_le_l in Hm2; [exact Hm2 | exact Hs]. }
+  assert (Hru : - (B * u) <= r * u) by nra.
+  assert (HL : m * (1 # 2) <= m + r * u) by lra.
+  (* LHS >= E/2 *)
+  assert (HLHS : E * (1 # 2) <= (m + r * u) * (sigma0 + u - theta)).
+  { unfold E. nra. }
+  (* RHS <= Cabs * u, since 0 < s(1-s) <= 1 *)
+  assert (Hs1 : 0 < (sigma0 + u) * (1 - (sigma0 + u))) by (apply Qmult_lt_0_compat; lra).
+  assert (Hs2 : (sigma0 + u) * (1 - (sigma0 + u)) <= 1) by nra.
+  assert (HCs : C * ((sigma0 + u) * (1 - (sigma0 + u))) <= Cabs).
+  { destruct (Qlt_le_dec C 0) as [Cn|Cp].
+    - assert (C * ((sigma0 + u) * (1 - (sigma0 + u))) < 0) by nra. lra.
+    - rewrite Qabs_pos in H_Cabs by exact Cp. nra. }
+  assert (HRHS : C * u * ((sigma0 + u) * (1 - (sigma0 + u))) <= Cabs * u).
+  { setoid_replace (C * u * ((sigma0 + u) * (1 - (sigma0 + u))))
+      with (u * (C * ((sigma0 + u) * (1 - (sigma0 + u))))) by ring.
+    setoid_replace (Cabs * u) with (u * Cabs) by ring.
+    apply Qmult_le_l; [exact Hu0 | exact HCs]. }
+  (* E/2 <= Cabs u < K u <= E/2 *)
+  assert (Cabs * u < K * u) by (apply Qmult_lt_r; [exact Hu0 | unfold K; assert (0 <= B * (sigma0 - theta)) by (apply Qmult_le_0_compat; lra); lra]).
+  lra.
+Qed.
+
+End DefiniteSign.
+
+Print Assumptions no_real_zero_right_of_theta.

@@ -201,7 +201,10 @@ development from its types, without running Lean. The deep facts enter as
 section hypotheses, each named after the Lean/Mathlib declaration it mirrors.
 `critLine` re-proves the reflection argument (`Formalism.VW.critLine`).
 `zero_free_half` re-proves the ε-selection (`exists_small_eps`,
-`level_of_tiedWin`). Both are *Closed under the global context*: zero axioms,
+`level_of_tiedWin`). `no_real_zero_right_of_theta` re-proves the definite-sign
+step of `landau_entire`: with `H ≥ 0`, the Mellin transform
+`M(σ) = (P'/P − …)/(σ(σ−1)) + C/(σ−θ) ≥ 0`, and since `σ(σ−1) < 0` in the strip
+this rules out a real zero. Both are *Closed under the global context*: zero axioms,
 under Lean's three-axiom budget.
 
 ```sh
