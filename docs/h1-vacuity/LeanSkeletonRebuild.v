@@ -87,9 +87,33 @@ Theorem rh_strip_of_every : prim trivial -> forall s,
   0 < re s -> re s < 1 -> Lz trivial s -> re s == 1 # 2.
 Proof. intros Hp s; now apply critLine. Qed.
 
+
+(* rh_of_every, FULL Mathlib shape (the rh_of_right half the strip form lacked):
+     RiemannHypothesis : ∀ s, ζ s = 0 → ¬ (∃ n, s = -2(n+1)) → s ≠ 1 → s.re = 1/2.
+   Extra trusted inputs, each a Mathlib fact used by Lean's `rh_of_right`:
+     zf1   : riemannZeta_ne_zero_of_one_le_re  (no zero on Re s >= 1)
+     FE0   : riemannZeta_one_sub + Gamma/cos non-vanishing off the trivial zeros:
+             a non-trivial zero with Re s <= 0 reflects to a zero at 1 - s. *)
+Variable triv : C -> Prop.               (* s = -2(n+1) for some n *)
+Hypothesis zf1 : forall s, 1 <= re s -> ~ Lz trivial s.
+Hypothesis FE0 : forall s, Lz trivial s -> ~ triv s -> s <> one_pt -> re s <= 0 ->
+  Lz trivial (onem s).
+
+Theorem rh_of_every_full : prim trivial -> forall s,
+  Lz trivial s -> ~ triv s -> s <> one_pt -> re s == 1 # 2.
+Proof.
+  intros Hp s Hz Ht H1.
+  destruct (Qlt_le_dec 0 (re s)) as [Hpos|Hnpos].
+  - destruct (Qlt_le_dec (re s) 1) as [Hlt1|Hge1].
+    + now apply (critLine trivial s Hp).
+    + exfalso. exact (zf1 s Hge1 Hz).
+  - exfalso. pose proof (re_onem s) as Ho.
+    apply (zf1 (onem s)); [lra|]. now apply FE0.
+Qed.
 End CritLine.
 
 Print Assumptions critLine.
+Print Assumptions rh_of_every_full.
 
 (* ============================================================================
    Part 2.  level_of_tiedWin: a growth bound with exponent 1/2 + K*eps for every

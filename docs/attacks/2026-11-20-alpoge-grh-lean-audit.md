@@ -545,3 +545,33 @@ the √X balance (14), the definite sign (13), the ε-selection and reflection
 (8), the tower order laws (9–11) and the thick-set layer (root-only ticket,
 12). The Mathlib analysis and the slope/theta content of `ch_top` /
 `Frame_at` remain trusted.
+
+## Slice 15: review corrections, plus two gaps closed (2026-11-21)
+
+This slice responds to the four Cursor reviews on PR #1043 (slices 8–14).
+Those reviews were right that several sentences above read more strongly than
+what the probes prove. Corrections, with the earlier text kept for history:
+
+| slice | earlier wording | corrected reading |
+|---|---|---|
+| 8 | "the glue that reaches RH/GRH is sound, re-derived independently" | `critLine` / `zero_free_half` are **conditional skeletons**. Section hypotheses (`EveryCharacter`, FE, Γ ≠ 0, Landau, the growth exponent) are assumed, not discharged. `zero_free_half` takes the `1/2` as an **input** and has `level_of_tiedWin`'s **shape** (no windows, no `FormBAt`). |
+| 8 | `rh_strip_of_every` covers `rh_of_every` | It covered only the strip. **Gap closed:** `LeanSkeletonRebuild.v : rh_of_every_full` adds the `rh_of_right` half. Zero-freeness on `Re s ≥ 1` and FE-reflection of non-trivial zeros with `Re s ≤ 0` are named Mathlib hypotheses. Mathlib's full `RiemannHypothesis` shape (trivial zeros and `s = 1` excluded) follows. *Closed under the global context.* |
+| 9 | "every prime `l ≤ x` has orbit length `≳ x^(1+8ε)`, checked with nothing assumed" | Only the **divisibility law** `ord_large_J` is proved. The orbit-length bound also needs `PageN` (`2^s ≈ x^(2+8ε)`) and the division `J ≥ 2^(s+2)/(l+1)`, which remain readings. |
+| 10 | trivial edge "`N ≤ j+1`" | The right side becomes `2^0` exactly when **`N ≤ j`**. `N = j+1` is the first non-trivial case (modulus `2^1`). The proof's case split is sound either way. |
+| 10 | "degree function verified in both directions; makes the tower the stand-in for `F_{qⁿ}`" | `ord_dvd` (an iff) plus `ord_large_J` (one-sided) are proved. The degree-function story and the function-field analogy are **readings**. |
+| 12 | "Behrend collision layer rebuilt end to end" | `thick_set_window_two` assumed `8Lt < n` from outside. **Gap closed:** `SphereNoRelQED.v : thick_set_window_two_sized` derives it for every modulus `n ≥ 8L·b^K`. Still translations: orbit = coset, card ≤ 2 = no three distinct. |
+| 12 | (finding) NoRel suffices | Confirmed by the review, and narrowed: `NoRel` and `BehrendFree` differ in general. For the `WindowTwo` triple (`α = a−b`, `β = b`, `γ = −a`, all `< 2L`) both apply, so the weaker hypothesis is enough **for this relation**. |
+| 13 | "closure makes `P'/P` real on the real axis (`him`)" | `him` is `Im g(1) = 0` at the single point 1. Reality along the axis comes from `hsumL` / `lseries_real_im` on `Re s > 1`, together with continuation. The passage from `M ≥ 0` to the cleared inequality is a translation, not re-proved. "A function with only a functional equation never starts this step" is a reading of `hsumL`. |
+| 14 | "coefficients 4 + 8 + 8 + 4 + 4/3" read as Lean's | That is **this Rocq proof's own accounting**. Lean lumps the terms into 10, then 22, then `26 = 22 + 4` (`LipschitzWeightAndMinimum.lean:531–592`). Same hypothesis consumed. |
+| 14 | "every `SizeWindows` conjunct appears" | `nT2 ≤ n` is not used. The Rocq theorem is slightly **stronger** (the `q₂` bound comes from `e·k ≤ n²·s` alone). |
+| 14 | "the lemma **forces** `m ≈ √x`" | The window `x^(1/2−ε) ≤ m ≤ x^(1/2+ε/2)` is a **hypothesis** copied from `SizeWindows`. The theorem shows that, given it, the error terms balance at `x^(1/2+O(ε))`. That `√X` is the right chain length is a reading (the remark's "what else could it be?"), not a derivation. |
+
+| Rocq theorem (new) | OUTCOME |
+|---|---|
+| `LeanSkeletonRebuild.v : rh_of_every_full` | **QED, zero axioms** (conditional on named Mathlib hypotheses) |
+| `SphereNoRelQED.v : thick_set_window_two_sized` | **QED, zero axioms**, no hypotheses beyond the modulus bound |
+
+**SUMMARY (slice 15) ok 2 / warn 11 (wording corrected) / bug 0**. Verdict
+unchanged: **PASS-STATIC / PENDING**. The Rocq probes are conditional
+skeletons and integer lemmas under stated translations. They are not a
+verification of the external proof.

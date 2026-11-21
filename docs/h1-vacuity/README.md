@@ -187,8 +187,8 @@ to 0 are all 0 (`eval_zero_digits`). Together they give
 rebuilds `OrbitOne`: a short Frobenius orbit meets a thick translate at most
 once. `window_two` rebuilds `WindowTwo`: a long orbit has no three hits in a
 window of length `2L`. The forced relation `a(t₃−t₁) = b(t₂−t₁)` is exactly
-`NoRel`, i.e. collinearity. `thick_set_window_two` composes it with
-`thick_set_exists`. `Print Assumptions` reports *Closed under the global
+`NoRel`, i.e. collinearity. `thick_set_window_two_sized` composes it with
+`thick_set_exists` for every modulus `n ≥ 8L·b^K`. `Print Assumptions` reports *Closed under the global
 context*. CI compiles all three Rocq rebuild probes (`SphereNoRelQED.v`,
 `TowerOrderLawQED.v`, `LeanSkeletonRebuild.v`) via `scripts/hunt_probe_smoke.sh`.
 They need only Stdlib, so `rocq c <file>` also works on its own.
@@ -201,16 +201,18 @@ rocq c docs/h1-vacuity/SphereNoRelQED.v
 `Q` only) that re-derives the logical skeleton of the external RH/GRH Lean
 development from its types, without running Lean. The deep facts enter as
 section hypotheses, each named after the Lean/Mathlib declaration it mirrors.
-`critLine` re-proves the reflection argument (`Formalism.VW.critLine`).
-`zero_free_half` re-proves the ε-selection (`exists_small_eps`,
-`level_of_tiedWin`). `no_real_zero_right_of_theta` re-proves the definite-sign
-step of `landau_entire`: with `H ≥ 0`, the Mellin transform
-`M(σ) = (P'/P − …)/(σ(σ−1)) + C/(σ−θ) ≥ 0`, and since `σ(σ−1) < 0` in the strip
-this rules out a real zero. `growth_size_bound` re-proves `GrowthSizeBound`,
-the √X balance. From the `SizeWindows` constraints and the main inequality it
-gives `Gx ≤ x^(1/2+(C+3)ε)`, with the same `26 ≤ x^(3ε/8)` constant as Lean
-(term coefficients 4 + 8 + 8 + 4 + 4/3 ≤ 26). Both are *Closed under the global context*: zero axioms,
-under Lean's three-axiom budget.
+These are conditional skeletons, not a check of the Lean proof.
+`critLine` mirrors the reflection in `Formalism.VW.critLine`. `rh_of_every_full`
+adds the `rh_of_right` half, giving Mathlib's full `RiemannHypothesis` shape.
+`zero_free_half` has the shape of `level_of_tiedWin`: it re-proves
+`exists_small_eps`, and takes the `1/2` exponent and Landau as inputs, without
+windows or `FormBAt`. `no_real_zero_right_of_theta` is the definite-sign step of
+`landau_entire`, after the Mellin identity has been cleared of denominators.
+`growth_size_bound` mirrors `GrowthSizeBound` with Lean's `26 ≤ x^(3ε/8)`; the
+coefficients 4 + 8 + 8 + 4 + 4/3 are this proof's own accounting, not Lean's.
+The bounds `x^(1/2−ε) ≤ m ≤ x^(1/2+ε/2)` are hypotheses, not derived.
+`Print Assumptions` reports *Closed under the global context*: section
+hypotheses become parameters, not axioms.
 
 ```sh
 rocq c docs/h1-vacuity/LeanSkeletonRebuild.v

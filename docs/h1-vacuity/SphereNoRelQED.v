@@ -587,3 +587,32 @@ Proof.
 Qed.
 
 Print Assumptions thick_set_window_two.
+
+(* The size side condition of thick_set_window_two discharged: the sphere set
+   lives in [0, b^K), so any modulus n >= 8 L b^K satisfies 8 L t < n. *)
+Corollary thick_set_window_two_sized : forall (L : Z) (K d : nat) (b : Z),
+  (1 <= d)%nat -> 1 <= L -> 4 * (2 * L) * Z.of_nat d < b ->
+  exists T : list Z,
+    (Nat.pow d K <= S (K * (d - 1) * (d - 1)) * length T)%nat /\
+    forall (n h u t0 : Z), 8 * L * b ^ Z.of_nat K <= n ->
+      (forall a, 0 < a <= 2 * L -> ~ (n | a * h)) ->
+      forall j i1 i2 i3 t1 t2 t3,
+        j <= i1 -> i1 < i2 -> i2 < i3 -> i3 < j + 2 * L ->
+        In t1 T -> In t2 T -> In t3 T ->
+        (n | t0 + i1 * h - (t1 + u)) -> (n | t0 + i2 * h - (t2 + u)) ->
+        (n | t0 + i3 * h - (t3 + u)) -> False.
+Proof.
+  intros L K d b Hd HL Hb.
+  destruct (thick_set_exists (2 * L) K d b Hd ltac:(lia) Hb) as [T [_ [Hrange [HNR Hc]]]].
+  exists T. split; [exact Hc|].
+  intros n h u t0 Hn Hord.
+  assert (HT' : forall t, In t T -> 0 <= t /\ 8 * L * t < n).
+  { intros t Ht. destruct (Hrange t Ht) as [H0 H1]. split; [exact H0|]. nia. }
+  assert (HNR' : NoRelZ (fun t => In t T) (2 * L)).
+  { intros s1 s2 s3 i j H1 H2 H3 N12 N13 N23 Hi1 Hi2 Hj1 Hj2 Hij.
+    exact (HNR s1 s2 s3 i j H1 H2 H3 N12 N13 N23 Hi1 Hi2 Hj1 Hj2 Hij). }
+  assert (Hbpos : 0 < b ^ Z.of_nat K) by (apply Z.pow_pos_nonneg; lia).
+  exact (window_two n L h u t0 (fun t => In t T) ltac:(nia) ltac:(lia) HT' HNR' Hord).
+Qed.
+
+Print Assumptions thick_set_window_two_sized.
