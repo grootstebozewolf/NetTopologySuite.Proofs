@@ -1,9 +1,11 @@
 <!-- doc-kind: finding
 date: 2026-11-20
-Provenance: external artifact, static audit only (no build)
-Theorems: none in this repo — subject is a third-party Lean 4 development
+Provenance: cbd557921d7f4e8c24b40a17734ff2c8c1751b45
+Theorems: `LeanSkeletonRebuild.v : critLine`, `LeanSkeletonRebuild.v : zero_free_half`, `LeanSkeletonRebuild.v : no_real_zero_right_of_theta`, `LeanSkeletonRebuild.v : growth_size_bound`, `TowerOrderLawQED.v : ord_large_J`, `TowerOrderLawQED.v : ord_dvd`, `TowerOrderLawQED.v : ord_d`, `SphereNoRelQED.v : orbit_one`, `SphereNoRelQED.v : window_two`
 -->
 # Alpöge RH/GRH Lean claim: static audit
+
+> External subject: third-party Lean 4 development, mirror `CocoSgt/riemann-hypothesis-lean` @ `7cbf7a0`. `Provenance` pins this repository's commit at which the Rocq probes named in `Theorems` were compiled.
 
 **Subject.** The Lean 4 development published by Levent Alpöge on 2026-11-20
 (announcement `https://alpo.ge/remark.pdf`). It claims RH, and GRH for

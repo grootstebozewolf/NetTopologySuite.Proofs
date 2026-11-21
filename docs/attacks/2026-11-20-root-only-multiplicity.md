@@ -1,9 +1,13 @@
-<!-- doc-kind: hunt-ticket
+<!-- doc-kind: finding
 date: 2026-11-20
-Provenance: external artifact — CocoSgt/riemann-hypothesis-lean @ 7cbf7a0 (mirror of Alpöge's Lean archive); companion to `2026-11-20-alpoge-grh-lean-audit.md`
-Theorems: none in this repo — claims about a third-party Lean 4 development
+Provenance: cbd557921d7f4e8c24b40a17734ff2c8c1751b45
+Theorems: `SphereNoRelQED.v : sphere_no_collinear`, `SphereNoRelQED.v : sphere_digits_norel`, `SphereNoRelQED.v : sphere_slice_large`, `SphereNoRelQED.v : thick_set_exists`, `SphereNoRelQED.v : thick_set_window_two`
 -->
 # Root-only multiplicity: does ζ need the canopy?
+
+> External subject: mirror `CocoSgt/riemann-hypothesis-lean` @ `7cbf7a0`. Companion to `2026-11-20-alpoge-grh-lean-audit.md`.
+
+SUMMARY ok 7 / warn 0 / bug 0 / open 1 (R3c). R1 and R2 are QED by reading; S1–S4 are answered, with S4 machine-checked; R3c is open.
 
 **Question.** In the claimed RH/GRH proof, the ζ case is extracted from the
 general one. Does the ζ case *need* the general (auxiliary-character,
