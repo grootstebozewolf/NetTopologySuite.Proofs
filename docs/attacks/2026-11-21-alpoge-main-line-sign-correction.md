@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-21
 Provenance: b7cc174
-Theorems: `LandauWindowCore.v : window_contra`, `LeanSkeletonRebuild.v : no_real_zero_right_of_theta`
+Theorems: `LandauWindowCore.v : window_contra`, `LandauWindowCore.v : real_pole_residue_pos`, `LeanSkeletonRebuild.v : no_real_zero_right_of_theta`
 -->
 # Correction: the Alpöge main line's sign step is `landau_window`, not `landau_entire`
 
@@ -74,8 +74,34 @@ exactly what the √X chain supplies (only on `x ∈ Win`, with `la = 3/2`).
 |---|---|---|
 | 2 (R2), 2b | positivity step = `landau_family` / `zero_free_of_Chebyshev_growth` | the main line uses **`landau_window`** through `FormBAt`. `Landau.lean`'s route has no callers on the main line. |
 | 3 (R3a) | "windowed Landau: … `FormB`, a windowed form of R2" | `FormB` is **not** derived from R2. It is proved independently by `landau_window`, a different argument (high derivatives, majorant on windows). |
-| 13 | the sign is `H ≥ 0` plus Mellin plus `σ(σ−1) < 0` | true of `landau_entire`, which is off the main line. On the main line the sign is **`R ≥ 0` on windows plus positive real-pole residues**, inside a Taylor-coefficient contradiction. |
+| 13 | the sign is `H ≥ 0` plus Mellin plus `σ(σ−1) < 0` | true of `landau_entire`, which is off the main line. On the main line the sign is **`R ≥ 0` on windows plus positive real-pole residues**, inside a Taylor-coefficient contradiction. The factor **`σ(σ−1) < 0` does reappear** there, inside the residue (see "Ladder rung" below). Slice 13 had the right ingredient in the wrong lemma. |
 | 13 addendum | the Euler product enters via `hsumL` | on the main line the Euler product enters through `PoleData` for `g = Gm`: Laplace identity, poles at zeros, residues equal to multiplicities. `hsumL` is in the off-line `Landau.lean`. The Davenport–Heilbronn reading is unchanged in substance. |
+
+## Ladder rung: where the real-pole residue sign comes from (`poleData`)
+
+`…/LandauTheorems/poleData.lean : poleData`, lines 261–384, read from source:
+- **Construction.** `Φ = Σ_i (a_i/2)·(Φ₁(χ_i) + Φ₂(χ_i⁻¹))`. Closure under
+  `χ ↦ χ⁻¹` is **built in** through `Re Gchi`.
+- **Residue at a zero `ρ`.** `c = S·(−1/(ρ(ρ−1)))`, where
+  `S = Σ_i (a_i/2)·(m(χ_i, ρ) + m(χ_i⁻¹, ρ̄))`, weights `a_i > 0`
+  (`CharFamily.a_pos`), multiplicities `m ∈ ℕ`, and at least one `m ≥ 1`. So
+  `S > 0`.
+- **Real `ρ ∈ (0,1)`.** There `ρ(ρ−1) < 0`, so `c > 0`. The factor
+  `1/(s(s−1))` is the Mellin kernel of the Riesz weight `(x/n − 1)⁺` in
+  `Gchi`.
+
+| theorem | statement | OUTCOME |
+|---|---|---|
+| `LandauWindowCore.v : real_pole_residue_pos` | For a list of `(a_i, m₁ᵢ, m₂ᵢ)` with all `a_i > 0` and some `m₁ᵢ + m₂ᵢ ≥ 1`, and real `0 < ρ < 1`: `0 < S·(−1/(ρ(ρ−1)))` | **QED, zero axioms**. The residue computation itself (`logDeriv_local`, the `dslope` algebra) is the translation and is not re-proved. |
+
+So, on the main line, the **definite sign** is three things together:
+1. positive weights times multiplicities (`S > 0`);
+2. `ρ(ρ−1) < 0` in the strip;
+3. the window majorant `R ≥ 0`.
+
+These feed the high-derivative contradiction (`window_contra`). The Euler
+product enters as the source of `Gchi`'s von Mangoldt sums, whose Laplace
+transform is `−L'/L` with poles exactly at the zeros.
 
 **OUTCOME.** **CORRECTED.**
 - The main line's definite sign is located in `landau_window`. Its
@@ -84,4 +110,4 @@ exactly what the √X chain supplies (only on `x ∈ Win`, with `la = 3/2`).
   to be off the main line.
 - The audit verdict is unchanged: **PASS-STATIC / PENDING**.
 
-**SUMMARY ok 2 / warn 1 (slices 2/2b/3/13 of the merged audit misattributed the main-line sign step) / bug 0.**
+**SUMMARY ok 3 / warn 1 (slices 2/2b/3/13 of the merged audit misattributed the main-line sign step) / bug 0.**

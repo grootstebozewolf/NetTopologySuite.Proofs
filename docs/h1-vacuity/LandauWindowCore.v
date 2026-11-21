@@ -133,3 +133,77 @@ Qed.
 End Contra.
 
 Print Assumptions window_contra.
+
+(* ============================================================================
+   Where the main line's positivity comes from: PoleData.pole for the family
+   (Development/.../LandauTheorems/poleData.lean : poleData, lines 261-384).
+   Phi = sum_i (a_i/2) (Phi1(chi_i) + Phi2(chi_i^-1))   -- closure under chi -> chi^-1
+   is built in via Re Gchi.  At a zero rho the residue is
+     c = S * (-1 / (rho (rho - 1))),   S = sum_i (a_i/2) (m(chi_i, rho) + m(chi_i^-1, conj rho)),
+   with weights a_i > 0, multiplicities m in N, and some multiplicity >= 1.
+   For REAL rho in (0,1), rho (rho - 1) < 0, so c > 0: the sign that
+   landau_window's Re-term needs.  (The factor 1/(s(s-1)) is the Mellin kernel
+   of the Riesz weight (x/n - 1)+; it is the sigma(sigma-1) < 0 of slice 13,
+   entering here through the residue.)
+   Rebuilt below over Q; the residue computation itself is the translation.
+   ========================================================================== *)
+From Stdlib Require Import List.
+Import ListNotations.
+
+Fixpoint wsum (l : list (Q * nat * nat)) : Q :=
+  match l with
+  | [] => 0
+  | (a, m1, m2) :: tl => a * (1 # 2) * (inject_Z (Z.of_nat m1) + inject_Z (Z.of_nat m2)) + wsum tl
+  end.
+
+Lemma nat_q_nonneg : forall n : nat, 0 <= inject_Z (Z.of_nat n).
+Proof. intros n. change 0 with (inject_Z 0). rewrite <- Zle_Qle. lia. Qed.
+
+Lemma wsum_nonneg : forall l, Forall (fun t => 0 < fst (fst t)) l -> 0 <= wsum l.
+Proof.
+  induction l as [|[[a m1] m2] tl IH]; intros H; cbn [wsum]; [lra|].
+  inversion H as [|? ? Ha Htl]; subst. cbn in Ha.
+  pose proof (nat_q_nonneg m1). pose proof (nat_q_nonneg m2). specialize (IH Htl).
+  assert (0 <= a * (1 # 2) * (inject_Z (Z.of_nat m1) + inject_Z (Z.of_nat m2)))
+    by (apply Qmult_le_0_compat; [apply Qmult_le_0_compat|]; lra).
+  lra.
+Qed.
+
+Lemma wsum_pos : forall l, Forall (fun t => 0 < fst (fst t)) l ->
+  Exists (fun t => (1 <= snd (fst t) + snd t)%nat) l -> 0 < wsum l.
+Proof.
+  induction l as [|[[a m1] m2] tl IH]; intros Hall Hex; [inversion Hex|].
+  inversion Hall as [|? ? Ha Htl]; subst. cbn in Ha. cbn [wsum].
+  pose proof (nat_q_nonneg m1). pose proof (nat_q_nonneg m2).
+  inversion Hex as [? ? Hhd|? ? Htlex]; subst.
+  - cbn in Hhd.
+    assert (1 <= inject_Z (Z.of_nat m1) + inject_Z (Z.of_nat m2)).
+    { rewrite <- inject_Z_plus. change 1 with (inject_Z 1). rewrite <- Zle_Qle. lia. }
+    assert (0 < a * (1 # 2) * (inject_Z (Z.of_nat m1) + inject_Z (Z.of_nat m2)))
+      by (apply Qmult_lt_0_compat; [apply Qmult_lt_0_compat|]; lra).
+    pose proof (wsum_nonneg tl Htl). lra.
+  - assert (0 <= a * (1 # 2) * (inject_Z (Z.of_nat m1) + inject_Z (Z.of_nat m2)))
+      by (apply Qmult_le_0_compat; [apply Qmult_le_0_compat|]; lra).
+    pose proof (IH Htl Htlex). lra.
+Qed.
+
+(* real-pole residue positivity:  c = S * (-1 / (rho (rho - 1))) > 0 *)
+Theorem real_pole_residue_pos : forall (l : list (Q * nat * nat)) (rho : Q),
+  Forall (fun t => 0 < fst (fst t)) l ->
+  Exists (fun t => (1 <= snd (fst t) + snd t)%nat) l ->
+  0 < rho -> rho < 1 ->
+  0 < wsum l * (-1 / (rho * (rho - 1))).
+Proof.
+  intros l rho Hall Hex H0 H1.
+  pose proof (wsum_pos l Hall Hex) as HS.
+  assert (Hneg : rho * (rho - 1) < 0) by nra.
+  assert (Hpos : 0 < -1 / (rho * (rho - 1))).
+  { set (x := rho * (rho - 1)) in *.
+    assert (Hx : ~ x == 0) by (intro Z; rewrite Z in Hneg; discriminate Hneg).
+    assert (Hx' : ~ - x == 0) by (intro Z; apply Hx; lra).
+    setoid_replace (-1 / x) with (1 / (- x)) by (field; auto).
+    apply Qlt_shift_div_l; lra. }
+  apply Qmult_lt_0_compat; assumption.
+Qed.
+
+Print Assumptions real_pole_residue_pos.
