@@ -67,6 +67,7 @@ PROBES=(
   docs/h1-vacuity/LandauKeyRebuilt.v
   docs/h1-vacuity/CoreSliceQED.v
   docs/h1-vacuity/AlpogeRefineBatch.v
+  docs/h1-vacuity/AlpogeRealsQED.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 

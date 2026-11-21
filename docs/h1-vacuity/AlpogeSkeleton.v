@@ -38,7 +38,8 @@
 *)
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
-  LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch.
+  LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
+  AlpogeRealsQED.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -143,4 +144,30 @@ Theorem two_thirds_refined : 2 * total <= 3 * refined.
 Proof. vm_compute. repeat constructor. Qed.
 
 Print Assumptions two_thirds_refined.
+
+(* ---- twelve refined items PROVED over Stdlib's R (AlpogeRealsQED.v),
+        within the three-axiom allowlist ---- *)
+Check AlpogeRealsQED.landau_growth_contra.   Check AlpogeRealsQED.landau_window_contra.
+Check AlpogeRealsQED.landau_kernel_max.      Check AlpogeRealsQED.landau_tails_pow.
+Check AlpogeRealsQED.eFamC_of_cls.           Check AlpogeRealsQED.landau_window_re_pos.
+Check AlpogeRealsQED.eq_ofReal_sub_of_dist_le_of_le_sub_re.
+Check AlpogeRealsQED.landau_nearest_equi.    Check AlpogeRealsQED.exists_small_eps.
+Check AlpogeRealsQED.level_family_sum.       Check AlpogeRealsQED.sigA_le.
+Check AlpogeRealsQED.hypV_of_cls.
+
+Definition reals12 : list string := [
+  "landau_growth_contra"; "landau_window_contra"; "landau_kernel_max"; "landau_tails_pow";
+  "eFamC_of_cls"; "landau_window_re_pos"; "eq_ofReal_sub_of_dist_le_of_le_sub_re";
+  "landau_nearest_equi"; "exists_small_eps"; "level_family"; "sigA_le (chr_bounded)"; "hypV_of_cls" ].
+
+(* each of the twelve is a refined ledger item, and they are distinct *)
+Theorem twelve_proved_are_refined :
+  @eq nat (length reals12) 12%nat /\
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) reals12) true /\
+  NoDup reals12.
+Proof.
+  split; [reflexivity|]. split; [vm_compute; reflexivity|].
+  repeat constructor; simpl; intuition discriminate.
+Qed.
+Print Assumptions twelve_proved_are_refined.
 Print Assumptions main_line_from_core.
