@@ -61,6 +61,7 @@ PROBES=(
   docs/h1-vacuity/MasulloRepairCondition.v
   docs/h1-vacuity/LandauWindowCore.v
   docs/h1-vacuity/LandauDichotomyQED.v
+  docs/h1-vacuity/LandauWindowRebuilt.v
 )
 
 fail=0
