@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-21
 Provenance: ebe823e
-Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`
+Theorems: `LeanSkeletonRebuild.v : masullo_right_of_half`, `LeanSkeletonRebuild.v : masullo_critLine`, `MarkushevichBoundQEX.v : block_qex`, `MarkushevichBoundQEX.v : no_uniform_bound`
 -->
 # Masullo's GRH draft ("The Music of the Primes") against the Alpöge main line
 
@@ -151,3 +151,56 @@ puts essentially all of the content in Theorem 12.5.1.1, while Alpöge's splits
 it into a growth bound and a sign.
 
 **SUMMARY (slice 2) ok 2 / warn 0 / bug 0.**
+
+## Slice 3: the p. 444 Markushevich inference (QEX), and where it is used (2026-11-21)
+
+**The claim.** Terminology 10.2.1.2(2), p. 444, defines a Markushevich basis
+`{(x_m, f_m)}` of a Banach space as "Regular, if and only if
+`{x_m} ⊂ E` is strictly bounded away from `0 ∈ E`. **In particular,
+`{f_m} ⊂ E'_β` is bounded.**"
+
+**It is used.**
+- Corollary 10.2.1.4 (p. 444) and Corollary 10.2.2.3 (p. 447) conclude
+  "regular and bounded, hence normalized" for the draft's spectral bases
+  `η_{χ,t,m}(g) = χ(g)|g|^{it}_F (log|g|_F)^m`.
+- p. 451 (§10.3, spectral nuclearity): "The existence of C is ensured by the
+  Markushevich basis … and hence its bi-orthogonal sequence {ψ}, being
+  normalized (see Terminology 10.2.1.2), which implies that C can be chosen to
+  be independent of m′ … (k, j)".
+- p. 468 (§10.4.3, the spectral side of the Trace Formula) cites the same
+  normalization (Corollary 10.2.1.4).
+
+**QEX (machine-checked).** `docs/h1-vacuity/MarkushevichBoundQEX.v`
+(Stdlib, `Q`, no hypotheses), *Closed under the global context*:
+
+| Rocq theorem | statement | OUTCOME |
+|---|---|---|
+| `block_qex` | For every `B ≥ 0` there is a biorthogonal pair in `Q²`: `x₁ = (1,0)`, `x₂ = (1,ε)`, `f₁ = (1,−1/ε)`, `f₂ = (0,1/ε)`, with `ε = 1/(B+1)` and `1 ≤ ‖x_i‖² ≤ 2`, yet `f₂(e₂) = B+1 > B` on the unit vector `e₂`. | **QED, zero axioms**. The ℓ² direct sum of these blocks (`ε_k → 0`) is a bounded, regular Markushevich basis with unbounded `{f_m}`, so **the inference is false in general**. The direct-sum assembly is standard and not re-proved. |
+| `close_pair_lower` / `no_uniform_bound` | If `f(x) = 1`, `f(x') = 0` and `\|f(v)\| ≤ B·N(v)`, then `1 ≤ B·N(x − x')`. A biorthogonal system with pairs at arbitrarily small distance has no uniform bound. | **QED, zero axioms** |
+
+For **Schauder** bases the inference does hold, through the basis constant
+(`‖f_m‖ ≤ 2K/‖x_m‖`). The draft's own Remark 10.2.1.5 says these spectral
+bases are **not** Schauder bases.
+
+**Application to the draft's basis (argument, not formalized; for a
+specialist to check).**
+- For `s > 1`, `‖η_{χ,t,0} − η_{χ,t',0}‖_{−s,2}² = ∫ |e^{itu} − e^{it'u}|² (1+u²)^{−s/2} du ≤ ∫ min(4, |t−t'|²u²)(1+u²)^{−s/2} du`,
+  which tends to `0` as `|t − t'| → 0`, uniformly in `t`.
+- So on any line that carries infinitely many zeros whose ordinates have
+  **arbitrarily small gaps**, `no_uniform_bound` applies, and the
+  bi-orthogonal norms `‖ψ_{χ,t,0}‖` are unbounded.
+- The critical line is such a line, unconditionally: Selberg's positive
+  proportion gives `N₀(T) ≫ T log T` zeros on it up to height `T`, so the
+  average gap tends to 0.
+- Whether the "a-lines" in §§10.2–10.4 include a line of that kind depends on
+  the draft's normalization of `s` (`χ|·|^s` versus a `ρ − 1/2` shift). That was
+  not determined here.
+- If they do, the uniform constant `C` claimed on p. 451 does not exist as
+  stated, and the step needs another justification.
+
+This independently confirms that the publicly reported p. 444 objection is a
+**genuine gap in the stated inference**. Whether it is **fatal** depends on
+whether pp. 451/468 can be repaired, for example with truncations that keep
+`t` gaps bounded below, or weighted constants. That is not assessed.
+
+**SUMMARY (slice 3) ok 2 / warn 1 (gap in a used inference; repairability not assessed) / bug 0.**

@@ -57,6 +57,7 @@ PROBES=(
   docs/h1-vacuity/SphereNoRelQED.v
   docs/h1-vacuity/TowerOrderLawQED.v
   docs/h1-vacuity/LeanSkeletonRebuild.v
+  docs/h1-vacuity/MarkushevichBoundQEX.v
 )
 
 fail=0
