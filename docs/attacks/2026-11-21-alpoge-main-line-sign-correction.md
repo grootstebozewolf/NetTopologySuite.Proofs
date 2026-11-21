@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-21
 Provenance: b7cc174
-Theorems: `LandauWindowCore.v : window_contra`, `LandauWindowCore.v : real_pole_residue_pos`, `LeanSkeletonRebuild.v : no_real_zero_right_of_theta`
+Theorems: `LandauWindowCore.v : window_contra`, `LandauWindowCore.v : real_pole_residue_pos`, `LeanSkeletonRebuild.v : level_of_tiedWin_rebuilt`, `LeanSkeletonRebuild.v : no_real_zero_right_of_theta`
 -->
 # Correction: the Alpöge main line's sign step is `landau_window`, not `landau_entire`
 
@@ -103,6 +103,32 @@ These feed the high-derivative contradiction (`window_contra`). The Euler
 product enters as the source of `Gchi`'s von Mangoldt sums, whose Laplace
 transform is `−L'/L` with poles exactly at the zeros.
 
+## Ladder rung: `level_of_tiedWin` with windows and `FormBAt`
+
+This closes the "shape only" caveat on `zero_free_half` (merged audit,
+slice 8; Cursor review at `290d863`).
+
+`LeanSkeletonRebuild.v : level_of_tiedWin_rebuilt` (Part 6, over `Q`) is
+*Closed under the global context*. It takes these named hypotheses:
+- Lean's `HasWindows S la` (`∀ y, ∃ Y ≥ y, ∀ x ∈ [Y, Y^la], S x`);
+- **`FormBAt la`**, which is `landau_window`'s output and exactly the
+  windowed statement the main line uses;
+- **`WIN`**, Lean's `ChebyshevInequalityOnWindows` and
+  `ChebyshevInequalityAtWindowScale` combined: for small `ε`, a window set
+  `Win` with `HasWindows Win la` and `Gm x ≤ x^(1/2+Kε)` on `Win` beyond
+  `x₁`.
+
+From these it proves **zero-freeness above `1/2`**. The proof follows Lean's:
+1. choose `ε` with `Kε ≤ δ/2`;
+2. set `θ = 1/2 + δ/2 < Re s`;
+3. restart `Win`'s windows beyond `max(y, x₁, 1)` so that they become windows
+   for `{Gm ≤ x^θ}`, using monotonicity of `x^a` in `a` for `x ≥ 1`;
+4. apply `FormBAt`.
+
+The **translation** is that `x^a` appears as an abstract `pw x a`, monotone
+in `a` for `x ≥ 1`. The `1/2` is still the exponent `WIN` supplies, i.e. the
+√X window from `ch_core` / `GrowthSizeBound`, as before.
+
 **OUTCOME.** **CORRECTED.**
 - The main line's definite sign is located in `landau_window`. Its
   elementary contradiction core is machine-checked (`window_contra`).
@@ -110,4 +136,4 @@ transform is `−L'/L` with poles exactly at the zeros.
   to be off the main line.
 - The audit verdict is unchanged: **PASS-STATIC / PENDING**.
 
-**SUMMARY ok 3 / warn 1 (slices 2/2b/3/13 of the merged audit misattributed the main-line sign step) / bug 0.**
+**SUMMARY ok 4 / warn 1 (slices 2/2b/3/13 of the merged audit misattributed the main-line sign step) / bug 0.**

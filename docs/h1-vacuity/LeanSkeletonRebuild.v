@@ -533,3 +533,91 @@ Qed.
 End Masullo.
 
 Print Assumptions masullo_critLine.
+
+(* ============================================================================
+   Part 6.  level_of_tiedWin with WINDOWS and FormBAt (closes the "shape only"
+   caveat on zero_free_half; Formalism/.../TotientGaloisClasses/TopWin.lean :
+   level_of_tiedWin, Window.lean : HasWindows, FormBAt).
+
+   Lean:
+     HasWindows S la := ∀ y, ∃ Y, y ≤ Y ∧ ∀ x, Y ≤ x → x ≤ Y^la → x ∈ S
+     FormBAt la := ∀ θ ∈ (0,1), HasWindows {x | Gm x ≤ x^θ} la → ZeroFreeAbove θ
+     level_of_tiedWin : ChebyshevInequalityOnWindows -> FormBAt la ->
+                        ChebyshevInequalityAtWindowScale la -> ZeroFreeLevel
+   Here the two Chebyshev hypotheses are combined into WIN (for small eps a
+   window set Win with HasWindows Win la and Gm x <= x^(1/2 + K eps) on
+   Win beyond x1), FormBAt is a hypothesis (it is landau_window's output), and
+   x^a is an abstract pw x a, monotone in a for x >= 1 (translation).
+   ========================================================================== *)
+Section TiedWinWindows.
+
+Variable C : Type.
+Variable re : C -> Q.
+Variable nz : C -> Prop.
+Variable Gm : Q -> Q.
+Variable pw : Q -> Q -> Q.                       (* pw x a = x^a *)
+Hypothesis pw_mono : forall x a b, 1 <= x -> a <= b -> pw x a <= pw x b.
+Variable la : Q.
+
+Definition HasWindows (S : Q -> Prop) : Prop :=
+  forall y, exists Y, y <= Y /\ forall x, Y <= x -> x <= pw Y la -> S x.
+
+Definition ZFA (theta : Q) : Prop := forall s, theta < re s -> nz s.
+
+Hypothesis FormBAt : forall theta, 0 < theta -> theta < 1 ->
+  HasWindows (fun x => Gm x <= pw x theta) -> ZFA theta.
+
+Variables K eps1 : Q.
+Hypothesis K_nonneg : 0 <= K.
+Hypothesis eps1_pos : 0 < eps1.
+Hypothesis WIN : forall eps, 0 < eps -> eps < eps1 ->
+  exists (Win : Q -> Prop) (x1 : Q), HasWindows Win /\
+    forall x, x1 <= x -> Win x -> Gm x <= pw x ((1 # 2) + K * eps).
+
+Lemma small_eps_w : forall delta, 0 < delta -> exists eps, 0 < eps /\ eps < eps1 /\ K * eps <= delta.
+Proof.
+  intros delta Hd.
+  set (e := Qmin (eps1 * (1 # 2)) (delta / (K + 1))).
+  assert (HK1 : 0 < K + 1) by lra.
+  assert (He2 : e <= delta / (K + 1)) by apply Q.le_min_r.
+  assert (He1 : e <= eps1 * (1 # 2)) by apply Q.le_min_l.
+  assert (Hpos : 0 < e) by (unfold e; apply Q.min_glb_lt; [lra | apply Qlt_shift_div_l; lra]).
+  exists e. repeat split; [exact Hpos | lra |].
+  apply Qle_trans with ((K + 1) * e); [nra|].
+  apply Qle_trans with ((K + 1) * (delta / (K + 1))).
+  - apply Qmult_le_l; [exact HK1 | exact He2].
+  - rewrite Qmult_div_r; [lra|]. intros Z. rewrite Z in HK1. discriminate HK1.
+Qed.
+
+Theorem level_of_tiedWin_rebuilt : ZFA (1 # 2).
+Proof.
+  intros s Hs.
+  set (delta := Qmin (re s - (1 # 2)) (1 # 2)).
+  assert (Hd0 : 0 < delta) by (unfold delta; apply Q.min_glb_lt; lra).
+  assert (Hd1 : delta <= re s - (1 # 2)) by apply Q.le_min_l.
+  assert (Hd2 : delta <= 1 # 2) by apply Q.le_min_r.
+  destruct (small_eps_w (delta * (1 # 2)) ltac:(lra)) as [eps [He0 [He1 HKe]]].
+  set (theta := (1 # 2) + delta * (1 # 2)).
+  destruct (WIN eps He0 He1) as [Win [x1 [HW Hbound]]].
+  apply (FormBAt theta); [unfold theta; lra | unfold theta; lra | | unfold theta; lra].
+  (* windows for {Gm x <= x^theta}: those of Win, started beyond max(x1, 1) *)
+  intros y.
+  destruct (HW (Qmax y (Qmax x1 1))) as [Y [HY HYx]].
+  exists Y. split; [eapply Qle_trans; [apply Q.le_max_l | exact HY]|].
+  intros x Hx1 Hx2.
+  assert (Hxx1 : x1 <= x).
+  { apply Qle_trans with Y; [|exact Hx1].
+    apply Qle_trans with (Qmax y (Qmax x1 1)); [|exact HY].
+    apply Qle_trans with (Qmax x1 1); [apply Q.le_max_l | apply Q.le_max_r]. }
+  assert (Hx1' : 1 <= x).
+  { apply Qle_trans with Y; [|exact Hx1].
+    apply Qle_trans with (Qmax y (Qmax x1 1)); [|exact HY].
+    apply Qle_trans with (Qmax x1 1); [apply Q.le_max_r | apply Q.le_max_r]. }
+  apply Qle_trans with (pw x ((1 # 2) + K * eps)).
+  - apply Hbound; [exact Hxx1 | exact (HYx x Hx1 Hx2)].
+  - apply pw_mono; [exact Hx1' | unfold theta; lra].
+Qed.
+
+End TiedWinWindows.
+
+Print Assumptions level_of_tiedWin_rebuilt.
