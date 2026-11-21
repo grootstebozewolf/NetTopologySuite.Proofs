@@ -60,6 +60,7 @@ PROBES=(
   docs/h1-vacuity/MarkushevichBoundQEX.v
   docs/h1-vacuity/MasulloRepairCondition.v
   docs/h1-vacuity/LandauWindowCore.v
+  docs/h1-vacuity/LandauDichotomyQED.v
 )
 
 fail=0
