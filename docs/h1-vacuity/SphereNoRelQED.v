@@ -449,3 +449,40 @@ Proof.
 Qed.
 
 Print Assumptions thick_set_exists.
+
+(* ============================================================================
+   OrbitOne (Formalism/BehrendSets/Statement.lean):
+     (∀ t ∈ T, 8 L t < n) -> addOrderOf h ≤ 8 L ->
+     t0 + i1•h ∈ thick n T u -> t0 + i2•h ∈ thick n T u -> i1•h = i2•h
+   (thick n T u = image of T + u in ZMod n).
+   Group translation (not re-proved): the orbit {t0 + i•h} of h of additive
+   order o = n/g in ZMod n is a coset of g·ZMod n, g = gcd(h, n); so two orbit
+   points x, y satisfy g | x - y, and o ≤ 8L is n ≤ 8L·g.
+   Integer form proved here: two such points that both lie in T + u (mod n)
+   coincide mod n.
+   ========================================================================== *)
+
+Theorem orbit_one : forall (n L g t1 t2 u x y : Z),
+  0 < g -> 0 < L -> (g | n) -> n <= 8 * L * g ->
+  0 <= t1 -> 0 <= t2 -> 8 * L * t1 < n -> 8 * L * t2 < n ->
+  (g | x - y) ->
+  (n | x - (t1 + u)) -> (n | y - (t2 + u)) ->
+  (n | x - y).
+Proof.
+  intros n L g t1 t2 u x y Hg HL Hgn Hn T1 T2 H1 H2 Hxy Hx Hy.
+  assert (Gx : (g | x - (t1 + u))) by (apply Z.divide_trans with n; assumption).
+  assert (Gy : (g | y - (t2 + u))) by (apply Z.divide_trans with n; assumption).
+  (* g | t1 - t2 *)
+  assert (Gt : (g | t1 - t2)).
+  { replace (t1 - t2) with ((x - y) - (x - (t1 + u)) + (y - (t2 + u))) by ring.
+    apply Z.divide_add_r; [apply Z.divide_sub_r; assumption | assumption]. }
+  (* 0 <= t1, t2 < g *)
+  assert (t1 < g) by nia. assert (t2 < g) by nia.
+  assert (Et : t1 = t2).
+  { destruct Gt as [c Hc]. assert (c = 0) by nia. subst c. lia. }
+  subst t2.
+  replace (x - y) with ((x - (t1 + u)) - (y - (t1 + u))) by ring.
+  now apply Z.divide_sub_r.
+Qed.
+
+Print Assumptions orbit_one.

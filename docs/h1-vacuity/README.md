@@ -183,7 +183,9 @@ to 0 are all 0 (`eval_zero_digits`). Together they give
 `sphere_digits_norel`. A generic pigeonhole gives the density bound
 `sphere_slice_large`: some slice has `(K(d−1)²+1)·|S_r| ≥ d^K`.
 `thick_set_exists` packages both into an integer analogue of the external
-`HostThickExists`, with polynomial instead of `exp(−C√…)` loss. `Print Assumptions` reports *Closed under the global
+`HostThickExists`, with polynomial instead of `exp(−C√…)` loss. `orbit_one`
+rebuilds `OrbitOne`: a short Frobenius orbit meets a thick translate at most
+once. `Print Assumptions` reports *Closed under the global
 context*. It is not in `scripts/hunt_probe_smoke.sh`, which is the flocq lane.
 
 ```sh
@@ -211,8 +213,9 @@ lifting-the-exponent style strong induction (`lte`). It also rebuilds the
 exact law `OrdDvd` (`ord_dvd`): for odd `l` and `j ≥ 1`,
 `l^(2^j) ≡ ±1 (mod 2^N)` holds iff `l ≡ ±1 (mod 2^(N−j))`, with truncated
 subtraction as in Lean. That proof goes through the exact valuation
-`val_exact`: `2^n ∣ l^(2^(j+1))−1 ⇔ 2^n ∣ (l²−1)·2^j`. *Closed under the
-global context*. The compile prints Stdlib 9.1 deprecation warnings for `Znumtheory`
+`val_exact`: `2^n ∣ l^(2^(j+1))−1 ⇔ 2^n ∣ (l²−1)·2^j`. As a corollary, it
+rebuilds `OrdD` (`ord_d`: `d ≡ 7 (mod 16)` has maximal order). *Closed under
+the global context*. The compile prints Stdlib 9.1 deprecation warnings for `Znumtheory`
 names.
 
 ```sh

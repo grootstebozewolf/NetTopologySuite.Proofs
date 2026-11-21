@@ -365,3 +365,33 @@ Qed.
 End OrdDvd.
 
 Print Assumptions ord_dvd.
+
+(* ============================================================================
+   OrdD (Formalism/BehrendSets/StatementE.lean):
+     d % 16 = 7  ->  orderOf (frob s d hd) = 2^(s-1)
+   Integer form, for s >= 3 (N = s+2): with d ≡ 7 (mod 16),
+     d^(2^(s-1)) ≡ ±1 (mod 2^(s+2))   and   d^(2^(s-2)) ≢ ±1 (mod 2^(s+2)).
+   Since the order of frob is a power of 2 (OrdGrp s is cyclic of order 2^s),
+   "divides 2^(s-1) but not 2^(s-2)" is "equals 2^(s-1)" (group translation,
+   not re-proved).  Reason: v2(d+1) = 3, v2(d-1) = 1.
+   ========================================================================== *)
+
+Theorem ord_d : forall (d : Z) (s : nat), d mod 16 = 7 -> (3 <= s)%nat ->
+  ((2 ^ Z.of_nat (s + 2) | d ^ p2 (s - 1) - 1) \/ (2 ^ Z.of_nat (s + 2) | d ^ p2 (s - 1) + 1)) /\
+  ~ ((2 ^ Z.of_nat (s + 2) | d ^ p2 (s - 2) - 1) \/ (2 ^ Z.of_nat (s + 2) | d ^ p2 (s - 2) + 1)).
+Proof.
+  intros d s Hd Hs.
+  assert (Hq : d = 16 * (d / 16) + 7) by (pose proof (Z.div_mod d 16); lia).
+  set (q := d / 16) in Hq.
+  assert (Hodd : Z.odd d = true) by (rewrite Hq, Z.odd_add, Z.odd_mul; reflexivity).
+  split.
+  - apply (proj2 (ord_dvd d Hodd (s + 2) (s - 1) ltac:(lia))).
+    replace (s + 2 - (s - 1))%nat with 3%nat by lia.
+    right. change (2 ^ Z.of_nat 3) with 8. exists (2 * q + 1). lia.
+  - intros H. apply (proj1 (ord_dvd d Hodd (s + 2) (s - 2) ltac:(lia))) in H.
+    replace (s + 2 - (s - 2))%nat with 4%nat in H by lia.
+    change (2 ^ Z.of_nat 4) with 16 in H.
+    destruct H as [[c Hc]|[c Hc]]; lia.
+Qed.
+
+Print Assumptions ord_d.

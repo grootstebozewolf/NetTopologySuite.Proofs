@@ -368,3 +368,28 @@ verified in both directions. These are exactly the facts that make the
 
 **SUMMARY (slice 10) ok 3 / warn 0 / bug 0**. Verdict unchanged:
 **PASS-STATIC / PENDING**.
+
+## Slice 11: Rocq rebuilds of `OrdD` and `OrbitOne` (2026-11-21)
+
+| Lean type | Rocq theorem (integer form) | probe | OUTCOME |
+|---|---|---|---|
+| `StatementE.lean : OrdD` (`d % 16 = 7 → orderOf (frob s d) = 2^(s−1)`) | `ord_d`: for `s ≥ 3`, `d^(2^(s−1)) ≡ ±1` and `d^(2^(s−2)) ≢ ±1 (mod 2^(s+2))`. Corollary of `ord_dvd`, since `v₂(d+1) = 3` and `v₂(d−1) = 1`. | `TowerOrderLawQED.v` | **QED, zero axioms** |
+| `Statement.lean : OrbitOne` (a short orbit, `addOrderOf h ≤ 8L`, meets `thick n T u` at most once) | `orbit_one`: if `g ∣ n`, `n ≤ 8L·g`, `0 ≤ t < n/(8L)` for both points, `g ∣ x−y`, and `x ≡ t₁+u`, `y ≡ t₂+u (mod n)`, then `x ≡ y (mod n)` | `SphereNoRelQED.v` | **QED, zero axioms** |
+
+**Group translations (definitional, not re-proved).**
+- `OrdD`: the order of `frob` is a power of 2 because `OrdGrp s` is cyclic
+  of order `2^s`. So "divides `2^(s−1)` but not `2^(s−2)`" means "equals
+  `2^(s−1)`". The edge case `s = 2` (`j = 0`) is excluded in the integer
+  form.
+- `OrbitOne`: the orbit `{t₀ + i·h}` is a coset of `g·ℤ/n` with
+  `g = gcd(h,n) = n/addOrderOf h`.
+
+**Meaning.** `ord_d` is why the auxiliary prime `d ≡ 7 (16)` is "inert-like"
+(root-only ticket, slice 2). `orbit_one` is the first half of the Behrend
+collision control: points of `T + u` lie within `n/(8L)` of each other, and
+points of a short orbit are at least `n/(8L)` apart. `WindowTwo` (long
+orbits: at most 2 hits per window) is the remaining half, and it is where
+`NoRel` / collinearity is used.
+
+**SUMMARY (slice 11) ok 2 / warn 0 / bug 0**. Verdict unchanged:
+**PASS-STATIC / PENDING**.
