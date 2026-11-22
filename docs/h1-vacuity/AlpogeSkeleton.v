@@ -40,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -96,7 +96,7 @@ Definition ledger : list (string * string * bool) := [
   ("sum_A", "sum_A_trivial, sum_A_nontrivial (AlpogeFifthBatch, refined)", true);
   ("one_char", "one_char_r (AlpogeSixthCH, refined); over R: AlpogeSixthCHReals.one_char_C", true);
   ("th_le", "th_le_r (AlpogeSixthCH, refined); over R: AlpogeSixthCHReals.th_le_C", true);
-  ("ch_balance", "ch_balance_r (AlpogeSixthCH, refined); over R: AlpogeSixthCHReals.ch_balance_C", true);
+  ("ch_balance", "ch_balance_r (AlpogeSixthCH, refined); askExp: askExp_split_r, hA_swap, cutoff_uniform (AlpogeAskExp); over R: AlpogeSixthCHReals.ch_balance_C", true);
   ("ch_top", "ch_top_r (AlpogeSixthCH, refined); over R: AlpogeSixthCHReals.ch_top_C", true);
   ("proposition_size_bound (GrowthSizeBound)", "growth_size_bound", true);
   (* formB *)
@@ -398,3 +398,13 @@ Check AlpogeTopShape.small_level_at_max.
 Check AlpogeTopShape.bridge_rows_r.
 Check AlpogeTopShape.topDesWin_r.
 Check AlpogeTopShape.shapeWin_from_links_r.
+
+(* ---- askExp (ChBalance.lean, above ch_balance), REFINED (AlpogeAskExp.v).
+        A sub-lemma of ch_balance: ledger counts stay 53/53 and 46 over R.
+        cutoff_needs_hN is a control, not a NACK of the Lean proof. ---- *)
+Check AlpogeAskExp.cutoff_uniform.
+Check AlpogeAskExp.cutoff_needs_hN.
+Check AlpogeAskExp.ramified_weights_zero.
+Check AlpogeAskExp.askD_zero_of_lt.
+Check AlpogeAskExp.askExp_split_r.
+Check AlpogeAskExp.hA_swap.
