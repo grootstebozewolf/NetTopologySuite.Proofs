@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-22
 Provenance: 49d228e9fba1e327324d5c75dbf407a01f7e5af2
-Theorems: `AlpogeTransportSizes.v : sizes_exp_upper`, `AlpogeTransportSizes.v : sizes_exp_upper_needs_eps`, `AlpogeTransportSizes.v : sizes_pow4_256`, `AlpogeTransportSizes.v : sizes_pow4_needs_x`, `AlpogeTransportSizes.v : sizes_ez_sixth`, `AlpogeTransportSizes.v : sizes_ez_sixth_needs_nonneg`, `AlpogeTransportSizes.v : sizesRec_exponents_r`, `AlpogeTransportSizes.v : transport_link_zero_r`, `AlpogeTransportSizes.v : rows_threshold_inside`, `AlpogeTransportSizes.v : threshold_of_one_misses_another`, `AlpogeSkeleton.v : counts`
+Theorems: `AlpogeTransportSizes.v : sizes_exp_upper`, `AlpogeTransportSizes.v : sizes_exp_upper_needs_eps`, `AlpogeTransportSizes.v : sizes_pow4_256`, `AlpogeTransportSizes.v : sizes_pow4_needs_x`, `AlpogeTransportSizes.v : sizes_ez_sixth`, `AlpogeTransportSizes.v : sizes_ez_sixth_needs_nonneg`, `AlpogeTransportSizes.v : rpower_mono_not_for_every_fn`, `AlpogeTransportSizes.v : sizesRec_exponents_r`, `AlpogeTransportSizes.v : transport_link_zero_r`, `AlpogeTransportSizes.v : rows_threshold_inside`, `AlpogeTransportSizes.v : threshold_of_one_misses_another`, `AlpogeSkeleton.v : counts`
 -->
 # Alpöge main line: transport link zero and sizesRec_at
 
@@ -35,7 +35,7 @@ The same per-member shape appears in the producers this theorem calls and this s
 
 `LinkIRROfJoinEx.lean:39-138`. The statement is at one `(Fm, x, i, Cs)`, with `Fm.x1 < x`, `4 ≤ x`, and `6 ≤ Cs`. `eps < 1/52` and `0 < eps` are read from `(Fm.L x i).sc` (`lines 44-45`). Nothing is pulled outside `x`.
 
-The five `Real.rpow_le_rpow_of_exponent_le` steps (`lines 64-71`) are `sizesRec_exponents_r`, under the named hypothesis `rpow_mono`.
+The five exponent comparisons (`lines 64-71`) are `sizesRec_exponents_r`. They follow from `rpower_mono` for one function `rp`: `1 <= x -> e1 <= e2 -> rp x e1 <= rp x e2`. That is the statement of Stdlib `Rle_Rpower` (`1 <= e -> n <= m -> Rpower e n <= Rpower e m`). An earlier hypothesis claimed this for every `rp : R -> R -> R`. That proves `False`: `rpower_mono_not_for_every_fn` takes `rp _ e := -e` at `x = 1`, `e1 = 0`, `e2 = 1` and gets `0 <= -1`. The `1 <= x` guard does not save an arbitrary function; it is the guard `Rle_Rpower` uses for `Rpower`. The identifier `Rpower` is not written in the checked theorem: mentioning it makes `Print Assumptions` report `Classical_Prop.classic`, which is off the allowlist. `Rle_Rpower` stays QEX.
 
 | comparison | Lean | needs |
 |---|---|---|
@@ -57,10 +57,10 @@ Controls, on the same pattern as `cutoff_needs_hN`:
 
 ## QEX (named hypotheses)
 
-`RowsTie` takes `x` and `i`, and `link_of_eval` takes `1 ≤ C0`. The literal `C0 = 3` is the `link_alt` instantiation, restored on the TopShape slice; this lemma keeps `C0` as the section parameter of `LinkSPos.lean:14`.
+`link_of_eval` matches `theoremS_link_of_evaluation` (`LinkSPos.lean:97-102`): `1 ≤ C0`, `0 ≤ C`, `2 * Cg ≤ A`, `2 ≤ sCl`, `2 * C ≤ sCl`, `StandingHypothesesWithConstants`, `∃ xR, ∀ x, x1 < x → ∀ i, ∃ X : RowsAut`, `ThmSOwn`, `CountAllPointsClass`. It does not take `TuSize`. The literal `C0 = 3` is the `link_alt` instantiation.
 
-- `rpow_mono` is `Real.rpow_le_rpow_of_exponent_le` for base `≥ 1`. Real exponentiation is not opened.
-- `hc30` and `link_of_eval`. The second is `theoremS_link_of_evaluation` (`LinkSPos.lean:97-106`). `linkS_of_standing_hypotheses` and `countOwn_of_rowsPEv` are inside it.
+- `rpower_mono` is `Rle_Rpower` for one `rp`. Stdlib's proof of `Rle_Rpower`, and the name `Rpower` itself, use `Classical_Prop.classic`.
+- `hc30`, `sCl_ge2`, `sCl_twiceC`, `standing_of`, `thmOwn_of`, `countAll_of`, and `link_of_eval`. `linkS_of_standing_hypotheses` and `countOwn_of_rowsPEv` sit inside `link_of_eval`.
 - `closed_of_th`'s three side conditions (`0 ≤ CGam`, `0 ≤ sC'`, `0 ≤ sCl`) are not premises of `transport_link_zero_r`. The Lean lambda discards them and returns `⟨(sel Fm hc).1, …⟩`. This theorem packages that existential. It does not re-prove `closed_of_th`.
 - Unread producers: `finXC_of`, `selOK_of`, `concEv_of_sel`, `rowsTiePT'_of`, `hypOwnE_kppOff`, `hypOwnE_kppDiagP`, `kernel_diagonal_positive`, `hypOwnS_off`, `hypOwnL_diagP`, `diagonal_positive_final`, `closed_of_large`, `linkThresholds`.
 - `Fm.sizes` (`LinkIRROfJoinEx.lean:41`): `SizeN`, `SizeK`, `SizeQD`, `SizeG`, the rank comparisons, and `Real.exp (x^(ez/6)) ≤ host.q` and `≤ host.d` (lines 91-106). The exponent comparisons above do not use those bounds.
@@ -71,6 +71,6 @@ Controls, on the same pattern as `cutoff_needs_hN`:
 
 ## OUTCOME
 
-**QED (refined)** for the exponent comparisons, the power bounds, the per-member `xR` packaging, and the application of `hc30` at `Fm`. **No candidate NACK.** **QEX** for the inventory and Mathlib calls above. The Alpöge verdict is unchanged: **PASS-STATIC / PENDING**.
+**QED (refined)** for the exponent arithmetic, the power bounds `256 ≤ x^4` and `2 * x^5 ≤ x^6`, the control that monotonicity for every function is false, and the packaging of `theoremS_link_of_evaluation`. **QEX** for `Rle_Rpower` itself and for the inventory premises above. The false unguarded `rpow_mono` was a transcription, not a gap in the Lean `rpow_le_rpow_of_exponent_le` step, which assumes base `≥ 1`. No candidate NACK of that Lean step. The Alpöge verdict is unchanged: **PASS-STATIC / PENDING**.
 
 **SUMMARY ok 12 / warn 0 / bug 0.**
