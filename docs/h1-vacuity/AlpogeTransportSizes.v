@@ -2,9 +2,12 @@
    left by the TopShape slice:
 
      theoremS_transport_link_zero
-       LinkSPos.lean (Formalism.L2.SG.ThmSOwn), called from
-       LinkAlt.lean.  Counting constants c30 are a function of Fm.cOut.
-       The row witness is ⟨(sel Fm hc).1, …⟩, an ∃ xR inside the member.
+       LinkSPos.lean:131 (Formalism.L2.SG.ThmSOwn).  Counting constants
+       c30 are read at Fm.cOut (hc30, line 141).  The row witness is
+       ⟨(sel Fm hc).1, …⟩ (lines 155-157), an ∃ xR inside the member.
+       closed_of_th (ThmSOwn.lean:435) takes those two zero functions as
+       family-constant side conditions (0 ≤ CGam, 0 ≤ sC', 0 ≤ sCl).
+       The lambda does not turn them into an x-tail.
      sizesRec_at
        LinkIRROfJoinEx.lean.  The rpow comparisons used by SizesRec.
        The exponent 9/2 + 10 ε + ε/100 ≤ 5 needs ε < 1/52.

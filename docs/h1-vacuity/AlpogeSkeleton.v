@@ -40,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -77,7 +77,7 @@ Check real_pole_residue_pos.
 Definition ledger : list (string * string * bool) := [
   (* top *)
   ("zeroFreeAll_of_topG / plugWin (composition)", "main_line_from_core", true);
-  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape)", true);
+  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes)", true);
   ("HostExW (supplyChi, VWin)", "supplyChi_r, hostExW_main_r (AlpogeSixthBatch, refined)", true);
   ("hypV_of_cls", "hypV_of_cls_r", true);
   ("eFamC_of_cls", "eFamC_of_cls_r", true);
@@ -408,3 +408,20 @@ Check AlpogeAskExp.ramified_weights_zero.
 Check AlpogeAskExp.askD_zero_of_lt.
 Check AlpogeAskExp.askExp_split_r.
 Check AlpogeAskExp.hA_swap.
+
+(* ---- theoremS_transport_link_zero and sizesRec_at, REFINED
+        (AlpogeTransportSizes.v). Sub-lemmas of the TopG link facts:
+        ledger counts stay 53/53 and 46 over R. The three *_needs_*
+        theorems and threshold_of_one_misses_another are controls. ---- *)
+Check AlpogeTransportSizes.sizes_exp_upper.
+Check AlpogeTransportSizes.sizes_exp_upper_needs_eps.
+Check AlpogeTransportSizes.sizes_pow4_256.
+Check AlpogeTransportSizes.sizes_pow4_needs_x.
+Check AlpogeTransportSizes.sizes_two_x5.
+Check AlpogeTransportSizes.sizes_ez_sixth.
+Check AlpogeTransportSizes.sizes_ez_sixth_needs_nonneg.
+Check AlpogeTransportSizes.sizesRec_exponents_r.
+Check AlpogeTransportSizes.rows_threshold_inside.
+Check AlpogeTransportSizes.counting_constants_at_member.
+Check AlpogeTransportSizes.transport_link_zero_r.
+Check AlpogeTransportSizes.threshold_of_one_misses_another.
