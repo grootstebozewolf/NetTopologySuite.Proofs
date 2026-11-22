@@ -131,13 +131,15 @@ End SizesMono.
 (* and hc30 read at that Fm, not before the member is chosen.            *)
 (* ===================================================================== *)
 
-(* xR is the member's own selection threshold. *)
-Theorem rows_threshold_inside : forall (sel1 x1 : R) (P : R -> Prop),
-  (forall x : R, sel1 <= x -> x1 < x -> P x) ->
-  exists xR, xR = sel1 /\ forall x : R, xR <= x -> x1 < x -> P x.
+(* xR is the member's own selection threshold.  The index i is the
+   Lean `i : Fm.Ix x` of RowsTieP (LinkSPos.lean:156-157). *)
+Theorem rows_threshold_inside : forall (sel1 x1 : R) (Ix : R -> Type)
+  (P : forall x, Ix x -> Prop),
+  (forall (x : R) (i : Ix x), sel1 <= x -> x1 < x -> P x i) ->
+  exists xR, xR = sel1 /\ forall (x : R) (i : Ix x), xR <= x -> x1 < x -> P x i.
 Proof.
-  intros sel1 x1 P H. exists sel1. split; [reflexivity|].
-  intros x Hx H1. apply H; assumption.
+  intros sel1 x1 Ix P H. exists sel1. split; [reflexivity|].
+  intros x i Hx H1. apply H; assumption.
 Qed.
 
 (* c30 Fm.cOut is applied at Fm.  LinkSPos.lean hc30, used as (hc30 Fm). *)
@@ -150,26 +152,34 @@ Section Transport.
 Variable Fam : Type.
 Variable InC : Fam -> Prop.
 Variable sel1 x1 : Fam -> R.
-Variable TuSize LinkS Resid HypOwn RowsTie : Fam -> Prop.
+Variable Ix : Fam -> R -> Type.
+Variable TuSize Resid HypOwn : Fam -> Prop.
+(* LinkS at the section parameter C0.  link_alt instantiates C0 with 3. *)
+Variable LinkS : R -> Fam -> Prop.
+Variable RowsTie : forall (Fm : Fam) (x : R), Ix Fm x -> Prop.
 Variable cC cA Cg : Fam -> R.
+Variable C0 : R.
+Hypothesis C0_ge1 : 1 <= C0.
 (* [inventory] hc30: constants depend on the member (Fm.cOut), and only then *)
 Hypothesis hc30 : forall Fm, InC Fm -> 0 <= cC Fm /\ 2 * Cg Fm <= cA Fm.
-(* [inventory] theoremS_link_of_evaluation, with its own ∃ xR premise *)
+(* [inventory] theoremS_link_of_evaluation (LinkSPos.lean:97).
+   h1 : 1 ≤ C0 is a premise.  The row witness quantifies i. *)
 Hypothesis link_of_eval : forall Fm, InC Fm ->
-  0 <= cC Fm -> 2 * Cg Fm <= cA Fm ->
-  (exists xR, forall x : R, xR <= x -> x1 Fm < x -> RowsTie Fm) ->
-  Resid Fm -> HypOwn Fm -> TuSize Fm -> LinkS Fm.
+  1 <= C0 -> 0 <= cC Fm -> 2 * Cg Fm <= cA Fm ->
+  (exists xR, forall (x : R) (i : Ix Fm x), xR <= x -> x1 Fm < x -> RowsTie Fm x i) ->
+  Resid Fm -> HypOwn Fm -> TuSize Fm -> LinkS C0 Fm.
 
 Theorem transport_link_zero_r : forall Fm, InC Fm ->
   Resid Fm -> HypOwn Fm -> TuSize Fm ->
-  (forall x : R, sel1 Fm <= x -> x1 Fm < x -> RowsTie Fm) ->
-  LinkS Fm.
+  (forall (x : R) (i : Ix Fm x), sel1 Fm <= x -> x1 Fm < x -> RowsTie Fm x i) ->
+  LinkS C0 Fm.
 Proof.
   intros Fm HC HR HO HT Hrows.
   destruct (hc30 Fm HC) as [Hc0 HcA].
-  assert (Hpack : exists xR : R, forall x : R, xR <= x -> x1 Fm < x -> RowsTie Fm).
-  { exists (sel1 Fm). intros x Hx Hlt. exact (Hrows x Hx Hlt). }
-  exact (link_of_eval Fm HC Hc0 HcA Hpack HR HO HT).
+  assert (Hpack : exists xR : R, forall (x : R) (i : Ix Fm x),
+      xR <= x -> x1 Fm < x -> RowsTie Fm x i).
+  { exists (sel1 Fm). intros x i Hx Hlt. exact (Hrows x i Hx Hlt). }
+  exact (link_of_eval Fm HC C0_ge1 Hc0 HcA Hpack HR HO HT).
 Qed.
 End Transport.
 

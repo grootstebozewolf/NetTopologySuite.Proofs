@@ -25,7 +25,7 @@ Closed (fun Fm _ => ∃ xR, ∀ x ≥ xR, Fm.x1 < x → ∀ i, ∃ X, RowsTieP �
        ⟨(sel Fm hc).1, fun x hx0 hx i => ⟨_, rowsTiePT'_of …⟩⟩
 ```
 
-`closed_of_th` (`ThmSOwn.lean:435-438`) supplies three premises before the payload: `thm Fm.cOut ≤ Fm.CGam`, `th (cOut ++ cMid) ≤ sC'`, and the same for `sCl`. With both functions constantly `0`, those premises are `0 ≤ Fm.CGam`, `0 ≤ sC' Fm`, and `0 ≤ sCl Fm`. The lambda discards them. The `x`-threshold it returns is `(sel Fm hc).1`, chosen after `Fm` and `hc`. `rows_threshold_inside` and `transport_link_zero_r` replay that packaging: `hc30` is applied at the member, then `xR` is defined as `sel1 Fm` inside the existential that `link_of_eval` demands.
+`closed_of_th` (`ThmSOwn.lean:435-438`) supplies three premises before the payload: `thm Fm.cOut ≤ Fm.CGam`, `th (cOut ++ cMid) ≤ sC'`, and the same for `sCl`. With both functions constantly `0`, those premises are `0 ≤ Fm.CGam`, `0 ≤ sC' Fm`, and `0 ≤ sCl Fm`. The lambda discards them. The `x`-threshold it returns is `(sel Fm hc).1`, chosen after `Fm` and `hc`. `rows_threshold_inside` and `transport_link_zero_r` replay that packaging: `hc30` is applied at the member, then `xR` is defined as `sel1 Fm` inside the existential, and the tail quantifies `i`. `link_of_eval` also takes `1 ≤ C0`.
 
 `threshold_of_one_misses_another` is the control. A threshold `0` that serves one member fails for a member whose selection threshold is `3`, at `x = 1`. A finite class still has a uniform threshold (the maximum). An unbounded family would need the archimedean axiom, which is off the allowlist, so that stronger negative statement is not formalised here.
 
@@ -55,12 +55,15 @@ Controls, on the same pattern as `cutoff_needs_hN`:
 
 `link_irr` (`LinkIRROfJoinEx.lean:157-162`) passes `x ≥ 4` by taking `max (max x0 (sel …).1) (max (Fm.x1 + 1) 4)` inside the member, then calls `sizesRec_at` at that `x` with `Cs = 6`. The `4` is a per-member lower bound on the tail, not a constant claimed uniform in `t` or the level.
 
-## QEX (named hypotheses; the Lean statements were not weakened)
+## QEX (named hypotheses)
 
-- `rpow_mono`, the reading of `Real.rpow_le_rpow_of_exponent_le` for base `≥ 1`. Real exponentiation is not opened in Stdlib.
-- `hc30` and `link_of_eval`. The second is `theoremS_link_of_evaluation` (`LinkSPos.lean:97-106`), including `linkS_of_standing_hypotheses` and `countOwn_of_rowsPEv`.
-- The producers in the transport term, unread below the quantifier: `finXC_of`, `selOK_of`, `concEv_of_sel`, `rowsTiePT'_of`, `hypOwnE_kppOff`, `hypOwnE_kppDiagP`, `kernel_diagonal_positive`, `hypOwnS_off`, `hypOwnL_diagP`, `diagonal_positive_final`, `closed_of_large`, `linkThresholds`.
-- `Fm.sizes` (`LinkIRROfJoinEx.lean:41`): the `SizeN`, `SizeK`, `SizeQD`, and `SizeG` bounds, the rank comparisons `f ≤ k`, `m ≤ f`, `2 ≤ m`, `k ≤ r ≤ 2k`, and the `exp` / `log` steps `Real.exp (x^(ez/6)) ≤ host.q` and `≤ host.d` (`lines 91-106`).
+`RowsTie` takes `x` and `i`, and `link_of_eval` takes `1 ≤ C0`. The literal `C0 = 3` is the `link_alt` instantiation, restored on the TopShape slice; this lemma keeps `C0` as the section parameter of `LinkSPos.lean:14`.
+
+- `rpow_mono` is `Real.rpow_le_rpow_of_exponent_le` for base `≥ 1`. Real exponentiation is not opened.
+- `hc30` and `link_of_eval`. The second is `theoremS_link_of_evaluation` (`LinkSPos.lean:97-106`). `linkS_of_standing_hypotheses` and `countOwn_of_rowsPEv` are inside it.
+- `closed_of_th`'s three side conditions (`0 ≤ CGam`, `0 ≤ sC'`, `0 ≤ sCl`) are not premises of `transport_link_zero_r`. The Lean lambda discards them and returns `⟨(sel Fm hc).1, …⟩`. This theorem packages that existential. It does not re-prove `closed_of_th`.
+- Unread producers: `finXC_of`, `selOK_of`, `concEv_of_sel`, `rowsTiePT'_of`, `hypOwnE_kppOff`, `hypOwnE_kppDiagP`, `kernel_diagonal_positive`, `hypOwnS_off`, `hypOwnL_diagP`, `diagonal_positive_final`, `closed_of_large`, `linkThresholds`.
+- `Fm.sizes` (`LinkIRROfJoinEx.lean:41`): `SizeN`, `SizeK`, `SizeQD`, `SizeG`, the rank comparisons, and `Real.exp (x^(ez/6)) ≤ host.q` and `≤ host.d` (lines 91-106). The exponent comparisons above do not use those bounds.
 
 ## Ledger
 
