@@ -13,7 +13,7 @@
      the development's carriers named in AlpogeSixthCH.v;
    - large_x_eventually is proved outright over R with the allowlist-clean
      log Lc and rpow rpc: its three Mathlib premises (isLittleO_log_rpow_atTop,
-     tendsto_rpow_atTop, rpow_nonneg) are proved here.
+     tendsto_rpow_atTop, rpow_nonneg) are discharged by theories/LogRpowClean.v.
 
    Within docs/axiom-allowlist.txt.  Evidence for
    docs/attacks/2026-11-22-alpoge-sixth-batch.md.  NOT a product module.
@@ -99,60 +99,19 @@ Definition ch_balance_C := AlpogeSixthCH.ch_balance_r CcStr.
 Definition ch_top_C := AlpogeSixthCH.ch_top_r CcStr.
 Definition gmA_eq_C := AlpogeSixthCH.gmA_eq_r CcStr.
 
-(* large_x_eventually over R: the three Mathlib premises, proved for Lc / rpc *)
-Lemma exp_ge_1px : forall z, 0 <= z -> 1 + z <= exp z.
-Proof.
-  intros z Hz. pose proof (exp_ge_Pk 1 z Hz) as H. rewrite Pk_S, Pk_O in H. simpl in H. lra.
-Qed.
-
-(* tendsto_rpow_atTop *)
-Lemma rpc_top : forall eps, 0 < eps -> forall M, exists x0, forall x, x0 <= x -> M <= rpc x eps.
-Proof.
-  intros eps Heps M. exists (exp (Rabs M / eps)). intros x Hx.
-  pose proof (exp_pos (Rabs M / eps)) as He.
-  assert (HL : Rabs M / eps <= Lc x).
-  { rewrite <- (Lc_exp (Rabs M / eps)). apply Lc_le_mono; assumption. }
-  unfold rpc. assert (Hz : Rabs M <= eps * Lc x).
-  { apply (Rmult_le_compat_l eps) in HL; [|lra]. replace (eps * (Rabs M / eps)) with (Rabs M) in HL by (field; lra). exact HL. }
-  pose proof (exp_ge_1px (eps * Lc x) ltac:(pose proof (Rabs_pos M); lra)).
-  pose proof (Rle_abs M). lra.
-Qed.
-
-(* isLittleO_log_rpow_atTop, as the bound for every c > 0 *)
-Lemma Lc_littleo : forall eps, 0 < eps -> forall c, 0 < c ->
-  exists x0, forall x, x0 <= x -> Rabs (Lc x) <= c * Rabs (rpc x eps).
-Proof.
-  intros eps Heps c Hc.
-  destruct (rpc_top (eps / 2) ltac:(lra) (2 / (eps * c))) as [x1 Hx1].
-  exists (Rmax 1 x1). intros x Hx.
-  assert (Hx1' : 1 <= x) by (eapply Rle_trans; [apply Rmax_l|exact Hx]).
-  assert (Hxp : 0 < x) by lra.
-  assert (HL0 : 0 <= Lc x) by (rewrite <- Lc_1; apply Lc_le_mono; lra).
-  rewrite (Rabs_right (Lc x)) by lra. rewrite (Rabs_right (rpc x eps)) by (left; apply rpc_pos).
-  pose proof (Lc_le_rpc_div x (eps / 2) Hxp ltac:(lra)) as H1.
-  pose proof (Hx1 x (Rle_trans _ _ _ (Rmax_r _ _) Hx)) as H2.
-  set (q := rpc x (eps / 2)) in *.
-  assert (Hq : 0 < q) by apply rpc_pos.
-  assert (Hsplit : rpc x eps = q * q).
-  { unfold q, rpc. rewrite <- exp_plus. f_equal. field. }
-  rewrite Hsplit.
-  clearbody q.
-  assert (Hd : q / (eps / 2) = 2 / eps * q) by (field; lra).
-  rewrite Hd in H1.
-  assert (2 / eps = c * (2 / (eps * c))) by (field; lra).
-  assert (c * (2 / (eps * c)) * q <= c * q * q).
-  {
-    assert (0 <= c * q) by (apply Rmult_le_pos; lra).
-    replace (c * (2 / (eps * c)) * q) with (c * q * (2 / (eps * c))) by ring.
-    apply Rmult_le_compat_l; assumption. }
-  rewrite H in H1. replace (c * (q * q)) with (c * q * q) by ring. lra.
-Qed.
-
+(* large_x_eventually over R: the three Mathlib premises, proved for Lc / rpc
+   by the shared growth lemmas of theories/LogRpowClean.v
+   (isLittleO_log_rpow_atTop = lc_le_mul_rpc_eventually,
+    tendsto_rpow_atTop = rpc_eventually_ge) *)
 Theorem large_x_eventually_R : AlpogeSixthCH.LargeXEv Lc rpc.
 Proof.
   apply AlpogeSixthCH.large_x_eventually_r.
-  - exact Lc_littleo.
-  - exact rpc_top.
+  - intros eps Heps c Hc.
+    destruct (lc_le_mul_rpc_eventually c eps Hc Heps) as [x0 Hx0].
+    exists x0. intros x Hx. destruct (Hx0 x Hx) as [H1x HL].
+    rewrite (Rabs_right (Lc x)) by (apply Rle_ge, Lc_nonneg; exact H1x).
+    rewrite (Rabs_right (rpc x eps)) by (left; apply rpc_pos). exact HL.
+  - intros eps Heps M. exact (rpc_eventually_ge eps M Heps).
   - intros x y _. left. apply rpc_pos.
 Qed.
 

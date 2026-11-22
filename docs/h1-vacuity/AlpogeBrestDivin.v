@@ -181,42 +181,11 @@ End Divin.
 (* (theories/LogRpowClean.v: Lc, rpc).  DivinNOfHypV.lean:59-74 states it  *)
 (* for Real.log / Real.rpow; with Lc / rpc it is proved, not assumed.     *)
 (* ===================================================================== *)
-(* rpc x a -> oo as x -> oo (tendsto_rpow_atTop) *)
-Lemma rpc_eventually_ge : forall a M, 0 < a -> exists x0, forall x, x0 <= x -> M <= rpc x a.
-Proof.
-  intros a M Ha. exists (exp (Rabs M / a)). intros x Hx.
-  pose proof (exp_pos (Rabs M / a)) as He.
-  assert (HL : Rabs M / a <= Lc x) by (rewrite <- (Lc_exp (Rabs M / a)); apply Lc_le_mono; assumption).
-  assert (Hz : Rabs M <= a * Lc x).
-  { apply (Rmult_le_compat_l a) in HL; [|lra].
-    replace (a * (Rabs M / a)) with (Rabs M) in HL by (field; lra). exact HL. }
-  unfold rpc. pose proof (exp_ge_1_plus (a * Lc x) ltac:(pose proof (Rabs_pos M); lra)).
-  pose proof (Rle_abs M). lra.
-Qed.
-
+(* The proof is theories/LogRpowClean.v : lc_sq_le_rpc_eventually; this
+   name is kept as the anchor of log_sq_le_rpow cited by the finding. *)
 Theorem log_sq_le_rpc : forall eps, 0 < eps ->
   exists x6, forall x, x6 <= x -> Lc x * Lc x <= rpc x eps.
-Proof.
-  intros eps He. set (t := eps / 4).
-  assert (Ht : 0 < t) by (unfold t; lra).
-  destruct (rpc_eventually_ge (eps / 2) (/ (t * t)) ltac:(lra)) as [x0 Hx0].
-  exists (Rmax 1 x0). intros x Hx.
-  assert (Hx1 : 1 <= x) by (eapply Rle_trans; [apply Rmax_l|exact Hx]).
-  assert (HL0 : 0 <= Lc x) by (apply Lc_nonneg; exact Hx1).
-  pose proof (Lc_le_rpc_div x t ltac:(lra) Ht) as H1.
-  pose proof (Hx0 x (Rle_trans _ _ _ (Rmax_r _ _) Hx)) as H2.
-  set (q := rpc x t) in *.
-  assert (Hq : 0 < q) by apply rpc_pos.
-  assert (Hq2 : rpc x (eps / 2) = q * q) by (unfold q; rewrite <- rpc_add; f_equal; unfold t; field).
-  assert (Hq4 : rpc x eps = (q * q) * (q * q)) by (rewrite <- Hq2, <- rpc_add; f_equal; field).
-  rewrite Hq2 in H2. rewrite Hq4. clearbody q.
-  assert (Hsq : Lc x * Lc x <= (q / t) * (q / t)) by (apply Rmult_le_compat; lra).
-  assert (Ht2 : 0 < t * t) by nra.
-  replace ((q / t) * (q / t)) with ((q * q) * / (t * t)) in Hsq by (field; lra).
-  assert (Hqq : 0 <= q * q) by nra.
-  assert ((q * q) * / (t * t) <= (q * q) * (q * q)) by (apply Rmult_le_compat_l; lra).
-  lra.
-Qed.
+Proof. exact lc_sq_le_rpc_eventually. Qed.
 
 (* divinN_of_hypV with logf = Lc, powf = rpc: the log-square premise is
    discharged; the remaining premises are the Lean proof's QEX calls. *)
@@ -235,7 +204,6 @@ Proof.
            (fun H => log_sq_le_rpc eps H) hV hN hR hD He).
 Qed.
 
-Print Assumptions rpc_eventually_ge.
 Print Assumptions log_sq_le_rpc.
 Print Assumptions divinN_of_hypV_clean.
 
