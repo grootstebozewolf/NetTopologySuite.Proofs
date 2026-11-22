@@ -81,3 +81,8 @@ standard; the audit is OK and there are no `Admitted`.
 The Alpöge verdict is unchanged: **PASS-STATIC / PENDING**.
 
 **SUMMARY ok 8 / warn 1 (7 items need an allowlist-clean integral library) / bug 0.**
+
+**Follow-up (2026-11-22).** The integration library this writeup asked for
+now exists: `docs/h1-vacuity/CleanIntegralQED.v`, see
+`docs/attacks/2026-11-22-clean-integral-library.md`. With it,
+`kernel_integral` and `windowHyp_of_rpow` are proved over `R`.
