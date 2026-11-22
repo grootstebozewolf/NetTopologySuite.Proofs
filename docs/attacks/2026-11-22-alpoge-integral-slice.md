@@ -3,7 +3,7 @@ date: 2026-11-22
 Provenance: 0a2d842
 Theorems: `AlpogeIntegralQED.v : RI_lipschitz`, `AlpogeIntegralQED.v : rsum_inv_cv`, `AlpogeIntegralQED.v : windowHyp_of_rpow`, `AlpogeSkeleton.v : integral_slice_proved_is_refined`
 -->
-# Alpöge main line: allowlist-clean integration, and windowHyp_of_rpow proved over R (33/39)
+# Alpöge main line: allowlist-clean integration, and windowHyp_of_rpow proved over R (34/39 with #1047)
 
 Follows `2026-11-21-alpoge-third-batch-over-reals.md`. That finding left 7
 refined items blocked: they need integral facts, and Stdlib's integral
@@ -44,30 +44,53 @@ from source; nothing was built.
 integral are an `IntVal` (`Riemann_integrable` plus the limit of uniform
 Riemann sums, from `AlpogeDeepStatements.v`).
 
-`AlpogeSkeleton.v : integral_slice_proved_is_refined` checks that
-`windowHyp_of_rpow` is a refined ledger item, and that the 33 items proved
-over `R` are distinct.
+## Relation to #1047 (`CleanIntegralQED.v`), merged concurrently
 
-## Status of the 6 still-blocked items
+While this slice was in review, #1047 landed a more general allowlist-clean
+library, `docs/h1-vacuity/CleanIntegralQED.v`
+(`docs/attacks/2026-11-22-clean-integral-library.md`). It provides:
+- tagged-partition integrals (`RInt`);
+- linearity, monotonicity and Chasles;
+- its own one-sided mean value theorem, and FTC;
+- change of variables and improper integrals;
+- proofs of `kernel_integral` and `windowHyp_of_rpow_r`.
+
+The two files overlap and complement each other:
+- **`windowHyp_of_rpow` is now proved twice.** It is proved here for
+  `WindowHypR` with Stdlib-style `IntVal` (`Riemann_integrable` plus
+  uniform sums, as in `AlpogeDeepStatements.v`), and in #1047 with `RInt`.
+  The two `WindowHypR` definitions differ only in the integral notion.
+- **`RI_lipschitz` is not in #1047.** It yields integrability in
+  **Stdlib's own sense** (`Riemann_integrable`, built from step functions),
+  which is what `AlpogeDeepStatements.v`'s statements use. #1047's `RInt` is
+  a separate notion, and the two are not linked by a proof here.
+- **`kernel_integral`** (proved in #1047) now counts as proved over `R`.
+
+`AlpogeSkeleton.v : integral_slice_proved_is_refined` checks that
+`windowHyp_of_rpow` and `kernel_integral` are refined ledger items. It also
+checks that the **34** items proved over `R` are distinct, and the skeleton
+`Check`s both `CleanIntegralQED.kernel_integral` and
+`CleanIntegralQED.windowHyp_of_rpow_r`.
+
+## Status of the 5 still-blocked items (after #1047)
 
 | item | what remains |
 |---|---|
-| `windowHypU_of_windowHyp` | change of variables `y = e^u` for the integral (the substitution is nonlinear, so uniform sums do not map to uniform sums) |
-| `landau_window_ineq` | additivity over `window ∪ tails`, and the triangle inequality for complex integrals |
-| `kernel_integral` | the exact improper integral. `RI_lipschitz` now gives integrability on `[0,T]`. The value needs bracketing of `u^k e^{−au}` against its antiderivative, then `T → ∞`. |
-| `landau_tails_chernoff` | additivity and set-monotonicity of improper integrals |
-| `landau_coeff` | linearity of `IntVal`: integrability of `c·f`, now constructible by `RI_lipschitz` for Lipschitz `f`, or by a direct step-function scaling |
+| `windowHypU_of_windowHyp` | #1047's `windowU_change_var` covers majorants whose y-integrand has an antiderivative. A merely integrable majorant needs FTC part 1. |
+| `landau_window_ineq` | #1047 provides splitting (`RIntInf_chasles`) and monotonicity. The triangle inequality for complex integrals still needs integrability of `\|f\|`. |
+| `landau_tails_chernoff` | the tools now exist (`RIntInf_chasles`, `RIntInf_le`); not yet assembled |
+| `landau_coeff` | the obstruction is gone (`RInt_scal`); not yet assembled |
 | `landau_cauchy` | Cauchy integral formula |
-
-`RI_lipschitz` and the bracketing method are the reusable pieces. The next
-natural targets are `landau_coeff` (via linearity) and `kernel_integral`
-(via bracketing).
 
 ## OUTCOME
 
-**QED.** Riemann integrability of Lipschitz functions and the logarithmic
-integral are now available within the allowlist. `windowHyp_of_rpow` is
-proved over `R`, bringing the total to **33 of 39** refined items.
+**QED.** Within the allowlist:
+- Lipschitz functions are integrable in Stdlib's own sense;
+- the logarithmic integral is available;
+- `windowHyp_of_rpow` is proved over `R`.
+
+Together with #1047's `kernel_integral`, **34 of 39** refined items are now
+proved over `R`.
 
 The Alpöge verdict is unchanged: **PASS-STATIC / PENDING**.
 

@@ -39,7 +39,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -243,12 +243,18 @@ Check AlpogeIntegralQED.RI_lipschitz.
 Check AlpogeIntegralQED.rsum_inv_cv.
 Check AlpogeIntegralQED.windowHyp_of_rpow.
 
-Definition realsFourth : list string := [ "windowHyp_of_rpow" ].
+(* the clean integration library of #1047 (CleanIntegralQED.v) proves
+   kernel_integral and, a second time and in its own integral formalism,
+   windowHyp_of_rpow *)
+Check CleanIntegralQED.kernel_integral.
+Check CleanIntegralQED.windowHyp_of_rpow_r.
+
+Definition realsFourth : list string := [ "windowHyp_of_rpow"; "kernel_integral" ].
 
 Theorem integral_slice_proved_is_refined :
   @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) realsFourth) true /\
   NoDup (reals12 ++ realsNext ++ realsThird ++ realsFourth) /\
-  @eq nat (length (reals12 ++ realsNext ++ realsThird ++ realsFourth)) 33%nat.
+  @eq nat (length (reals12 ++ realsNext ++ realsThird ++ realsFourth)) 34%nat.
 Proof.
   split; [vm_compute; reflexivity|]. split; [|reflexivity].
   repeat constructor; simpl; intuition discriminate.
