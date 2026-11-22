@@ -40,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -77,7 +77,7 @@ Check real_pole_residue_pos.
 Definition ledger : list (string * string * bool) := [
   (* top *)
   ("zeroFreeAll_of_topG / plugWin (composition)", "main_line_from_core", true);
-  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch, refined)", true);
+  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape)", true);
   ("HostExW (supplyChi, VWin)", "supplyChi_r, hostExW_main_r (AlpogeSixthBatch, refined)", true);
   ("hypV_of_cls", "hypV_of_cls_r", true);
   ("eFamC_of_cls", "eFamC_of_cls_r", true);
@@ -379,3 +379,22 @@ Print Assumptions sixth_batch_all_refined.
 Check AlpogePoleDataChar.poleData_abstract_r.
 Check AlpogePoleDataChar.poleData_char_nontriv_r.
 Check AlpogePoleDataChar.poleData_char_triv_r.
+
+(* ---- TopShape link facts (ShapeWin.lean and the Link*.lean it calls),
+        REFINED (AlpogeTopShape.v).  Sub-lemmas of the TopG row, so the
+        ledger counts stay 53/53 refined and 46 proved over R. ---- *)
+Check AlpogeTopShape.designExists_of_choices_r.
+Check AlpogeTopShape.link_ex_r.
+Check AlpogeTopShape.link_gl_r.
+Check AlpogeTopShape.link_eta_r.
+Check AlpogeTopShape.link_g_r.
+Check AlpogeTopShape.link_brest_r.
+Check AlpogeTopShape.link_alt_r.
+Check AlpogeTopShape.link_irr_r.
+Check AlpogeTopShape.admissible_twist_link_r.
+Check AlpogeTopShape.selection_closed_r.
+Check AlpogeTopShape.small_level_rank_eq_r.
+Check AlpogeTopShape.small_level_at_max.
+Check AlpogeTopShape.bridge_rows_r.
+Check AlpogeTopShape.topDesWin_r.
+Check AlpogeTopShape.shapeWin_from_links_r.
