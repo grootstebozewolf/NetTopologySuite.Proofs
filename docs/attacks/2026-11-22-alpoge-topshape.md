@@ -61,7 +61,7 @@ the missing piece is a named hypothesis and is listed as QEX.
 - `dGamSize_fact` is the reading that `DGamSize` supplies the `FactDGam` tail. `muDGam_of_fact` (`SumLogPrimeFactorsLe.lean:756`) takes that tail and returns `MuDGam`. `DesWin.lean:31` applies it to `hDG`.
 - `rank_zero` still hides the non-surjectivity callbacks (`toRows`, `rowsHold0_of`, the selection projections). The surjectivity callback is the one instantiated at `Rmax (sel) xr`.
 
-No candidate NACK. The restored statements are the Lean quantifier order. The items above are unread proofs, not weaker conclusions.
+No candidate NACK on the restored quantifier order. The items above are unread proofs or readings; several of them are still not the full Lean statements, and they are listed for that reason.
 
 ## Ledger
 
