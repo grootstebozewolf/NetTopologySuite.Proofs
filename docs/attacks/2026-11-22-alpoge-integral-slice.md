@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-22
-Provenance: 0a2d842
+Provenance: ddc8ef8 (#1047 merge; the 34/39 count needs `CleanIntegralQED.v`)
 Theorems: `AlpogeIntegralQED.v : RI_lipschitz`, `AlpogeIntegralQED.v : rsum_inv_cv`, `AlpogeIntegralQED.v : windowHyp_of_rpow`, `AlpogeSkeleton.v : integral_slice_proved_is_refined`
 -->
 # Alpöge main line: allowlist-clean integration, and windowHyp_of_rpow proved over R (34/39 with #1047)
@@ -40,7 +40,7 @@ from source; nothing was built.
 3. That is at most `Y^η`, by `windowHyp_of_rpow_eventually` (already proved
    over `R`).
 
-`WindowHypR` writes Lean's `WindowHyp` over `R`: the integrability and the
+`WindowHypR_IV` writes Lean's `WindowHyp` over `R`: the integrability and the
 integral are an `IntVal` (`Riemann_integrable` plus the limit of uniform
 Riemann sums, from `AlpogeDeepStatements.v`).
 
@@ -57,9 +57,10 @@ library, `docs/h1-vacuity/CleanIntegralQED.v`
 
 The two files overlap and complement each other:
 - **`windowHyp_of_rpow` is now proved twice.** It is proved here for
-  `WindowHypR` with Stdlib-style `IntVal` (`Riemann_integrable` plus
+  `WindowHypR_IV` with Stdlib-style `IntVal` (`Riemann_integrable` plus
   uniform sums, as in `AlpogeDeepStatements.v`), and in #1047 with `RInt`.
-  The two `WindowHypR` definitions differ only in the integral notion.
+  The two definitions (`WindowHypR_IV` here, `CleanIntegralQED.WindowHypR`)
+  differ only in the integral notion; `Lc_mult` is reused from #1047.
 - **`RI_lipschitz` is not in #1047.** It yields integrability in
   **Stdlib's own sense** (`Riemann_integrable`, built from step functions),
   which is what `AlpogeDeepStatements.v`'s statements use. #1047's `RInt` is

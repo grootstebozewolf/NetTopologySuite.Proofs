@@ -103,7 +103,7 @@ Definition ledger : list (string * string * bool) := [
   ("formB", "formB_rebuilt", true);
   ("level_family", "level_family_sum, level_family_zerofree", true);
   ("zeroFree_of_rpow_window", "formB_rebuilt (lemmaL o windowHyp_of_rpow)", true);
-  ("windowHyp_of_rpow", "windowHyp_of_rpow_rebuilt", true);
+  ("windowHyp_of_rpow", "windowHyp_of_rpow_rebuilt; over R: AlpogeIntegralQED.windowHyp_of_rpow, CleanIntegralQED.windowHyp_of_rpow_r", true);
   ("windowHyp_of_rpow_eventually", "windowHyp_of_rpow_eventually_r, poly_le_qpow", true);
   ("windowHypU_of_windowHyp", "windowHypU_of_windowHyp_r", true);
   ("lemmaL", "lemmaL_rebuilt", true);
@@ -114,11 +114,11 @@ Definition ledger : list (string * string * bool) := [
   ("landau_window_key", "key_rebuilt", true);
   ("landau_window_ineq", "window_ineq_discrete", true);
   ("landau_kernel_max", "landau_kernel_max_r", true);
-  ("kernel_integral", "kernel_integral_r", true);
+  ("kernel_integral", "kernel_integral_r; over R: CleanIntegralQED.kernel_integral", true);
   ("landau_tails", "tails_rebuilt", true);
-  ("landau_tails_chernoff", "landau_tails_chernoff_r", true);
+  ("landau_tails_chernoff", "landau_tails_chernoff_r; over R: AlpogeFifthBatch.landau_tails_chernoff", true);
   ("landau_tails_pow", "tails_pow_core", true);
-  ("landau_coeff", "landau_coeff_sign_r", true);
+  ("landau_coeff", "landau_coeff_sign_r; over R: AlpogeFifthBatch.landau_coeff", true);
   ("iteratedDeriv_laplace", "-", false);
   ("landau_dichotomy", "dichotomy_rebuilt", true);
   ("landau_nearest", "nearest_rebuilt", true);
@@ -281,3 +281,14 @@ Proof.
   repeat constructor; simpl; intuition discriminate.
 Qed.
 Print Assumptions fifth_batch_counts.
+
+(* where each post-#1047 over-R proof lives (review of #1046): the module
+   of every witness below is Check-ed above by its qualified name *)
+Definition overR_src : list (string * string) := [
+  ("windowHyp_of_rpow", "AlpogeIntegralQED.windowHyp_of_rpow");
+  ("kernel_integral", "CleanIntegralQED.kernel_integral");
+  ("landau_tails_chernoff", "AlpogeFifthBatch.landau_tails_chernoff");
+  ("landau_coeff", "AlpogeFifthBatch.landau_coeff") ].
+
+Lemma overR_src_covers : @eq (list string) (map fst overR_src) (List.app realsFourth realsFifth).
+Proof. reflexivity. Qed.

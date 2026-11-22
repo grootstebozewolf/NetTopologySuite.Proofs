@@ -26,7 +26,7 @@
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals Lra Psatz List ZArith Lia RList RiemannInt_SF RiemannInt.
-From NTS.Proofs.Probes Require Import AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3.
+From NTS.Proofs.Probes Require Import AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 CleanIntegralQED.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -165,10 +165,7 @@ Print Assumptions RI_lipschitz.
 (* ===================================================================== *)
 (* Part B: the integral of 1/y, by bracketing                             *)
 (* ===================================================================== *)
-Lemma Lc_mult : forall x y, 0 < x -> 0 < y -> Lc (x * y) = Lc x + Lc y.
-Proof.
-  intros x y Hx Hy. apply exp_inj. rewrite exp_plus, !exp_Lc; [reflexivity|lra|lra|apply Rmult_lt_0_compat; lra].
-Qed.
+(* Lc_mult is CleanIntegralQED.Lc_mult (#1047). *)
 
 Lemma Lc_inv : forall x, 0 < x -> Lc (/ x) = - Lc x.
 Proof.
@@ -259,14 +256,14 @@ Proof. intros y Hy. unfold rpc. replace (-1 * Lc y) with (- Lc y) by ring. rewri
 
 (* WindowHyp F theta delta (CharFamily.lean l.41), over R, with the window
    integral as an IntVal (Riemann_integrable + limit of uniform Riemann sums) *)
-Definition WindowHypR (GmF : R -> R) (theta delta : R) : Prop :=
+Definition WindowHypR_IV (GmF : R -> R) (theta delta : R) : Prop :=
   forall eta, 0 < eta -> forall Y0, exists Y, Y0 <= Y /\ exists Rf : R -> R,
     (exists I, IntVal (fun y => Rf y * rpc y (- theta - 1)) Y (rpc Y (1 + delta)) I /\ I <= rpc Y eta) /\
     (forall y, Y <= y -> y <= rpc Y (1 + delta) -> 0 <= Rf y /\ GmF y <= Rf y).
 
 Theorem windowHyp_of_rpow : forall (GmF : R -> R) theta delta C, 0 < delta ->
   (forall Y0, exists Y, Y0 <= Y /\ forall y, Y <= y -> y <= rpc Y (1 + delta) -> GmF y <= C * rpc y theta) ->
-  WindowHypR GmF theta delta.
+  WindowHypR_IV GmF theta delta.
 Proof.
   intros GmF theta delta C Hd h eta Heta Y0.
   destruct (windowHyp_of_rpow_eventually (Rabs C * delta) eta ltac:(pose proof (Rabs_pos C); nra) Heta) as [Y1 HY1].
