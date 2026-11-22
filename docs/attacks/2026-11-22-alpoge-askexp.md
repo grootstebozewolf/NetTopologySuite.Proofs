@@ -48,13 +48,15 @@ step is circular: `askExp` does not call `ch_balance`.
 | `hC` and the sum over `P` | `primeSum_eq`, `askExp_split_r` | The three cases, then the sum. |
 | the three-sum swap in `hA` | `hA_swap` | `ksum_swap` twice. |
 
-## QEX (named hypotheses, statements not weakened)
+## QEX (named hypotheses)
 
-- `ld`, `lsplit`, `lunram` (the character-sum evaluations `ounram` / `cardI` sit inside them).
-- `askP p = 0` from `inPhi (frob p)` and `inPhi_nsmul`.
-- The reading of `unfold askD` as a sum of `max(a/D.d^i − w, 0)`.
-- `sum_vonMangoldt_primePow` as an identity of prime powers. Its support obligation is the proved cutoff; the identity itself is not opened.
-- The ring step that names `Kc * Fc` is not separated from `hA_swap`: the swaps are proved for an arbitrary summand.
+Each of these keeps the quantifiers that the proved split uses. None concludes `True`. The bodies are not the Lean proofs.
+
+- `primeSum_d`, `primeSum_s0`, `primeSum_free` are the closed forms of `ld`, `lsplit`, and `lunram`. The character sums `ounram` / `cardI` are not opened.
+- `askP_zero` is `askP p = 0` under `In p P`, not inert, not in `S0`, and `p ≠ d`. `inPhi_nsmul` is not opened.
+- `askD_unfold` is a reading of `unfold askD` as a sum of `max(a/D.d^i − w, 0)`, guarded by `N < d`. It is not the Lean definition.
+- `sum_vonMangoldt_primePow` is not a hypothesis in this file. The support step the identity would need is the proved cutoff.
+- `hA_swap` is proved for an arbitrary summand. The ring step that names `Kc * Fc` is not a separate theorem.
 
 ## Ledger
 
