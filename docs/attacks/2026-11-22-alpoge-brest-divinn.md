@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-22
 Provenance: b1ee6875409faf500a54a92a06ccad736b23e53a
-Theorems: `AlpogeBrestDivin.v : bRest_all_r`, `AlpogeBrestDivin.v : link_brest_at_two`, `AlpogeBrestDivin.v : divinN_of_hypV_r`, `AlpogeBrestDivin.v : divin_abs_bound`, `AlpogeBrestDivin.v : divin_abs_needs_abs`, `AlpogeBrestDivin.v : scale_le_product`, `AlpogeBrestDivin.v : scale_le_product_needs_y`, `AlpogeBrestDivin.v : divin_threshold_pack`, `AlpogeBrestDivin.v : log_sq_not_for_every_fn`, `AlpogeSkeleton.v : counts`
+Theorems: `AlpogeBrestDivin.v : bRest_all_r`, `AlpogeBrestDivin.v : link_brest_at_two`, `AlpogeBrestDivin.v : divinN_of_hypV_r`, `AlpogeBrestDivin.v : divin_abs_bound`, `AlpogeBrestDivin.v : divin_abs_needs_abs`, `AlpogeBrestDivin.v : scale_le_product`, `AlpogeBrestDivin.v : scale_le_product_needs_y`, `AlpogeBrestDivin.v : divin_threshold_pack`, `AlpogeBrestDivin.v : log_sq_not_for_every_fn`, `AlpogeBrestDivin.v : log_sq_le_rpc`, `AlpogeBrestDivin.v : divinN_of_hypV_clean`, `AlpogeSkeleton.v : counts`
 -->
 # Alpöge main line: bRest_all and divinN_of_hypV
 
@@ -45,7 +45,7 @@ inside the existential (`line 123`). `divin_threshold_pack` splits that max. `di
 - `hh_of_lvl`: `FinalAll.lean:40-41`.
 - `bu_rr`: `buRat_rrFull_closed`, `FinalAll.lean:43`.
 - `la_of`: `FinalAll.lean:46`.
-- `log_sq_le_rpow`: `DivinNOfHypV.lean:59-74`, one `logf` and one `powf`.
+- `log_sq_le_rpow`: `DivinNOfHypV.lean:59-74`, one `logf` and one `powf`. **Discharged for the clean pair** `Lc`/`rpc` (`theories/LogRpowClean.v`): `log_sq_le_rpc` proves `Lc x² ≤ x^ε` eventually (from `Lc y ≤ y^t/t` with `t = ε/4`), and `divinN_of_hypV_clean` is `divinN_of_hypV_r` with that premise gone.
 - `divin_at`: `divinN_at` and `vvRecord`, `DivinNOfHypV.lean:17` and `:79`, fed `|C| + 1` and `x1 + 1 <= x`.
 - `hV`, `hN`, `hR`: the outer existentials of `HypV` (`line 10`), `LinkN`, and `SmallLevelRankEq` as read off the `obtain`s at lines 119-121.
 

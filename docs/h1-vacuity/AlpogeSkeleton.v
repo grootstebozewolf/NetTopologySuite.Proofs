@@ -441,3 +441,5 @@ Check AlpogeBrestDivin.log_sq_not_for_every_fn.
 Check AlpogeBrestDivin.divinN_of_hypV_r.
 Check AlpogeBrestDivin.bRest_all_r.
 Check AlpogeBrestDivin.link_brest_at_two.
+Check AlpogeBrestDivin.log_sq_le_rpc.
+Check AlpogeBrestDivin.divinN_of_hypV_clean.
