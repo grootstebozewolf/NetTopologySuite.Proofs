@@ -114,7 +114,7 @@ Definition ledger : list (string * string * bool) := [
   ("landau_window_key", "key_rebuilt", true);
   ("landau_window_ineq", "window_ineq_discrete", true);
   ("landau_kernel_max", "landau_kernel_max_r", true);
-  ("kernel_integral", "kernel_integral_r; over R: CleanIntegralQED.kernel_integral", true);
+  ("kernel_integral", "kernel_integral_r; over R: TaggedIntegralApps.kernel_integral (theories)", true);
   ("landau_tails", "tails_rebuilt", true);
   ("landau_tails_chernoff", "landau_tails_chernoff_r; over R: AlpogeFifthBatch.landau_tails_chernoff", true);
   ("landau_tails_pow", "tails_pow_core", true);
@@ -249,10 +249,11 @@ Check AlpogeIntegralQED.RI_lipschitz.
 Check AlpogeIntegralQED.rsum_inv_cv.
 Check AlpogeIntegralQED.windowHyp_of_rpow.
 
-(* the clean integration library of #1047 (CleanIntegralQED.v) proves
+(* the clean integration library of #1047 (now theories/TaggedIntegral*.v,
+   re-exported by CleanIntegralQED.v) proves
    kernel_integral and, a second time and in its own integral formalism,
    windowHyp_of_rpow *)
-Check CleanIntegralQED.kernel_integral.
+Check TaggedIntegralApps.kernel_integral.
 Check CleanIntegralQED.windowHyp_of_rpow_r.
 
 Definition realsFourth : list string := [ "windowHyp_of_rpow"; "kernel_integral" ].
@@ -291,7 +292,7 @@ Print Assumptions fifth_batch_counts.
    of every witness below is Check-ed above by its qualified name *)
 Definition overR_src : list (string * string) := [
   ("windowHyp_of_rpow", "AlpogeIntegralQED.windowHyp_of_rpow");
-  ("kernel_integral", "CleanIntegralQED.kernel_integral");
+  ("kernel_integral", "TaggedIntegralApps.kernel_integral");
   ("landau_tails_chernoff", "AlpogeFifthBatch.landau_tails_chernoff");
   ("landau_coeff", "AlpogeFifthBatch.landau_coeff") ].
 

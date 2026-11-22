@@ -165,7 +165,7 @@ Print Assumptions RI_lipschitz.
 (* ===================================================================== *)
 (* Part B: the integral of 1/y, by bracketing                             *)
 (* ===================================================================== *)
-(* Lc_mult is CleanIntegralQED.Lc_mult (#1047). *)
+(* Lc_mult is TaggedIntegralApps.Lc_mult (#1047). *)
 
 Lemma Lc_inv : forall x, 0 < x -> Lc (/ x) = - Lc x.
 Proof.

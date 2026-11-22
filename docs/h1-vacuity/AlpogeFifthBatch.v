@@ -4,7 +4,7 @@
    proof, all within the three-axiom allowlist (docs/axiom-allowlist.txt).
 
    Proved over R, with the allowlist-clean integral library of #1047
-   (CleanIntegralQED.v: RInt, RIntInf, FTC_C1, kernel antiderivative Gk):
+   (theories/TaggedIntegral*.v via CleanIntegralQED.v: RInt, RIntInf, tagged_ftc_c1, kernel antiderivative Gk):
      A  landau_tails_chernoff   (LandauTheorems/landauTails.lean)
      B  landau_coeff            (LandauTheorems/LandauCoeff.lean)
 
@@ -35,7 +35,7 @@ Lemma kernel_RInt_ab : forall k a V T, 0 < a -> 0 <= V -> V <= T ->
   RInt (gk k a) V T (Gk k a T - Gk k a V).
 Proof.
   intros k a V T Ha HV HT.
-  apply (FTC_C1 (Gk k a) (gk k a)
+  apply (tagged_ftc_c1 (Gk k a) (gk k a)
            (fun u => (INR k * u ^ pred k - a * u ^ k) * exp (- (a * u)) / INR (fact k))
            V T (INR k * T ^ pred k + a * T ^ k) HT).
   - intros x _. apply Gk_deriv. exact Ha.
