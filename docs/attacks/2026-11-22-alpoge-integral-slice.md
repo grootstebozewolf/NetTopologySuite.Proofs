@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-22
-Provenance: ddc8ef8 (#1047 merge; the 34/39 count needs `CleanIntegralQED.v`)
+Provenance: ddc8ef8
 Theorems: `AlpogeIntegralQED.v : RI_lipschitz`, `AlpogeIntegralQED.v : rsum_inv_cv`, `AlpogeIntegralQED.v : windowHyp_of_rpow`, `AlpogeSkeleton.v : integral_slice_proved_is_refined`
 -->
 # Alpöge main line: allowlist-clean integration, and windowHyp_of_rpow proved over R (34/39 with #1047)
@@ -9,6 +9,9 @@ Follows `2026-11-21-alpoge-third-batch-over-reals.md`. That finding left 7
 refined items blocked: they need integral facts, and Stdlib's integral
 theory is outside the corpus allowlist. This slice builds the first piece of
 an allowlist-clean integration toolkit and proves one blocked item with it.
+
+The pinned commit is `ddc8ef8`, the #1047 merge: the 34/39 count needs
+`CleanIntegralQED.v`.
 
 External subject: mirror `CocoSgt/riemann-hypothesis-lean` @ `7cbf7a0`, read
 from source; nothing was built.

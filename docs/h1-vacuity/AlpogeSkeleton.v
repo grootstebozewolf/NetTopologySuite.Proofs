@@ -26,8 +26,8 @@
    that the ledger cannot cite a missing theorem.
 
    Stop condition (user): at least 2/3 of the lemmas refined.
-   two_thirds_refined (QED): 41 of 53 since the fifth batch (39 when first
-   met; 3 * 41 = 123 >= 106 = 2 * 53).
+   two_thirds_refined (QED): 43 of 53 since the sixth batch (39 when first
+   met; 3 * 43 = 129 >= 106 = 2 * 53).
 
    Evidence for docs/attacks/2026-11-21-alpoge-skeleton-two-thirds.md.
    NOT a product module.
@@ -40,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -77,8 +77,8 @@ Check real_pole_residue_pos.
 Definition ledger : list (string * string * bool) := [
   (* top *)
   ("zeroFreeAll_of_topG / plugWin (composition)", "main_line_from_core", true);
-  ("TopG (shapeWin, from GLq.Green)", "-", false);
-  ("HostExW (supplyChi, VWin)", "-", false);
+  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch, refined)", true);
+  ("HostExW (supplyChi, VWin)", "supplyChi_r, hostExW_main_r (AlpogeSixthBatch, refined)", true);
   ("hypV_of_cls", "hypV_of_cls_r", true);
   ("eFamC_of_cls", "eFamC_of_cls_r", true);
   ("zeroFreeOn_of_tiedWin_cyc / level_of_tiedWin", "level_of_tiedWin_rebuilt", true);
@@ -137,7 +137,7 @@ Definition ledger : list (string * string * bool) := [
 Definition total : nat := length ledger.
 Definition refined : nat := length (filter (fun t => snd t) ledger).
 
-Lemma counts : total = 53 /\ refined = 41.
+Lemma counts : total = 53 /\ refined = 43.
 Proof. vm_compute. split; reflexivity. Qed.
 
 (* Stop condition: at least two thirds refined. *)
@@ -201,8 +201,9 @@ Proof.
 Qed.
 Print Assumptions next_twelve_proved_are_refined.
 
-(* ---- four UNREFINED items, now STATED in Rocq (no proofs;
-        AlpogeDeepStatements.v), within the allowlist ---- *)
+(* ---- four items that were UNREFINED when STATED in Rocq (no proofs;
+        AlpogeDeepStatements.v), within the allowlist; TopG and HostExW
+        are refined since the sixth batch ---- *)
 Check AlpogeDeepStatements.TopG.
 Check AlpogeDeepStatements.HostExW.
 Check AlpogeDeepStatements.poleData_statement.
@@ -211,8 +212,12 @@ Check AlpogeDeepStatements.landau_pole_asym_statement.
 Definition stated4 : list string :=
   [ "TopG (shapeWin, from GLq.Green)"; "HostExW (supplyChi, VWin)"; "poleData"; "landau_pole_asym" ].
 
+(* the name is kept: it anchors docs/attacks/2026-11-21-alpoge-deep-statements.md
+   (immutable).  The four were unrefined at that finding's provenance; since
+   the sixth batch TopG and HostExW are refined, so this now checks ledger
+   membership only (the refined flags are checked in sixth_batch_counts). *)
 Theorem stated_four_are_unrefined_items :
-  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (negb (snd t))) ledger) stated4) true.
+  @eq bool (forallb (fun nm => existsb (fun t => String.eqb (fst (fst t)) nm) ledger) stated4) true.
 Proof. vm_compute. reflexivity. Qed.
 Print Assumptions stated_four_are_unrefined_items.
 
@@ -292,3 +297,31 @@ Definition overR_src : list (string * string) := [
 
 Lemma overR_src_covers : @eq (list string) (map fst overR_src) (List.app realsFourth realsFifth).
 Proof. reflexivity. Qed.
+
+(* ---- the sixth batch (AlpogeSixthBatch.v): sum_A, sum_Th (over C = R x R),
+        landau_window_ineq and windowHypU_of_windowHyp PROVED over R; TopG and
+        HostExW REFINED (ledger entries flipped above) ---- *)
+Check AlpogeSixthBatch.sum_A_trivial_C.        Check AlpogeSixthBatch.sum_A_nontrivial_C.
+Check AlpogeSixthBatch.sum_Th_C.               Check AlpogeSixthBatch.landau_window_ineq_R.
+Check AlpogeSixthBatch.windowHypU_of_windowHyp_R.
+Check AlpogeSixthBatch.shapeWin_r.             Check AlpogeSixthBatch.supplyChi_r.
+
+Definition realsSixth : list string :=
+  [ "sum_A"; "sum_Th"; "landau_window_ineq"; "windowHypU_of_windowHyp" ].
+
+Definition overR_src6 : list (string * string) := [
+  ("sum_A", "AlpogeSixthBatch.sum_A_trivial_C, sum_A_nontrivial_C");
+  ("sum_Th", "AlpogeSixthBatch.sum_Th_C");
+  ("landau_window_ineq", "AlpogeSixthBatch.landau_window_ineq_R");
+  ("windowHypU_of_windowHyp", "AlpogeSixthBatch.windowHypU_of_windowHyp_R") ].
+
+Theorem sixth_batch_counts :
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) realsSixth) true /\
+  @eq (list string) (map fst overR_src6) realsSixth /\
+  NoDup (reals12 ++ realsNext ++ realsThird ++ realsFourth ++ realsFifth ++ realsSixth) /\
+  @eq nat (length (reals12 ++ realsNext ++ realsThird ++ realsFourth ++ realsFifth ++ realsSixth)) 40%nat.
+Proof.
+  split; [vm_compute; reflexivity|]. split; [reflexivity|]. split; [|reflexivity].
+  repeat constructor; simpl; intuition discriminate.
+Qed.
+Print Assumptions sixth_batch_counts.
