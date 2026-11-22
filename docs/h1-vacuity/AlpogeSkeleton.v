@@ -40,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes AlpogeBrestDivin.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -77,7 +77,7 @@ Check real_pole_residue_pos.
 Definition ledger : list (string * string * bool) := [
   (* top *)
   ("zeroFreeAll_of_topG / plugWin (composition)", "main_line_from_core", true);
-  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes)", true);
+  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes); bRest and divinN: bRest_all_r, divinN_of_hypV_r (AlpogeBrestDivin)", true);
   ("HostExW (supplyChi, VWin)", "supplyChi_r, hostExW_main_r (AlpogeSixthBatch, refined)", true);
   ("hypV_of_cls", "hypV_of_cls_r", true);
   ("eFamC_of_cls", "eFamC_of_cls_r", true);
@@ -425,3 +425,18 @@ Check AlpogeTransportSizes.rows_threshold_inside.
 Check AlpogeTransportSizes.counting_constants_at_member.
 Check AlpogeTransportSizes.transport_link_zero_r.
 Check AlpogeTransportSizes.threshold_of_one_misses_another.
+
+(* ---- bRest_all and divinN_of_hypV, REFINED (AlpogeBrestDivin.v).
+        Sub-lemmas of the TopG link facts: ledger counts stay 53/53
+        and 46 over R.  scale_le_product_needs_y, divin_abs_needs_abs,
+        divin_threshold_needs_all and log_sq_not_for_every_fn are controls. ---- *)
+Check AlpogeBrestDivin.scale_le_product.
+Check AlpogeBrestDivin.scale_le_product_needs_y.
+Check AlpogeBrestDivin.divin_abs_bound.
+Check AlpogeBrestDivin.divin_abs_needs_abs.
+Check AlpogeBrestDivin.divin_threshold_pack.
+Check AlpogeBrestDivin.divin_threshold_needs_all.
+Check AlpogeBrestDivin.log_sq_not_for_every_fn.
+Check AlpogeBrestDivin.divinN_of_hypV_r.
+Check AlpogeBrestDivin.bRest_all_r.
+Check AlpogeBrestDivin.link_brest_at_two.
