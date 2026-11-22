@@ -26,7 +26,8 @@
    that the ledger cannot cite a missing theorem.
 
    Stop condition (user): at least 2/3 of the lemmas refined.
-   two_thirds_refined (QED): 39 of 53 (3 * 39 = 117 >= 106 = 2 * 53).
+   two_thirds_refined (QED): 41 of 53 since the fifth batch (39 when first
+   met; 3 * 41 = 123 >= 106 = 2 * 53).
 
    Evidence for docs/attacks/2026-11-21-alpoge-skeleton-two-thirds.md.
    NOT a product module.
@@ -39,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -91,8 +92,8 @@ Definition ledger : list (string * string * bool) := [
   ("gmA_eq", "-", false);
   ("ch_core", "ch_core_CH", true);
   ("CharacterBalanceMoves.core", "core_rebuilt", true);
-  ("sum_Th", "- (instance: sum_Th_instance)", false);
-  ("sum_A", "- (instance: sum_A_instance)", false);
+  ("sum_Th", "sum_Th (AlpogeFifthBatch, refined; instance: sum_Th_instance)", true);
+  ("sum_A", "sum_A_trivial, sum_A_nontrivial (AlpogeFifthBatch, refined)", true);
   ("one_char", "-", false);
   ("th_le", "-", false);
   ("ch_balance", "-", false);
@@ -136,7 +137,7 @@ Definition ledger : list (string * string * bool) := [
 Definition total : nat := length ledger.
 Definition refined : nat := length (filter (fun t => snd t) ledger).
 
-Lemma counts : total = 53 /\ refined = 39.
+Lemma counts : total = 53 /\ refined = 41.
 Proof. vm_compute. split; reflexivity. Qed.
 
 (* Stop condition: at least two thirds refined. *)
@@ -260,3 +261,23 @@ Proof.
   repeat constructor; simpl; intuition discriminate.
 Qed.
 Print Assumptions integral_slice_proved_is_refined.
+
+(* ---- the fifth batch (AlpogeFifthBatch.v): landau_tails_chernoff and
+        landau_coeff PROVED over R with #1047's library; sum_A and sum_Th
+        REFINED from the Lean proof (ledger entries flipped above) ---- *)
+Check AlpogeFifthBatch.landau_tails_chernoff.  Check AlpogeFifthBatch.landau_coeff.
+Check AlpogeFifthBatch.sum_A_trivial.          Check AlpogeFifthBatch.sum_A_nontrivial.
+Check AlpogeFifthBatch.sum_Th.
+
+Definition realsFifth : list string := [ "landau_tails_chernoff"; "landau_coeff" ].
+
+Theorem fifth_batch_counts :
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) realsFifth) true /\
+  NoDup (reals12 ++ realsNext ++ realsThird ++ realsFourth ++ realsFifth) /\
+  @eq nat (length (reals12 ++ realsNext ++ realsThird ++ realsFourth ++ realsFifth)) 36%nat /\
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) ["sum_A"; "sum_Th"]) true.
+Proof.
+  split; [vm_compute; reflexivity|]. split; [|split; [reflexivity|vm_compute; reflexivity]].
+  repeat constructor; simpl; intuition discriminate.
+Qed.
+Print Assumptions fifth_batch_counts.

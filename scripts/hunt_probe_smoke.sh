@@ -73,6 +73,7 @@ PROBES=(
   docs/h1-vacuity/AlpogeRealsQED3.v
   docs/h1-vacuity/AlpogeIntegralQED.v
   docs/h1-vacuity/CleanIntegralQED.v
+  docs/h1-vacuity/AlpogeFifthBatch.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 
