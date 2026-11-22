@@ -82,6 +82,7 @@ PROBES=(
   docs/h1-vacuity/AlpogeTopShape.v
   docs/h1-vacuity/AlpogeAskExp.v
   docs/h1-vacuity/AlpogeTransportSizes.v
+  docs/h1-vacuity/AlpogeBrestDivin.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 

@@ -4671,3 +4671,16 @@ theories/QedInterval.v
 theories/QedRoots.v
 theories/QedRootsRefute.v
 theories/QedRootsExamples.v
+# Allowlist-clean real analysis, moved from the Alpöge audit probes
+# (docs/h1-vacuity; docs/attacks/2026-11-22-alpoge-theories-readiness.md).
+# exp from its E1 series, the IVT logarithm Lc and power rpc (Stdlib ln /
+# Rpower / exp_increasing print classic); the tagged-partition integral RInt /
+# RIntInf of #1047 with Chasles, a bisection MVT, FTC and change of variables;
+# its applications (Lc' = 1/y, window and kernel integrals); integrable =>
+# bounded and the y = e^u change of variables for a merely integrable
+# integrand.  3-axiom.  claimId: none.
+theories/ExpSeriesClean.v
+theories/LogRpowClean.v
+theories/TaggedIntegral.v
+theories/TaggedIntegralApps.v
+theories/TaggedIntegralChange.v

@@ -40,7 +40,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes AlpogeBrestDivin.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -77,7 +77,7 @@ Check real_pole_residue_pos.
 Definition ledger : list (string * string * bool) := [
   (* top *)
   ("zeroFreeAll_of_topG / plugWin (composition)", "main_line_from_core", true);
-  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes)", true);
+  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes); bRest and divinN: bRest_all_r, divinN_of_hypV_r (AlpogeBrestDivin)", true);
   ("HostExW (supplyChi, VWin)", "supplyChi_r, hostExW_main_r (AlpogeSixthBatch, refined)", true);
   ("hypV_of_cls", "hypV_of_cls_r", true);
   ("eFamC_of_cls", "eFamC_of_cls_r", true);
@@ -114,7 +114,7 @@ Definition ledger : list (string * string * bool) := [
   ("landau_window_key", "key_rebuilt", true);
   ("landau_window_ineq", "window_ineq_discrete", true);
   ("landau_kernel_max", "landau_kernel_max_r", true);
-  ("kernel_integral", "kernel_integral_r; over R: CleanIntegralQED.kernel_integral", true);
+  ("kernel_integral", "kernel_integral_r; over R: TaggedIntegralApps.kernel_integral (theories)", true);
   ("landau_tails", "tails_rebuilt", true);
   ("landau_tails_chernoff", "landau_tails_chernoff_r; over R: AlpogeFifthBatch.landau_tails_chernoff", true);
   ("landau_tails_pow", "tails_pow_core", true);
@@ -249,10 +249,11 @@ Check AlpogeIntegralQED.RI_lipschitz.
 Check AlpogeIntegralQED.rsum_inv_cv.
 Check AlpogeIntegralQED.windowHyp_of_rpow.
 
-(* the clean integration library of #1047 (CleanIntegralQED.v) proves
+(* the clean integration library of #1047 (now theories/TaggedIntegral*.v,
+   re-exported by CleanIntegralQED.v) proves
    kernel_integral and, a second time and in its own integral formalism,
    windowHyp_of_rpow *)
-Check CleanIntegralQED.kernel_integral.
+Check TaggedIntegralApps.kernel_integral.
 Check CleanIntegralQED.windowHyp_of_rpow_r.
 
 Definition realsFourth : list string := [ "windowHyp_of_rpow"; "kernel_integral" ].
@@ -291,7 +292,7 @@ Print Assumptions fifth_batch_counts.
    of every witness below is Check-ed above by its qualified name *)
 Definition overR_src : list (string * string) := [
   ("windowHyp_of_rpow", "AlpogeIntegralQED.windowHyp_of_rpow");
-  ("kernel_integral", "CleanIntegralQED.kernel_integral");
+  ("kernel_integral", "TaggedIntegralApps.kernel_integral");
   ("landau_tails_chernoff", "AlpogeFifthBatch.landau_tails_chernoff");
   ("landau_coeff", "AlpogeFifthBatch.landau_coeff") ].
 
@@ -425,3 +426,20 @@ Check AlpogeTransportSizes.rows_threshold_inside.
 Check AlpogeTransportSizes.counting_constants_at_member.
 Check AlpogeTransportSizes.transport_link_zero_r.
 Check AlpogeTransportSizes.threshold_of_one_misses_another.
+
+(* ---- bRest_all and divinN_of_hypV, REFINED (AlpogeBrestDivin.v).
+        Sub-lemmas of the TopG link facts: ledger counts stay 53/53
+        and 46 over R.  scale_le_product_needs_y, divin_abs_needs_abs,
+        divin_threshold_needs_all and log_sq_not_for_every_fn are controls. ---- *)
+Check AlpogeBrestDivin.scale_le_product.
+Check AlpogeBrestDivin.scale_le_product_needs_y.
+Check AlpogeBrestDivin.divin_abs_bound.
+Check AlpogeBrestDivin.divin_abs_needs_abs.
+Check AlpogeBrestDivin.divin_threshold_pack.
+Check AlpogeBrestDivin.divin_threshold_needs_all.
+Check AlpogeBrestDivin.log_sq_not_for_every_fn.
+Check AlpogeBrestDivin.divinN_of_hypV_r.
+Check AlpogeBrestDivin.bRest_all_r.
+Check AlpogeBrestDivin.link_brest_at_two.
+Check AlpogeBrestDivin.log_sq_le_rpc.
+Check AlpogeBrestDivin.divinN_of_hypV_clean.
