@@ -394,6 +394,7 @@ Check AlpogeTopShape.link_irr_r.
 Check AlpogeTopShape.admissible_twist_link_r.
 Check AlpogeTopShape.selection_closed_r.
 Check AlpogeTopShape.small_level_rank_eq_r.
+Check AlpogeTopShape.small_level_at_max.
 Check AlpogeTopShape.bridge_rows_r.
 Check AlpogeTopShape.topDesWin_r.
 Check AlpogeTopShape.shapeWin_from_links_r.
