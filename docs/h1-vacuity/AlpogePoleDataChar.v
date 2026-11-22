@@ -36,7 +36,7 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; not yet human-reviewed.
+   AI assistance disclosure: AI-drafted; human-reviewed by Jeroen Bloemscheer (2026-11-22).
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals Lra Psatz Ring Field.
