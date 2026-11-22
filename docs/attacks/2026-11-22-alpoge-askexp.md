@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-22
-Provenance: 0c81eb62
+Provenance: f7d624ee18e164ca907ccb83b1084477f572029d
 Theorems: `AlpogeAskExp.v : cutoff_uniform`, `AlpogeAskExp.v : cutoff_needs_hN`, `AlpogeAskExp.v : ramified_weights_zero`, `AlpogeAskExp.v : askExp_split_r`, `AlpogeAskExp.v : hA_swap`, `AlpogeSkeleton.v : counts`
 -->
 # Alpöge main line: askExp refined, cutoff checked for a NACK
