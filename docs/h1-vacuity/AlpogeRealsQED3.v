@@ -882,7 +882,7 @@ Theorem ch_core : forall C eps, 0 <= C -> 0 < eps -> exists x1, forall x, x1 <= 
   GmA <= rpc x (1 / 2 + (C + 3) * eps) + SigA.
 Proof.
   intros C eps HC He.
-  destruct (eventually_rpc_ge 26 (3 * eps / 8) ltac:(lra) ltac:(lra)) as [x2 Hx2].
+  destruct (rpc_eventually_ge (3 * eps / 8) 26 ltac:(lra)) as [x2 Hx2].
   exists (Rmax 3 x2). intros x Hx us n nT nT2 m b k aE GmA SigA Tsum
     HA0 Hper Hortho HY HaE HnT Hrho Hm1 Hk2 Hn Hb HaE0 Hn2 Hm2 Hk1.
   assert (Hx3 : 3 <= x) by (eapply Rle_trans; [apply Rmax_l|exact Hx]).

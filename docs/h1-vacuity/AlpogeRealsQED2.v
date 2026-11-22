@@ -105,43 +105,17 @@ Theorem windowHyp_of_rpow_eventually : forall K eta, 0 <= K -> 0 < eta ->
   exists Y1, forall Y, Y1 <= Y -> 1 <= Y /\ K * Lc Y <= rpc Y eta.
 Proof.
   intros K eta HK Heta.
-  set (hh := eta / 2). assert (Hh : 0 < hh) by (unfold hh; lra).
-  set (B := K / hh + 1).
-  assert (HKh : 0 <= K / hh) by (unfold Rdiv; apply Rmult_le_pos; [lra|left; apply Rinv_0_lt_compat; lra]).
-  assert (HB : 0 < B) by (unfold B; lra).
-  exists (Rmax 1 (rpc B (/ hh))). intros Y HY.
-  assert (HY1 : 1 <= Y) by (eapply Rle_trans; [apply Rmax_l|exact HY]).
-  assert (HYB : rpc B (/ hh) <= Y) by (eapply Rle_trans; [apply Rmax_r|exact HY]).
-  split; [exact HY1|].
-  set (P := rpc Y hh).
-  assert (HP : B <= P).
-  { unfold P. replace B with (rpc (rpc B (/ hh)) hh).
-    - apply rpc_mono_base; [lra|apply rpc_pos|exact HYB].
-    - rewrite rpc_mult, Rinv_l by lra. apply rpc_one. exact HB. }
-  assert (HlnY : 0 <= Lc Y) by (apply Lc_nonneg; exact HY1).
-  assert (Hl : Lc Y <= P / hh) by (apply Lc_le_rpc_div; lra).
-  assert (HP0 : 0 <= P) by (left; apply rpc_pos).
-  assert (Heq : rpc Y eta = P * P) by (unfold P; rewrite <- rpc_add; f_equal; unfold hh; field).
-  rewrite Heq.
-  assert (H1 : K * Lc Y <= K * (P / hh)) by (apply Rmult_le_compat_l; assumption).
-  assert (H2 : K * (P / hh) = K / hh * P) by (field; lra).
-  assert (H3 : K / hh * P <= P * P) by (apply Rmult_le_compat_r; [exact HP0|unfold B in HP; lra]).
-  lra.
+  destruct (lc_le_mul_rpc_eventually (/ (K + 1)) eta ltac:(apply Rinv_0_lt_compat; lra) Heta)
+    as [Y1 HY1].
+  exists Y1. intros Y HY. destruct (HY1 Y HY) as [H1Y HL]. split; [exact H1Y|].
+  pose proof (Lc_nonneg Y H1Y). pose proof (rpc_pos Y eta).
+  apply (Rmult_le_compat_l (K + 1)) in HL; [|lra].
+  rewrite <- Rmult_assoc, Rinv_r, Rmult_1_l in HL by lra. nra.
 Qed.
 
 (* ===================================================================== *)
-(* 4  core_gm   (the eventual step 1 + 4o <= x^eps proved here)           *)
+(* 4  core_gm   (the eventual step 1 + 4o <= x^eps: rpc_eventually_ge)    *)
 (* ===================================================================== *)
-Lemma eventually_rpc_ge : forall A eps, 1 <= A -> 0 < eps ->
-  exists x3, forall x, x3 <= x -> A <= rpc x eps.
-Proof.
-  intros A eps HA He. exists (Rmax 1 (rpc A (/ eps))). intros x Hx.
-  assert (H1 : rpc A (/ eps) <= x) by (eapply Rle_trans; [apply Rmax_r|exact Hx]).
-  replace A with (rpc (rpc A (/ eps)) eps) at 1.
-  - apply rpc_mono_base; [lra|apply rpc_pos|exact H1].
-  - rewrite rpc_mult, Rinv_l by lra. apply rpc_one. lra.
-Qed.
-
 Section CoreGm.
 Variable Gm : R -> R.
 Variable Hst KC : Type.
@@ -164,7 +138,7 @@ Theorem core_gm : forall eD eL kc Cc eps, 0 < eps -> exists x1, forall x, x1 <= 
 Proof.
   intros eD eL kc Cc eps He.
   destruct (CH eD eL kc Cc eps He) as [x1 Hx1].
-  destruct (eventually_rpc_ge (1 + 4 * o) eps ltac:(lra) He) as [x3 Hx3].
+  destruct (rpc_eventually_ge eps (1 + 4 * o) He) as [x3 Hx3].
   exists (Rmax x1 x3). intros x Hx h HE HC.
   assert (H1 : x1 <= x) by (eapply Rle_trans; [apply Rmax_l|exact Hx]).
   assert (H3 : x3 <= x) by (eapply Rle_trans; [apply Rmax_r|exact Hx]).
