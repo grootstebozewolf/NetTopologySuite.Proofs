@@ -39,7 +39,7 @@
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -235,3 +235,22 @@ Proof.
   repeat constructor; simpl; intuition discriminate.
 Qed.
 Print Assumptions third_batch_proved_are_refined.
+
+(* ---- the integral slice (AlpogeIntegralQED.v): allowlist-clean
+        integrability (RI_lipschitz), the integral of 1/y, and
+        windowHyp_of_rpow PROVED over R ---- *)
+Check AlpogeIntegralQED.RI_lipschitz.
+Check AlpogeIntegralQED.rsum_inv_cv.
+Check AlpogeIntegralQED.windowHyp_of_rpow.
+
+Definition realsFourth : list string := [ "windowHyp_of_rpow" ].
+
+Theorem integral_slice_proved_is_refined :
+  @eq bool (forallb (fun nm => existsb (fun t => andb (String.eqb (fst (fst t)) nm) (snd t)) ledger) realsFourth) true /\
+  NoDup (reals12 ++ realsNext ++ realsThird ++ realsFourth) /\
+  @eq nat (length (reals12 ++ realsNext ++ realsThird ++ realsFourth)) 33%nat.
+Proof.
+  split; [vm_compute; reflexivity|]. split; [|reflexivity].
+  repeat constructor; simpl; intuition discriminate.
+Qed.
+Print Assumptions integral_slice_proved_is_refined.

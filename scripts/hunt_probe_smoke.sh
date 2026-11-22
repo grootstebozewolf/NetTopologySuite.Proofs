@@ -71,6 +71,7 @@ PROBES=(
   docs/h1-vacuity/AlpogeRealsQED2.v
   docs/h1-vacuity/AlpogeDeepStatements.v
   docs/h1-vacuity/AlpogeRealsQED3.v
+  docs/h1-vacuity/AlpogeIntegralQED.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 
