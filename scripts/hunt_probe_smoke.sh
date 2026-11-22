@@ -71,8 +71,14 @@ PROBES=(
   docs/h1-vacuity/AlpogeRealsQED2.v
   docs/h1-vacuity/AlpogeDeepStatements.v
   docs/h1-vacuity/AlpogeRealsQED3.v
-  docs/h1-vacuity/AlpogeSkeleton.v
   docs/h1-vacuity/CleanIntegralQED.v
+  docs/h1-vacuity/AlpogeIntegralQED.v
+  docs/h1-vacuity/AlpogeFifthBatch.v
+  docs/h1-vacuity/AlpogeSixthBatch.v
+  docs/h1-vacuity/AlpogeSixthCH.v
+  docs/h1-vacuity/AlpogeSixthCHReals.v
+  docs/h1-vacuity/AlpogeSixthLandau.v
+  docs/h1-vacuity/AlpogeSkeleton.v
 )
 
 fail=0
