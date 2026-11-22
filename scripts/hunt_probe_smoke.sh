@@ -80,6 +80,7 @@ PROBES=(
   docs/h1-vacuity/AlpogeSixthLandau.v
   docs/h1-vacuity/AlpogePoleDataChar.v
   docs/h1-vacuity/AlpogeTopShape.v
+  docs/h1-vacuity/AlpogeAskExp.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 
