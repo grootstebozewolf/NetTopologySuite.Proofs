@@ -415,9 +415,10 @@ Definition LinkPack (Cabs eD eL : R) (eps : R) (Fm : FamP eps) : Prop :=
 
 (* LinkGLOBAL Fm Cabs CH C0 eD eL, instantiated as Fm 2 CH 3 2 0.
    CH is the channel real `ch`. *)
+(* DesWin.lean passes `aS hT`, which has type LinkS, not the function aS. *)
 Definition GLArrow (Cabs C0 eD eL : R) (eps : R) (Fm : FamP eps) (ch : R) : Prop :=
   TuSize eps Fm -> DGamSize eps Fm -> ChosenE C0 eps Fm ch ->
-  LinkG eps Fm -> (TuSize eps Fm -> LinkS C0 eps Fm) -> LinkIRR eps Fm ->
+  LinkG eps Fm -> LinkS C0 eps Fm -> LinkIRR eps Fm ->
   HDiv eps Fm -> MuLink eps Fm -> LinkPack Cabs eD eL eps Fm.
 
 (* [inventory] famGLmin_of_realPlaceSecondLayer _ .muRank *)
@@ -494,8 +495,8 @@ Qed.
 (* ===================================================================== *)
 (* link_brest (LinkBrest.lean:23), link_alt (LinkAlt.lean:34-48)          *)
 (* ===================================================================== *)
-(* RemainingDivisionBounds Fm 2 CH, depending on the channel and the two sizes. *)
-Variable RemAt : forall eps (Fm : FamP eps) (CH : R), Prop.
+(* RemainingDivisionBounds Fm Cabs CH.  link_brest instantiates Cabs with 2. *)
+Variable RemAt : R -> forall eps (Fm : FamP eps) (CH : R), Prop.
 Variable RowsB PrimAll DivG DcPt RealPlaceLayer : Prop.
 Hypothesis hRB : RowsB.
 Hypothesis hPA : PrimAll.
@@ -506,10 +507,10 @@ Hypothesis tie_layer : RealPlaceLayer.
 Hypothesis bRest_all : RowsB -> PrimAll -> DivG -> DcPt -> RealPlaceLayer ->
   Closed (D3 3 Acl) (fun eps Fm CH =>
     forall hc : D3 3 Acl eps Fm,
-      TuSize eps Fm -> DGamSize eps Fm -> RemAt eps Fm CH).
+      TuSize eps Fm -> DGamSize eps Fm -> RemAt 2 eps Fm CH).
 Theorem link_brest_r : Closed (D3 3 Acl) (fun eps Fm CH =>
   forall hc : D3 3 Acl eps Fm,
-    TuSize eps Fm -> DGamSize eps Fm -> RemAt eps Fm CH).
+    TuSize eps Fm -> DGamSize eps Fm -> RemAt 2 eps Fm CH).
 Proof. apply bRest_all; assumption. Qed.
 
 Variable ResidEv : forall eps, FamP eps -> Prop.
@@ -753,7 +754,7 @@ Hypothesis aC2 : Closed (D3 3 Acl) (fun eps Fm _ => Comp2 eps Fm).
 (* [inventory] (r hc hT hD).toRows (wire_sel _ hN) o a (complement_two_of_items c) c5.
    Conclusion is the hDIV arrow topDesWin applies as `aD hT hDG aE divinN`. *)
 Hypothesis toRows_wire : forall eps Fm (ch : R),
-  (forall hc : D3 3 Acl eps Fm, TuSize eps Fm -> DGamSize eps Fm -> RemAt eps Fm ch) ->
+  (forall hc : D3 3 Acl eps Fm, TuSize eps Fm -> DGamSize eps Fm -> RemAt 2 eps Fm ch) ->
   Cut eps Fm ->
   (forall hc : D3 3 Acl eps Fm,
      exists (C spare x0 : R), forall (x : R) (i : fIx eps Fm x),
@@ -770,7 +771,7 @@ Theorem bridge_rows_r :
 Proof.
   intros hA2 hC5.
   apply (closed_imp _ (fun eps Fm ch =>
-      (forall hc : D3 3 Acl eps Fm, TuSize eps Fm -> DGamSize eps Fm -> RemAt eps Fm ch) /\
+      (forall hc : D3 3 Acl eps Fm, TuSize eps Fm -> DGamSize eps Fm -> RemAt 2 eps Fm ch) /\
       Cut eps Fm /\
       (forall hc : D3 3 Acl eps Fm,
          exists (C spare x0 : R), forall (x : R) (i : fIx eps Fm x),
@@ -861,7 +862,7 @@ Proof.
   { apply linkMu_of_linkDIV; [exact Hd|exact (proj1 (aR Hch))|exact (proj2 (aR Hch))|
       exact (muTu_of_tuSize eps Fm Heps Ht)|apply muDGam_of_fact; apply dGamSize_fact; exact Hdg]. }
   assert (Hp : LinkPack Cabs eD eL eps Fm).
-  { apply aGL; [exact Ht|exact Hdg|exact Hch|exact aG|exact aS|exact aI|exact Hd|exact Hm]. }
+  { apply aGL; [exact Ht|exact Hdg|exact Hch|exact aG|exact (aS Ht)|exact aI|exact Hd|exact Hm]. }
   destruct Hp as [K [cHH [eK [CL [x0 Htie]]]]].
   exists Fm. split; [apply h2; exact HC's|].
   exists K, cHH, eK, CL, x0. intros x Hx Hw. exact (proj2 (Htie x Hx Hw)).
