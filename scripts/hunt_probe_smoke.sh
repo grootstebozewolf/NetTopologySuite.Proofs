@@ -78,6 +78,7 @@ PROBES=(
   docs/h1-vacuity/AlpogeSixthCH.v
   docs/h1-vacuity/AlpogeSixthCHReals.v
   docs/h1-vacuity/AlpogeSixthLandau.v
+  docs/h1-vacuity/AlpogePoleDataChar.v
   docs/h1-vacuity/AlpogeSkeleton.v
 )
 

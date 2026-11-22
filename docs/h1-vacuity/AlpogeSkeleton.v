@@ -34,13 +34,13 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; not yet human-reviewed.
+   AI assistance disclosure: AI-drafted; human-reviewed by Jeroen Bloemscheer (2026-11-22).
      Assisted-by: Claude
 *)
 From Stdlib Require Import String List Arith.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -108,7 +108,7 @@ Definition ledger : list (string * string * bool) := [
   ("windowHypU_of_windowHyp", "windowHypU_of_windowHyp_r", true);
   ("lemmaL", "lemmaL_rebuilt", true);
   ("charFamily_LFunction_ne_zero_of_one_le_re", "charFamily_ne_zero_r", true);
-  ("poleData", "poleData_r (AlpogeSixthLandau, refined; poleData_char as inventory)", true);
+  ("poleData", "poleData_r (AlpogeSixthLandau, refined); poleData_char: poleData_char_triv_r, poleData_char_nontriv_r (AlpogePoleDataChar)", true);
   (* landau_window *)
   ("landau_window", "landau_window_rebuilt, landau_window_full", true);
   ("landau_window_key", "key_rebuilt", true);
@@ -372,3 +372,10 @@ Theorem sixth_batch_all_refined :
   @eq bool (forallb (fun t => snd t) ledger) true.
 Proof. split; [reflexivity|]. split; vm_compute; reflexivity. Qed.
 Print Assumptions sixth_batch_all_refined.
+
+(* ---- poleData_char (poleData.lean l.137), the inventory input of
+        poleData_r, REFINED (AlpogePoleDataChar.v): poleData_abstract and both
+        cases, concluding AlpogeSixthLandau's CharPole ---- *)
+Check AlpogePoleDataChar.poleData_abstract_r.
+Check AlpogePoleDataChar.poleData_char_nontriv_r.
+Check AlpogePoleDataChar.poleData_char_triv_r.
