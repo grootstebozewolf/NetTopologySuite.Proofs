@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-22
-Provenance: 4ce81556
+Provenance: 49d228e9fba1e327324d5c75dbf407a01f7e5af2
 Theorems: `AlpogeTransportSizes.v : sizes_exp_upper`, `AlpogeTransportSizes.v : sizes_exp_upper_needs_eps`, `AlpogeTransportSizes.v : sizes_pow4_256`, `AlpogeTransportSizes.v : sizes_pow4_needs_x`, `AlpogeTransportSizes.v : sizes_ez_sixth`, `AlpogeTransportSizes.v : sizes_ez_sixth_needs_nonneg`, `AlpogeTransportSizes.v : sizesRec_exponents_r`, `AlpogeTransportSizes.v : transport_link_zero_r`, `AlpogeTransportSizes.v : rows_threshold_inside`, `AlpogeTransportSizes.v : threshold_of_one_misses_another`, `AlpogeSkeleton.v : counts`
 -->
 # Alpöge main line: transport link zero and sizesRec_at
