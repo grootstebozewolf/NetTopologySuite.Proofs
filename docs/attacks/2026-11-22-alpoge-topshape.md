@@ -1,6 +1,6 @@
 <!-- doc-kind: finding
 date: 2026-11-22
-Provenance: 0b70c5f0
+Provenance: 7ecba12b01222dd334552cf222eac3d4eac5cfa2
 Theorems: `AlpogeTopShape.v : shapeWin_from_links_r`, `AlpogeTopShape.v : topDesWin_r`, `AlpogeTopShape.v : link_ex_r`, `AlpogeTopShape.v : link_gl_r`, `AlpogeTopShape.v : designExists_of_choices_r`, `AlpogeTopShape.v : selection_closed_r`, `AlpogeTopShape.v : small_level_at_max`, `AlpogeSkeleton.v : counts`
 -->
 # Alpöge main line: TopShape link facts refined
