@@ -17,6 +17,7 @@
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted; not yet human-reviewed.
      Assisted-by: Claude
+     Assisted-by: Cursor Grok 4.7 (rpc_inv_cancel, rpc_le_of_root)
    ============================================================================ *)
 From Stdlib Require Import Reals Lra Psatz List Factorial.
 From NTS.Proofs Require Import ExpSeriesClean.
@@ -117,6 +118,29 @@ Proof. intros x a b Hx Hab. unfold rpc. apply exp_le_mono. pose proof (Lc_nonneg
 Lemma rpc_mono_base : forall a b c, 0 <= c -> 0 < a -> a <= b -> rpc a c <= rpc b c.
 Proof. intros a b c Hc Ha Hab. unfold rpc. apply exp_le_mono. pose proof (Lc_le_mono a b Ha Hab). nra. Qed.
 
+(* (b ^ (1/e)) ^ e = b.  Real.rpow_mul, one_div_mul_cancel, rpow_one.
+   LinkIRROfJoinEx.lean:29-30.  e <> 0 is the Rinv_l step; Rocq's / 0 is 0,
+   so the identity is not the e = 0 case. *)
+Lemma rpc_inv_cancel (b e : R) :
+  0 < b -> e <> 0 -> rpc (rpc b (1 / e)) e = b.
+Proof.
+  intros Hb He. rewrite rpc_mult.
+  assert (He1 : (1 / e) * e = 1).
+  { unfold Rdiv. rewrite Rmult_1_l. apply Rinv_l. exact He. }
+  rewrite He1. apply rpc_one. exact Hb.
+Qed.
+
+(* 0 < e and b^(1/e) <= x give b <= x^e.  Real.rpow_le_rpow.
+   LinkIRROfJoinEx.lean:27-31. *)
+Lemma rpc_le_of_root (b e x : R) :
+  0 < b -> 0 < e -> rpc b (1 / e) <= x -> b <= rpc x e.
+Proof.
+  intros Hb He Hx.
+  assert (Hne : e <> 0) by lra.
+  rewrite <- (rpc_inv_cancel b e Hb Hne).
+  apply rpc_mono_base; [lra | apply rpc_pos | exact Hx].
+Qed.
+
 (* Real.log_le_rpow_div *)
 Lemma Lc_le_rpc_div : forall y t, 0 < y -> 0 < t -> Lc y <= rpc y t / t.
 Proof.
@@ -202,6 +226,8 @@ Print Assumptions Lc_rpc.
 Print Assumptions rpc_mult.
 Print Assumptions rpc_mono_exp.
 Print Assumptions rpc_mono_base.
+Print Assumptions rpc_inv_cancel.
+Print Assumptions rpc_le_of_root.
 Print Assumptions Lc_le_rpc_div.
 Print Assumptions rpc_eventually_ge.
 Print Assumptions lc_le_mul_rpc_eventually.

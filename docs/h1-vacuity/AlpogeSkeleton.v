@@ -38,9 +38,10 @@
      Assisted-by: Claude
 *)
 From Stdlib Require Import String List Arith.
+From NTS.Proofs Require Import LiftIndex LogRpowClean.
 From NTS.Proofs.Probes Require Import LeanSkeletonRebuild LandauWindowCore LandauDichotomyQED
   LandauWindowRebuilt FormBRebuilt WinSeamRebuilt LandauKeyRebuilt CoreSliceQED AlpogeRefineBatch
-  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes AlpogeBrestDivin.
+  AlpogeRealsQED AlpogeRealsQED2 AlpogeDeepStatements AlpogeRealsQED3 AlpogeIntegralQED CleanIntegralQED AlpogeFifthBatch AlpogeSixthBatch AlpogeSixthCH AlpogeSixthCHReals AlpogeSixthLandau AlpogePoleDataChar AlpogeTopShape AlpogeAskExp AlpogeTransportSizes AlpogeBrestDivin AlpogeRankZero AlpogeLinkIrr.
 Import ListNotations.
 Local Open Scope string_scope.
 
@@ -77,7 +78,7 @@ Check real_pole_residue_pos.
 Definition ledger : list (string * string * bool) := [
   (* top *)
   ("zeroFreeAll_of_topG / plugWin (composition)", "main_line_from_core", true);
-  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes); bRest and divinN: bRest_all_r, divinN_of_hypV_r (AlpogeBrestDivin)", true);
+  ("TopG (shapeWin, from GLq.Green)", "shapeWin_r, topG_of_hyps (AlpogeSixthBatch); link facts: shapeWin_from_links_r (AlpogeTopShape); transport and sizesRec: transport_link_zero_r, sizesRec_exponents_r (AlpogeTransportSizes); bRest and divinN: bRest_all_r, divinN_of_hypV_r (AlpogeBrestDivin); rank_zero: rank_zero_of_row_conditions_r, small_level_of_xr_r (AlpogeRankZero); linkIRR: linkIRR_of_join_ex_r, link_irr_rows_at_witness_r (AlpogeLinkIrr)", true);
   ("HostExW (supplyChi, VWin)", "supplyChi_r, hostExW_main_r (AlpogeSixthBatch, refined)", true);
   ("hypV_of_cls", "hypV_of_cls_r", true);
   ("eFamC_of_cls", "eFamC_of_cls_r", true);
@@ -443,3 +444,33 @@ Check AlpogeBrestDivin.bRest_all_r.
 Check AlpogeBrestDivin.link_brest_at_two.
 Check AlpogeBrestDivin.log_sq_le_rpc.
 Check AlpogeBrestDivin.divinN_of_hypV_clean.
+
+(* ---- rank_zero_of_row_conditions, REFINED (AlpogeRankZero.v).
+        Sub-lemma of the TopG link facts: ledger counts stay 53/53
+        and 46 over R.  pin_at_tup_misses_mu0 and
+        family_threshold_misses_member are controls. ---- *)
+Check AlpogeRankZero.ht_of_zL.
+Check AlpogeRankZero.rank_zero_at_witness_r.
+Check AlpogeRankZero.rank_zero_of_row_conditions_r.
+Check AlpogeRankZero.small_level_of_xr_r.
+Check AlpogeRankZero.pin_at_tup_misses_mu0.
+Check AlpogeRankZero.family_threshold_misses_member.
+Check AlpogeRankZero.threshold_keeps_member_xr.
+Check LiftIndex.exists_fin_pred_of_icc.
+Check LiftIndex.icc_zero_excluded.
+Check LiftIndex.rmax_add_one_split.
+Check LiftIndex.rmax_pair_split.
+
+(* ---- linkIRR_of_join_ex, REFINED (AlpogeLinkIrr.v).
+        Sub-lemma of the TopG link facts: ledger counts stay 53/53
+        and 46 over R.  root_threshold_misses_member, pow_id_wrong_exp
+        and pow_id_at_zero are controls. ---- *)
+Check AlpogeLinkIrr.link_irr_rows_at_witness_r.
+Check AlpogeLinkIrr.linkIRR_of_join_ex_r.
+Check AlpogeLinkIrr.root_threshold_misses_member.
+Check AlpogeLinkIrr.root_threshold_keeps_member.
+Check AlpogeLinkIrr.pow_id_roundtrip.
+Check AlpogeLinkIrr.pow_id_wrong_exp.
+Check AlpogeLinkIrr.pow_id_at_zero.
+Check LogRpowClean.rpc_inv_cancel.
+Check LogRpowClean.rpc_le_of_root.

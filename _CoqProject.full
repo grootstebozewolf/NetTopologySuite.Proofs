@@ -4684,3 +4684,5 @@ theories/LogRpowClean.v
 theories/TaggedIntegral.v
 theories/TaggedIntegralApps.v
 theories/TaggedIntegralChange.v
+# Icc 1..m index shift and the max(x0, x1+1) tail.  claimId: none.
+theories/LiftIndex.v
