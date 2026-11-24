@@ -37,6 +37,7 @@ let () =
   assert_matrix "ll_matrix_disjoint" "FFFFFFFFF";
   assert_matrix "ll_matrix_point_ii" "0FFFFFFFF";
   assert_matrix "line_pair_fill LPR_ProperCross" "0FFFFFFFF";
+  assert_matrix "line_pair_fill LPR_Touches" "F0FFFFFF2";
   assert_matrix "FILL line_pair_fill LPR_CollinearOverlap" "1FFF0FFF0";
 
   (* area-area / area-line (Coq witness definitions) *)
