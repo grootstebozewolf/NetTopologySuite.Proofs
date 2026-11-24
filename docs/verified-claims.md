@@ -1756,6 +1756,7 @@ paper matrices (S3) remain oracle pins, not selection targets.
 | `RelateMatrixLineLine.v : line_fill_disjoint_witness` | **Witness:** `im_disjoint (line_pair_fill LPR_Disjoint)` `[exact]` | 0 |
 | `RelateMatrixLineLine.v : line_fill_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `line_pair_fill LPR_ProperCross` `[exact]` | 0 |
 | `RelateMatrixLineLine.v : line_fill_share_witness` | **Witness:** `Intersects` on `line_pair_fill LPR_Share` `[exact]` | 0 |
+| `RelateMatrixLineLine.v : line_fill_touches_witness` | **Witness:** `im_touches (line_pair_fill LPR_Touches)` `[exact]` | 0 |
 | `RelateMatrixLineLine.v : line_fill_collinear_overlap_witness` | **Witness:** `Overlaps` on `line_pair_fill LPR_CollinearOverlap` `[exact]` | 0 |
 | `RelateMatrixLineLine.v : rejection_not_share` | **Geometry:** same-side rejection excludes segment share `[exact]` | 3 |
 | `RelateMatrixLineLine.v : collinear_overlap_not_proper_cross` | **Geometry:** collinear overlap excludes proper crossing `[exact]` | 3 |
@@ -2211,8 +2212,8 @@ existential collection union, `matrix_dim_join` fold soundness (S15i),
 meet-layer II/BB dimension pinning (S15j), and collection relate-matrix
 pipeline capstone with test-10 pointset + fold=oracle (S15k).
 Exterior-row true-dimension pinning landed S15l
-(`RelateNodingLineLineExtPinned.v`). Per-pair full `line_pair_fill` bridges
-without hypotheses and Touches-vs-Share fill split remain S15l+.
+(`RelateNodingLineLineExtPinned.v`). Touches-vs-Share fill split landed
+S15l+ (`RelateNodingLineLineTouches.v : classify_touches_ib_cell`, claimId `67-d`). Per-pair full `line_pair_fill` bridges without hypotheses and the nine-cell `geom_de9im_pointset` capstone remain.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -2261,7 +2262,12 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 | `RelateNodingLineLinePinned.v : classify_disjoint_ii_dim_pinned` | `LPR_Disjoint` pins test-10 II cell dimension (S15j) `[exact]` | 3 |
 | `RelateNodingLineLinePinned.v : classify_proper_cross_ii_dim_pinned` | `LPR_ProperCross` pins II = 0-dim point cell (S15j) `[exact]` | 3 |
 | `RelateNodingLineLinePinned.v : classify_share_interior_ii_dim_pinned` | `LPR_Share` + interior share pins II = 0-dim (S15j) `[exact]` | 3 |
-| `RelateNodingLineLinePinned.v : line_pair_fill_share_ii_not_pinned_int_bnd_only` | Share fill II not pinned when only int×bnd contact (Touches gap) (S15j) `[exact]` | 3 |
+| `RelateNodingLineLinePinned.v : line_pair_fill_share_ii_not_pinned_int_bnd_only` | Share fill II not pinned when only int×bnd contact (S15j negative; 67-d is the Touches fill) `[exact]` | 3 |
+| `RelateNodingLineLineTouches.v : classify_touches_ib_cell` | **67-d — #67 S15l+ Touches-vs-Share fill:** `LPR_Touches` ⇒ IB = 0-dim on `line_pair_fill LPR_Touches` (`ll_matrix_touches_endpoint`) `[exact]` | 3 |
+| `RelateNodingLineLineTouches.v : classify_touches_ii_empty` | `LPR_Touches` ⇒ II cell empty on the Touches fill `[exact]` | 3 |
+| `RelateNodingLineLineTouches.v : classify_touches_share_fill_refused` | `LPR_Touches` ⇒ Share fill II pin refused `[exact]` | 3 |
+| `RelateNodingLineLineTouches.v : touch_junction_classifies` | T-junction AB=(0,0)–(2,0), CD=(1,0)–(1,1) classifies as `LPR_Touches` `[exact]` | 3 |
+| `RelateNodingLineLineTouches.v : line_pair_fill_touches_exterior_not_true_dim` | **67-d fill honesty:** on that T-junction, `line_pair_fill LPR_Touches` has IE/EI/BE/EB = None; true dims are 1/1/0/0. `F0FFFFFF2` is the `im_touches` witness, not the pointset matrix `[exact]` | 3 |
 | `RelateNodingLineLineExtPinned.v : classify_disjoint_exterior_row_dim_pinned` (+ `no_share_ie_dim_pinned`, `no_share_ei_dim_pinned`, `no_share_be_dim_pinned`, `no_share_eb_dim_pinned`, `bounded_ee_dim_pinned`, `line_cell_ok_pinned_ext_implies_ok`, `classify_disjoint_test10_exterior_row_pinned`, `parallel_unit_segments_exterior_row_pinned`) | **67-c Green — #67 S15l exterior-row true-dimension pinning:** complementary to S15j II/BB — IE=1 / EI=1 / BE=0 / EB=0 / EE=2 for non-degenerate no-share (and `LPR_Disjoint`) pairs. Forward bridge to `line_cell_ok`. Test-10 matrix carries the true row. Witness: parallel unit segments AB=(0,0)–(1,0), CD=(0,1)–(1,1). No eval mirror (production home is the theory). `[exact]` | 3 |
 | `RelateNodingLineLineExtPinned.v : line_pair_fill_disjoint_ie_not_true_dim` | S8 `line_pair_fill LPR_Disjoint` assigns IE=None; true dim is Some 1 — fill-honesty companion of the S15j Share/Touches gap `[exact]` | 3 |
 | `RelateNodingLineLineCapstone.v : line_collection_relate_matrix_fold_sound` | Fold-assign interface soundness headline (S15k capstone) `[exact]` | 3 |

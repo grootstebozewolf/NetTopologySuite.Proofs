@@ -13,7 +13,8 @@
    corollary on witness pairs.
 
    Honest gaps (remaining S15l+): prepared evaluate hook (identity already
-   Qed); new `LinePairRegime` for Touches-vs-Share at fill API.
+   Qed).  Touches-vs-Share fill split is `LPR_Touches` (67-d), one
+   orientation; its exterior cells are the honesty gap.
    Exterior-row true-dimension pinning landed in RelateNodingLineLineExtPinned.
 
    Sections: §20 (collection relate-matrix pipeline capstone, S15k).

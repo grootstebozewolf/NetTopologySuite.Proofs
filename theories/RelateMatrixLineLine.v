@@ -32,7 +32,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import DE9IM Distance RelateLineLine.
+From NTS.Proofs Require Import DE9IM Distance RelateLineLine RelateBoundary.
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -43,6 +43,7 @@ Inductive LinePairRegime : Type :=
 | LPR_Disjoint
 | LPR_ProperCross
 | LPR_Share
+| LPR_Touches
 | LPR_CollinearOverlap.
 
 Definition line_pair_fill (r : LinePairRegime) : IntersectionMatrix :=
@@ -50,6 +51,7 @@ Definition line_pair_fill (r : LinePairRegime) : IntersectionMatrix :=
   | LPR_Disjoint         => ll_matrix_disjoint
   | LPR_ProperCross      => ll_matrix_point_ii
   | LPR_Share            => ll_matrix_point_ii
+  | LPR_Touches          => ll_matrix_touches_endpoint
   | LPR_CollinearOverlap => ll_matrix_overlap_ii
   end.
 
@@ -65,6 +67,19 @@ Lemma line_pair_fill_share_eq :
   line_pair_fill LPR_Share = ll_matrix_point_ii.
 Proof. reflexivity. Qed.
 
+Lemma line_pair_fill_touches_eq :
+  line_pair_fill LPR_Touches = ll_matrix_touches_endpoint.
+Proof. reflexivity. Qed.
+
+Lemma line_pair_fill_touches_ne_share :
+  line_pair_fill LPR_Touches <> line_pair_fill LPR_Share.
+Proof.
+  intro H. apply (f_equal im_ii) in H.
+  rewrite line_pair_fill_touches_eq, line_pair_fill_share_eq in H.
+  unfold ll_matrix_touches_endpoint, ll_matrix_point_ii in H. simpl in H.
+  discriminate H.
+Qed.
+
 Lemma line_pair_fill_collinear_overlap_eq :
   line_pair_fill LPR_CollinearOverlap = ll_matrix_overlap_ii.
 Proof. reflexivity. Qed.
@@ -78,6 +93,7 @@ Definition classify_line_pair (A B C D : Point) (r : LinePairRegime) : Prop :=
   | LPR_Disjoint         => segments_rejected A B C D
   | LPR_ProperCross      => segments_proper_cross A B C D
   | LPR_Share            => segments_share A B C D
+  | LPR_Touches          => segments_int_bnd_only A B C D
   | LPR_CollinearOverlap =>
       segments_collinear A B C D /\
       segments_interior_collinear_overlap A B C D
@@ -165,6 +181,12 @@ Proof.
   rewrite line_pair_fill_share_eq. exact ll_matrix_point_ii_intersects.
 Qed.
 
+Theorem line_fill_touches_witness :
+  im_touches (line_pair_fill LPR_Touches).
+Proof.
+  rewrite line_pair_fill_touches_eq. exact ll_matrix_touches_endpoint_witness.
+Qed.
+
 Theorem line_fill_collinear_overlap_witness :
   im_overlaps (line_pair_fill LPR_CollinearOverlap).
 Proof.
@@ -178,4 +200,6 @@ Qed.
 Print Assumptions line_fill_disjoint_witness.
 Print Assumptions line_fill_proper_cross_witness.
 Print Assumptions line_fill_share_witness.
+Print Assumptions line_fill_touches_witness.
+Print Assumptions line_pair_fill_touches_ne_share.
 Print Assumptions line_fill_collinear_overlap_witness.

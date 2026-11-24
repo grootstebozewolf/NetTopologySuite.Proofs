@@ -32,6 +32,12 @@
      - RelateNodingLineLineExtPinned.v   S15l / 67-c
          exterior-row true-dimension pinning (IE/EI/BE/EB/EE) +
          `line_pair_fill_disjoint_ie_not_true_dim` fill-honesty gap.
+     - RelateNodingLineLineTouches.v     S15l+ / 67-d
+         `LPR_Touches` fill (`ll_matrix_touches_endpoint`, predicate
+         witness `F0FFFFFF2`) for one orientation: int×bnd on AB.
+         Exterior cells stay None
+         (`line_pair_fill_touches_exterior_not_true_dim`).
+         `LPR_Share` stays the point-II matrix.
      - RelateNodingLineLineCapstone.v    §20         (S15k)
          collection relate-matrix pipeline capstone (fold-assign + regime
          wrapper + test-10 pointset / fold=oracle / intersects).
@@ -40,7 +46,8 @@
 
      - Prepared evaluate hook (identity `prepared_evaluate_agrees` already
        Qed; end-to-end cache-path still the S13–S14 skeleton).
-     - New `LinePairRegime` for Touches-vs-Share at fill API.
+     - Touches-vs-Share fill split landed as `LPR_Touches` (67-d).
+       Multi-geom and the nine-cell `geom_de9im_pointset` capstone remain.
 
    No `Admitted`, no `Axiom`, no `Parameter`.  Per-theorem audit footprints
    (`Print Assumptions`) live in the split files, next to their theorems.
@@ -58,4 +65,5 @@ From NTS.Proofs Require Export
   RelateNodingLineLineCollection
   RelateNodingLineLinePinned
   RelateNodingLineLineExtPinned
+  RelateNodingLineLineTouches
   RelateNodingLineLineCapstone.

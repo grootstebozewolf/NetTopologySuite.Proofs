@@ -85,6 +85,7 @@ the mathematics.
 
 - `line_collection_test10_de9im_pointset` / `line_collection_matrix_fold_sound`
 - `line_pair_fill_disjoint_ie_not_true_dim` — S8 fill honesty gap
+- `line_pair_fill_touches_exterior_not_true_dim` — 67-d fill is the `F0FFFFFF2` predicate witness; the T-junction exterior cells are 1/1/0/0
 - Exterior-row true-dim pin lives in `RelateNodingLineLineExtPinned.v` (ledger #67-c)
 
 **Prepared hook**
@@ -109,8 +110,6 @@ disguised as disjointness — that was #530.
   `F`, because parity `point_set` is half-open. ADR-0003 is the convention;
   triangle bar-2 gtri cells are on `main` (#592–#594). Ticket 11 tracks
   whether the capstone consumed the ADR.
-- **Touches-vs-Share `LPR_Touches` fill split** (line×line). Companion of
-  `line_pair_fill_share_ii_not_pinned_int_bnd_only`.
 - **`F` vs not-computed** on `CURVE_RELATE_MATRIX` — sibling #523, not a
   #522 child. Children `523-a` / `523-b` / `523-c` (#603 #604 #605)
   landed; **owner accepted 2026-09-19, issue #523 closed** (wayfinder
