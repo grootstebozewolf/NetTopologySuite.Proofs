@@ -33,8 +33,11 @@
          exterior-row true-dimension pinning (IE/EI/BE/EB/EE) +
          `line_pair_fill_disjoint_ie_not_true_dim` fill-honesty gap.
      - RelateNodingLineLineTouches.v     S15l+ / 67-d
-         `LPR_Touches` fill (`ll_matrix_touches_endpoint`) for int×bnd
-         contact.  `LPR_Share` stays the point-II matrix.
+         `LPR_Touches` fill (`ll_matrix_touches_endpoint`, predicate
+         witness `F0FFFFFF2`) for one orientation: int×bnd on AB.
+         Exterior cells stay None
+         (`line_pair_fill_touches_exterior_not_true_dim`).
+         `LPR_Share` stays the point-II matrix.
      - RelateNodingLineLineCapstone.v    §20         (S15k)
          collection relate-matrix pipeline capstone (fold-assign + regime
          wrapper + test-10 pointset / fold=oracle / intersects).

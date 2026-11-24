@@ -176,6 +176,8 @@ let catalog =
     "line_pair_fill LPR_Disjoint", "FFFFFFFFF";
     "line_pair_fill LPR_ProperCross", "0FFFFFFFF";
     "line_pair_fill LPR_Share", "0FFFFFFFF";
+    (* Predicate witness (im_touches), not the T-junction pointset matrix.
+       Exterior honesty: line_pair_fill_touches_exterior_not_true_dim. *)
     "line_pair_fill LPR_Touches", "F0FFFFFF2";
     "line_pair_fill LPR_CollinearOverlap", "1FFF0FFF0";
     "area_line_fill ALR_Interior", "1FFFFFFF2";

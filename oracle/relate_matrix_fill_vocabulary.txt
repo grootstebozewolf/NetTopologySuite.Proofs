@@ -33,6 +33,8 @@ FILL_API RelateMatrixTriangle triangle_pair_fill TPR_TouchVertex => aa_matrix_to
 FILL_API RelateMatrixLineLine line_pair_fill LPR_Disjoint         => ll_matrix_disjoint
 FILL_API RelateMatrixLineLine line_pair_fill LPR_ProperCross      => ll_matrix_point_ii
 FILL_API RelateMatrixLineLine line_pair_fill LPR_Share            => ll_matrix_point_ii
+# F0FFFFFF2 is the im_touches predicate witness, not the T-junction pointset
+# matrix (RelateNodingLineLineTouches.v : line_pair_fill_touches_exterior_not_true_dim).
 FILL_API RelateMatrixLineLine line_pair_fill LPR_Touches          => ll_matrix_touches_endpoint
 FILL_API RelateMatrixLineLine line_pair_fill LPR_CollinearOverlap => ll_matrix_overlap_ii
 # Oracle: oracle/de9im_line_line_vectors.txt (Romanschek tests remain oracle-only)

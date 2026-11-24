@@ -4,7 +4,9 @@
 # Coq pins: theories/RelateLineLine.v (`ll_matrix_paper_test*`, predicate lemmas).
 # S8 fill: theories/RelateMatrixLineLine.v — line_pair_fill LPR_* maps to S2 witnesses:
 #   LPR_Disjoint => ll_matrix_disjoint; LPR_ProperCross/LPR_Share => ll_matrix_point_ii;
-#   LPR_Touches => ll_matrix_touches_endpoint (F0FFFFFF2);
+#   LPR_Touches => ll_matrix_touches_endpoint (F0FFFFFF2), the im_touches
+#     predicate witness, not the T-junction pointset matrix
+#     (RelateNodingLineLineTouches.v : line_pair_fill_touches_exterior_not_true_dim);
 #   LPR_CollinearOverlap => ll_matrix_overlap_ii.  Paper tests remain oracle-only.
 #
 # Format (one test per stanza):
