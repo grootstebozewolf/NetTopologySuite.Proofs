@@ -10,8 +10,9 @@
 
    `line_cell_true_dim` / `line_cell_ok_pinned` with the forward bridge to
    `line_cell_ok`; II/BB regime pins for every `LinePairRegime`; the
-   `LPR_Share` vs Touches fill mismatch documented
-   (`line_pair_fill_share_ii_not_pinned_int_bnd_only`).
+   `LPR_Share` fill refused for int×bnd-only contact
+   (`line_pair_fill_share_ii_not_pinned_int_bnd_only`); the Touches
+   fill is `LPR_Touches` (67-d).
 
    Sections: §19 (meet-layer cell-dimension pinning, S15j).
 

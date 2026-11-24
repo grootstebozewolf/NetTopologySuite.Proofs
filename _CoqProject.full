@@ -1340,6 +1340,7 @@ theories/RelateNodingLineLineRows.v
 theories/RelateNodingLineLineCollection.v
 theories/RelateNodingLineLinePinned.v
 theories/RelateNodingLineLineExtPinned.v
+theories/RelateNodingLineLineTouches.v
 theories/RelateNodingLineLineCapstone.v
 theories/RelateNodingLineLine.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
