@@ -330,8 +330,8 @@ def _instances(doc, entities, m, out: list, stack: tuple[str, ...] = ()) -> None
     Each INSERT and each MINSERT cell (ezdxf's ``multi_insert``) contributes ezdxf's own
     ``matrix44()``, composed by matrix product with the matrices above it. This avoids
     ``recursive_decompose``, which folds a nested INSERT into one through
-    ``Insert.transform``: ezdxf 1.4.4 then keeps a nested grid's spacing unscaled and its
-    rows unmirrored (pinned below). ATTDEFs are drawn instances too; ezdxf skips them.
+    ``Insert.transform``: before ezdxf 1.4.6 that keeps a nested grid's spacing unscaled
+    and its rows unmirrored (pinned below). ATTDEFs are drawn instances too; ezdxf skips them.
     """
     for entity in entities:
         if entity.dxftype() == "ENDBLK":
@@ -350,15 +350,25 @@ def _instances(doc, entities, m, out: list, stack: tuple[str, ...] = ()) -> None
             _instances(doc, doc.blocks.get(copy.dxf.name), copy.matrix44() @ m, out, stack + (copy.dxf.name,))
 
 
+# ezdxf 1.4.6 transforms a MINSERT's spacing with the insert (mozman/ezdxf#1474, fixed by
+# mozman/ezdxf#1476; first in 1.4.6b0). Earlier releases, the pinned 1.4.4 and 1.4.5 included,
+# keep the defect.
+_MINSERT_SPACING_FIXED = tuple(ezdxf.version[:3]) >= (1, 4, 6)
+
+
 @pytest.mark.parametrize(
     ("outer", "theirs_agree"),
     [({"xscale": 2, "yscale": 2}, False), ({"xscale": -1, "rotation": 30}, False), ({"rotation": 30}, True)],
 )
 def test_recursive_decompose_misplaces_a_nested_grid(outer: dict, theirs_agree: bool) -> None:
-    """Pins two ezdxf 1.4.4 defects the position oracle avoids. In a scaled block a nested
-    grid keeps its unscaled spacing; in a mirrored one its rows run the wrong way. The
-    extractor matches the matrix composition; if ezdxf fixes this, this goes red.
-    Reported upstream: https://github.com/mozman/ezdxf/issues/1474"""
+    """Pins two defects of ezdxf before 1.4.6 that the position oracle avoids. In a scaled
+    block a nested grid keeps its unscaled spacing; in a mirrored one its rows run the wrong
+    way. The extractor matches the matrix composition in every version. Before 1.4.6,
+    ``recursive_decompose`` agrees only for a pure rotation; from 1.4.6 it agrees in every
+    case, so a regression or a change in the fixed version goes red.
+    Reported upstream: https://github.com/mozman/ezdxf/issues/1474
+    Fixed upstream: https://github.com/mozman/ezdxf/pull/1476"""
+    theirs_agree = theirs_agree or _MINSERT_SPACING_FIXED
     doc = ezdxf.new("R2018")
     doc.blocks.new("B").add_line((0, 0), (1, 0))
     doc.blocks.new("O").add_blockref("B", (3, 4), dxfattribs={"rotation": 20}).grid(size=(2, 2), spacing=(4, 5))
