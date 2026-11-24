@@ -38,7 +38,7 @@ Anchor: Knauer, Löffler, Scherfenberg, Wolle, TCS 412 (2011), 10.1016/j.tcs.201
 ## #423 — Fréchet for arcs
 | | Paper | DOI | Targeted use |
 |---|---|---|---|
-| ★ | Rote, *Fréchet distance between piecewise smooth curves*, CGTA 37 2007 | 10.1016/j.comgeo.2005.01.004 | Arc–arc free-space cell = oracle kernel |
+| ★ | Rote, *Fréchet distance between piecewise smooth curves*, CGTA 37 2007 — **in Berkeley set (read 2026-11-24)** | 10.1016/j.comgeo.2005.01.004 | Thm 2: decision in O(mn) using two primitives — curve ∩ ε-circle and curve ∩ ε-offset. For arcs+segments both are closed-form (offset of an arc = concentric arc r±ε) → exact √-comparison decider. Lemma 3: ≤2 crossings per piece with turning angle ≤π (split arcs >π). §7.4 degenerate case: arc radius = ε with the other curve through its centre → horizontal free-space boundary (attack ticket). NTS has only DiscreteFrechetDistance (chords) |
 | | Alt & Godau, *Fréchet distance between two polygonal curves*, IJCGA 5 1995 | 10.1142/S0218195995000064 (unverified landing) | Free-space cell convexity lemma |
 | | Conradi, Driemel, Kolbe, *Revisiting Fréchet between piecewise smooth curves*, EuroCG 2024 | arXiv 2401.03339 | Simplest decision procedure to port to arcs |
 | | Bringmann, *Why walking the dog takes time*, FOCS 2014 | arXiv 1404.1448 | Complexity ceiling: never claim subquadratic |
