@@ -30,7 +30,7 @@ Anchor: Knauer, Löffler, Scherfenberg, Wolle, TCS 412 (2011), 10.1016/j.tcs.201
 | | Paper | DOI | Targeted use |
 |---|---|---|---|
 | ★ | Alt & Scharf, *Computing the Hausdorff distance between curved objects*, IJCGA 18(4) 2008 | 10.1142/S0218195908002647 | Finite candidate set for arcs/algebraic curves → Rocq theorem "arc Hausdorff attained on finite set"; lifts the two-pair D-HF lock |
-| | Alt, Behrends, Blömer, *Approximate matching of polygonal shapes*, AMAI 13 1995 | 10.1007/BF01530830 · OA core.ac.uk/download/199414746.pdf | Segment-set Hausdorff via Voronoi candidates — the linear lemma first (ref [2] of anchor) |
+| ★ | Alt, Behrends, Blömer, *Approximate matching of polygonal shapes*, AMAI 13 1995 — **in Berkeley set (read 2026-11-24)** | 10.1007/BF01530830 · OA core.ac.uk/download/199414746.pdf | Lemma 1: δ̃_H(Q,P) attained at a vertex of Q or an x-extreme crossing of Q with a Vor(P) edge → exact finite-candidate oracle for GEOS/NTS DHD (which is tolerance-based bisection). Cor. 10: holds for any non-crossing segment set. Lemma 5–7 (convex: Fréchet = Hausdorff; hull shrinks δ_H) → #423 |
 | | Kim, Oh, Yoon, Kim, Elber, *Precise Hausdorff for planar freeform curves using biarcs*, Vis. Comput. 26 2010 | 10.1007/s00371-010-0477-3 | Its arc-vs-arc kernel = exact oracle on CIRCULARSTRING pairs |
 | | Elber & Grandine, *Hausdorff and minimal distances between parametric freeforms*, GMP 2008 | 10.1007/978-3-540-79246-8_15 · OA gershon.cs.technion.ac.il | Antipodal / bisector conditions; worked examples as fixtures |
 | | Bai et al., *Polyline approach for approximating Hausdorff…*, CAD 43(6) 2011 | (unverified) | The chord baseline the no-chord-lie rule is measured against |
