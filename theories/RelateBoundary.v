@@ -93,6 +93,13 @@ Definition segments_endpoint_only_contact (A B C D : Point) : Prop :=
   ~ segments_interior_share A B C D /\
   ~ segments_interior_collinear_overlap A B C D.
 
+(* Int×bnd contact with no interior–interior share.  This is the LPR_Touches
+   arm: the contact point is strict-interior on AB and an endpoint of CD.
+   It is not LPR_Share's point-II fill. *)
+Definition segments_int_bnd_only (A B C D : Point) : Prop :=
+  (exists p : Point, between_strict A B p /\ on_segment_endpoint C D p) /\
+  ~ segments_interior_share A B C D.
+
 (* -------------------------------------------------------------------------- *)
 (* Canonical Touches witness — endpoint-only line-line contact (IB=0).     *)
 (* -------------------------------------------------------------------------- *)
